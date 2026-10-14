@@ -1,4 +1,11 @@
 import type { Dict } from "../translate";
+import app1 from "./hi-app-1";
+import app2 from "./hi-app-2";
+import app3 from "./hi-app-3";
+import app4 from "./hi-app-4";
+import app5 from "./hi-app-5";
+import app6 from "./hi-app-6";
+import app7 from "./hi-app-7";
 
 // Hindi. Keys are the English strings used on screen. Plain, everyday Hindi
 // (not overly formal) so it is easy for older users to read.
@@ -95,4 +102,5 @@ const dict: Dict = {
   "Consult verified doctors online and in clinic": "सत्यापित डॉक्टरों से ऑनलाइन और क्लिनिक में परामर्श",
 };
 
-export default dict;
+// Patient-facing screens are translated in hi-app-*.ts; this file wins on overlap.
+export default { ...app1, ...app2, ...app3, ...app4, ...app5, ...app6, ...app7, ...dict } as Dict;
