@@ -15,6 +15,11 @@
   --surface: #ffffff;
   --surface-2: #f1f5f9;
   --line: #e2e8f0;
+  /* Charts (validated for CVD and contrast on this surface) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #e8ecf1;
+  --chart-axis: #c3c9d3;
   --field: #64748b; /* 4.7:1 on white: form field boundaries */
   --fg: #0f172a;
   --fg-muted: #475569;
@@ -53,6 +58,10 @@
   --surface: #111b2e;
   --surface-2: #17233a;
   --line: #24324d;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --chart-grid: #1e2b44;
+  --chart-axis: #34445f;
   --field: #8a9bb5;
   --fg: #e2e8f0;
   --fg-muted: #a3b1c6;

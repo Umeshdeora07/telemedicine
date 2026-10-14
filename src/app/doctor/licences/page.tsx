@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { LicenceForm } from "@/components/doctor/onboarding-forms";
+import { humanize } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Licences" };
 
@@ -32,7 +33,7 @@ export default async function DoctorLicences() {
             <div className="flex flex-wrap items-center gap-2">
               <ShieldCheck className="size-5 text-primary" aria-hidden />
               <strong className="text-lg">{[l.region, t(name(l.country))].filter(Boolean).join(", ")}</strong>
-              <Badge tone={TONE[l.status]} className="ms-auto">{t(l.status)}</Badge>
+              <Badge tone={TONE[l.status]} className="ms-auto">{t(humanize(l.status))}</Badge>
             </div>
             <p>{l.issuingBody} · {t("Reg. no. {n}", { n: l.number })}</p>
             <p className="text-sm text-fg-muted">

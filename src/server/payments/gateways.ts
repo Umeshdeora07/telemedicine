@@ -113,5 +113,7 @@ async function stripeRefund(paymentIntentId: string, amountMinor: number) {
 export async function gatewayRefund(gateway: string, gatewayPaymentId: string | null, amountMinor: number, notes: Record<string, string>) {
   if (gateway === "razorpay" && gatewayPaymentId) return razorpayRefund(gatewayPaymentId, amountMinor, notes);
   if (gateway === "stripe" && gatewayPaymentId) return stripeRefund(gatewayPaymentId, amountMinor);
+  // Paid at the reception desk: the clinic hands the money back and records it.
+  if (gateway === "clinic_desk") return `desk_${crypto.randomBytes(6).toString("hex")}`;
   return `rfnd_demo_${crypto.randomBytes(6).toString("hex")}`;
 }

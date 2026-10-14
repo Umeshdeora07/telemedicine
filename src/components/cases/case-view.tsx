@@ -10,7 +10,7 @@ import { SPOKEN_LANGUAGES } from "@/config/languages";
 import type { Currency } from "@/config/currencies";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
+import { cn, humanize } from "@/lib/utils";
 import { AssignForm, CaseChat, EstimateForm, EstimateResponse, PayDeposit, StatusForm, TravelForm, VisaLetterForm } from "./case-forms";
 
 type Data = NonNullable<Awaited<ReturnType<typeof getCase>>>;
@@ -48,7 +48,7 @@ function EstimateCard({ e, ctx, data }: { e: Data["estimates"][number]; ctx: Ctx
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-lg font-bold">{e.recommendedTreatment}</h3>
-        <Badge tone={e.status === "accepted" ? "success" : e.status === "declined" ? "danger" : e.status === "superseded" ? "neutral" : "warning"}>{t(e.status)}</Badge>
+        <Badge tone={e.status === "accepted" ? "success" : e.status === "declined" ? "danger" : e.status === "superseded" ? "neutral" : "warning"}>{t(humanize(e.status))}</Badge>
       </div>
       {e.rationale ? <p>{e.rationale}</p> : null}
       <dl className="grid gap-3 sm:grid-cols-3">
@@ -194,7 +194,7 @@ export async function CaseView({ data, ctx }: { data: Data; ctx: Ctx }) {
                 <li key={p.id} className="flex flex-wrap items-center gap-2">
                   <Receipt className="size-4 text-primary" aria-hidden />
                   {p.purpose === "case_deposit" ? t("Deposit") : t("Hospital bill")} · {fmt.money(p.amountMinor, p.currency)}
-                  <Badge tone={p.status === "captured" ? "success" : "neutral"}>{t(p.status)}</Badge>
+                  <Badge tone={p.status === "captured" ? "success" : "neutral"}>{t(humanize(p.status))}</Badge>
                 </li>
               ))}
             </ul>

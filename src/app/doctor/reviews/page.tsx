@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ReviewReply } from "@/components/doctor/review-reply";
+import { humanize } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Reviews" };
 
@@ -47,7 +48,7 @@ export default async function DoctorReviewsPage() {
                 </span>
                 <span className="font-semibold">{r.authorDisplayName}</span>
                 <span className="text-sm text-fg-muted">{fmt.date(r.createdAt)}</span>
-                {r.status !== "published" ? <Badge tone="warning">{t(r.status)}</Badge> : null}
+                {r.status !== "published" ? <Badge tone="warning">{t(humanize(r.status))}</Badge> : null}
               </div>
               {r.text ? <p>{r.text}</p> : null}
               {r.tags.length ? <p className="flex flex-wrap gap-1">{r.tags.map((x) => <Badge key={x}>{t(x)}</Badge>)}</p> : null}

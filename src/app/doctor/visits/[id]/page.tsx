@@ -9,6 +9,7 @@ import { appointments, consultNotes } from "@/db/schema";
 import { ConsultPanel } from "@/components/doctor/consult-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { Alert } from "@/components/ui/alert";
+import { humanize } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Clinic visit" };
 
@@ -28,7 +29,7 @@ export default async function VisitPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <nav className="text-sm text-fg-muted"><Link href="/doctor" className="hover:underline">{t("Today")}</Link> › {a.ref}</nav>
-      <PageHeader title={t("Clinic visit: {name}", { name: access.patient.fullName })} description={`${fmt.dateTime(a.startAt, access.doctor.timeZone)} · ${a.status === "checked_in" ? t("Checked in") : t(a.status)}`} />
+      <PageHeader title={t("Clinic visit: {name}", { name: access.patient.fullName })} description={`${fmt.dateTime(a.startAt, access.doctor.timeZone)} · ${a.status === "checked_in" ? t("Checked in") : t(humanize(a.status))}`} />
       {parent && parentNote ? (
         <Alert tone="info" title={t("From the online consult on {date}", { date: fmt.date(parent.startAt) })}>
           <strong>{parentNote.diagnosis}</strong> — {parentNote.findings} {parentNote.advice}

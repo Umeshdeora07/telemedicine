@@ -23,6 +23,7 @@ export const getViewContext = cache(async () => {
     date: (d: Date | string, zone = tz, opts?: Intl.DateTimeFormatOptions) => formatDate(d, zone, i18n.intl, opts),
     time: (d: Date | string, zone = tz) => formatTime(d, zone, i18n.intl),
     zone: (zone = tz, at?: Date) => zoneLabel(zone, at, i18n.intl),
+    number: (n: number) => new Intl.NumberFormat(i18n.intl).format(n),
   };
   const priceFor = (fees: FeeTable, mode: string, cur: Currency = currency) => {
     const r = rates[cur]?.rate ?? 1;

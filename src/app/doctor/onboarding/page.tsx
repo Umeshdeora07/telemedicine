@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { BasicsForm, IdentityUploads, LicenceForm, QualificationForm, SubmitForVerification } from "@/components/doctor/onboarding-forms";
 import type { Uploaded } from "@/components/common/file-uploader";
+import { humanize } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Get verified" };
 
@@ -103,7 +104,7 @@ export default async function DoctorOnboarding() {
                 <ShieldCheck className="size-5 text-primary" aria-hidden />
                 <strong>{[l.region, l.country].filter(Boolean).join(", ")}</strong> · {l.issuingBody} · {l.number}
                 {l.expiresAt ? <span className="text-sm text-fg-muted">{t("valid until {date}", { date: fmt.date(l.expiresAt) })}</span> : null}
-                <Badge tone={LIC_TONE[l.status]} className="ms-auto">{t(l.status)}</Badge>
+                <Badge tone={LIC_TONE[l.status]} className="ms-auto">{t(humanize(l.status))}</Badge>
               </li>
             ))}
           </ul>

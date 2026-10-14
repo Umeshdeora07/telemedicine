@@ -54,3 +54,9 @@ export function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pi
   for (const k of keys) out[k] = obj[k];
   return out;
 }
+
+/** "partially_refunded" -> "Partially refunded" (used as the English key for t()). */
+export function humanize(value: string) {
+  const s = value.replace(/_/g, " ").trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
