@@ -6,7 +6,7 @@ import { ChatPanel } from "@/components/room/chat-panel";
 import type { ChatMessage } from "@/components/room/use-room";
 
 /** Free follow-up chat with the doctor after the consult (uses the consult's message thread). */
-export function FollowUpChat({ apptId, initial, open, closedText }: { apptId: string; initial: ChatMessage[]; open: boolean; closedText: string }) {
+export function FollowUpChat({ apptId, initial, open, closedText, note }: { apptId: string; initial: ChatMessage[]; open: boolean; closedText: string; note?: string }) {
   const { t } = useI18n();
   const [messages, setMessages] = useState(initial);
   const refresh = async () => {
@@ -24,7 +24,7 @@ export function FollowUpChat({ apptId, initial, open, closedText }: { apptId: st
   }); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="card flex h-96 flex-col overflow-hidden">
-      <p className="border-b border-line px-4 py-2 text-sm text-fg-muted">{open ? t("Free follow-up chat. The doctor usually replies within a few hours.") : closedText}</p>
+      <p className="border-b border-line px-4 py-2 text-sm text-fg-muted">{open ? (note ?? t("Free follow-up chat. The doctor usually replies within a few hours.")) : closedText}</p>
       <ChatPanel apptId={apptId} messages={messages} onSent={refresh} disabled={!open} disabledText={closedText} className="flex-1" />
     </div>
   );

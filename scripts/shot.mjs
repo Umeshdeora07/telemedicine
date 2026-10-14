@@ -18,10 +18,12 @@ if (process.env.LOGIN_PHONE || process.env.LOGIN_EMAIL) {
   await page.goto(base + "/login");
   const label = process.env.LOGIN_LABEL;
   await page.getByRole("button", { name: new RegExp(label) }).first().click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 60_000 });
 }
 for (const p of paths) {
-  const res = await page.goto(base + p, { waitUntil: "networkidle" });
+  const res = await page.goto(base + p, { waitUntil: "load", timeout: 90_000 });
+  // Pages that poll never reach "networkidle"; give them a moment instead.
+  await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
   const name = p.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "home";
   if (process.env.SEG) {
     const h = page.viewportSize().height;

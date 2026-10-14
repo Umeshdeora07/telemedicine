@@ -57,7 +57,7 @@ export async function doctorEarnings(d: DoctorRow) {
   // Doctor's share is computed on the consultation fee in INR (platform fee and GST excluded).
   const inInr = (p: typeof payments.$inferSelect) => (p.currency === "INR" ? p.feeMinor : Math.round(p.feeMinor / (p.fxRate || 1)));
   const sum = (filter: (r: (typeof rows)[number]) => boolean) => rows.filter(filter).reduce((s, r) => s + inInr(r.p), 0);
-  const released = sum((r) => r.p.payoutState === "released" && r.p.createdAt >= monthStart);
+  const released = sum((r) => (r.p.payoutState === "released" || r.p.payoutState === "paid_out") && r.p.createdAt >= monthStart);
   const held = sum((r) => r.p.payoutState === "held");
   const refunded = sum((r) => r.p.payoutState === "refunded");
   const commission = Math.round(released * env.commissionRate);
