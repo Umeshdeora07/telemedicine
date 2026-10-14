@@ -14,7 +14,7 @@ const MAP: Record<string, string> = {
   "“": '"',
   "”": '"',
   "…": "...",
-  "•": "-",
+  "•": "·",
   "×": "x",
   "→": "->",
   "≈": "~",
@@ -30,7 +30,8 @@ export function pdfSafe(s: string | null | undefined) {
     else if (/[̀-ͯ]/.test(ch)) continue;
     else {
       const code = ch.charCodeAt(0);
-      out += code >= 0x20 && code <= 0x7e ? ch : code === 0x0a ? "\n" : "";
+      // Printable ASCII and Latin-1 are in the PDF standard fonts' encoding.
+      out += (code >= 0x20 && code <= 0x7e) || (code >= 0xa1 && code <= 0xff) ? ch : code === 0x0a ? "\n" : "";
     }
   }
   return out;

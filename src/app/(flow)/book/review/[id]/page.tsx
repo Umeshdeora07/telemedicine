@@ -15,6 +15,8 @@ import { Stepper } from "@/components/ui/stepper";
 import { Alert } from "@/components/ui/alert";
 import { DoctorAvatar } from "@/components/ui/avatar";
 import { PayPanel } from "@/components/booking/pay-panel";
+import { payAtClinicAction } from "@/server/actions/hybrid";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const metadata: Metadata = { title: "Review and pay" };
 
@@ -166,6 +168,12 @@ export default async function ReviewPage({ params, searchParams }: { params: Pro
           holdUntil={slot?.heldUntil?.toISOString() ?? null}
         />
         {gateway === "demo" ? <p className="mt-3 text-center text-sm text-warning">{t("Demo: you'll see a test payment page. No real money moves.")}</p> : null}
+        {a.mode === "in_clinic" && q.totalMinor > 0 ? (
+          <form action={payAtClinicAction.bind(null, a.id)} className="mt-4 border-t border-line pt-4">
+            <SubmitButton variant="outline" className="w-full">{t("Pay at the clinic instead")}</SubmitButton>
+            <p className="mt-1 text-center text-sm text-fg-muted">{t("Pay at reception on the day. Your slot is confirmed now.")}</p>
+          </form>
+        ) : null}
       </section>
     </div>
   );
