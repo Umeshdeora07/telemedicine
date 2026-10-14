@@ -7,7 +7,10 @@ async function logout(req: NextRequest) {
   if (session) await audit({ actor: { id: session.user.id, role: session.user.role }, action: "auth.logout", entityType: "user", entityId: session.user.id, metadata: { reason: req.nextUrl.searchParams.get("reason") ?? "user" } });
   await destroySession();
   const reason = req.nextUrl.searchParams.get("reason");
-  return NextResponse.redirect(new URL(reason === "idle" ? "/login?reason=idle" : "/", req.url), 303);
+  const res = NextResponse.redirect(new URL(reason === "idle" ? "/login?reason=idle" : "/", req.url), 303);
+  // Remove offline copies of passes and prescriptions from this device (shared phones).
+  res.headers.set("Clear-Site-Data", '"cache", "storage"');
+  return res;
 }
 
 export const POST = logout;

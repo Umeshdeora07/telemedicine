@@ -91,3 +91,42 @@ export function HealthProfileForm({ p, languages }: { p: HP; languages: { code: 
     </form>
   );
 }
+
+function urlBase64ToUint8Array(base64: string) {
+  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
+  const raw = atob((base64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+/** Ask this browser for push permission and register it for reminders. */
+export function PushOptIn() {
+  const { t } = useI18n();
+  const [state, setState] = useState<"idle" | "busy" | "on" | "denied" | "unsupported" | "unconfigured">("idle");
+  const enable = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setState("unsupported");
+    setState("busy");
+    const { publicKey } = (await fetch("/api/push/subscribe").then((r) => r.json())) as { publicKey: string | null };
+    if (!publicKey) return setState("unconfigured");
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return setState("denied");
+    const reg = await navigator.serviceWorker.register("/sw.js");
+    await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+    await fetch("/api/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub.toJSON()) });
+    setState("on");
+  };
+  const msg: Record<string, string> = {
+    on: t("Notifications are on for this device."),
+    denied: t("Notifications are blocked. Allow them in your browser settings."),
+    unsupported: t("This browser doesn't support notifications. Add the app to your home screen, or use SMS/WhatsApp reminders."),
+    unconfigured: t("Device notifications aren't set up on this server yet. You'll still get SMS, WhatsApp and email."),
+  };
+  return (
+    <div className="space-y-2">
+      <button type="button" onClick={enable} disabled={state === "busy" || state === "on"} className="tap inline-flex items-center rounded-xl border border-line px-4 font-semibold text-primary hover:bg-primary-soft disabled:opacity-60">
+        {t("Turn on notifications on this device")}
+      </button>
+      {msg[state] ? <p role="status" className="text-sm text-fg-muted">{msg[state]}</p> : null}
+    </div>
+  );
+}

@@ -10,7 +10,7 @@ import { COMMON_TIME_ZONES } from "@/lib/time";
 import { PageHeader } from "@/components/ui/page-header";
 import { buttonClass } from "@/components/ui/button";
 import { DisplayPrefsPanel } from "@/components/layout/prefs-menu";
-import { ConsentToggles, DeleteAccountForm, RegionForm } from "@/components/patient/settings-forms";
+import { ConsentToggles, DeleteAccountForm, PushOptIn, RegionForm } from "@/components/patient/settings-forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -40,6 +40,7 @@ export default async function SettingsPage() {
             { type: "marketing", label: t("Health tips and offers"), hint: t("Occasional emails about health camps, plans and offers."), granted: granted("marketing") },
           ]}
         />
+        <PushOptIn />
         <p className="text-sm"><Link href="/family" className="text-primary underline">{t("Who can help with my care")}</Link> · <Link href="/records" className="text-primary underline">{t("Who can see my records")}</Link> · <Link href="/legal/privacy" className="text-primary underline">{t("Privacy policy")}</Link></p>
       </section>
       <section className="card space-y-3 p-5" aria-labelledby="data">
