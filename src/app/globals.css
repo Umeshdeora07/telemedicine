@@ -1,0 +1,412 @@
+@import "tailwindcss";
+
+/* Dark mode follows the .dark class on <html> (set from the user's setting,
+   or from the system preference before hydration). */
+@custom-variant dark (&:where(.dark, .dark *));
+/* High-contrast mode, toggled from Settings or the accessibility menu. */
+@custom-variant hc (&:where(.hc, .hc *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Every text pairing below meets WCAG AA (4.5:1 for text,
+   3:1 for UI boundaries such as form fields and focus rings).
+   --------------------------------------------------------------------------- */
+:root {
+  --page: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --line: #e2e8f0;
+  --field: #64748b; /* 4.7:1 on white: form field boundaries */
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --heading: #0b2545;
+
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --on-primary: #ffffff;
+  --primary-soft: #e6f4f2;
+  --primary-soft-fg: #0b524c;
+
+  --navy: #0b2545;
+  --on-navy: #f8fafc;
+  --navy-muted: #c3cfdf;
+
+  --accent: #f59e0b;
+  --on-accent: #0b2545;
+  --accent-soft: #fef3c7;
+
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --warning: #b45309;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-solid: #dc2626;
+  --on-danger: #ffffff;
+  --danger-soft: #fee2e2;
+
+  --focus: #0f766e;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.05);
+  color-scheme: light;
+}
+
+.dark {
+  --page: #0b1220;
+  --surface: #111b2e;
+  --surface-2: #17233a;
+  --line: #24324d;
+  --field: #8a9bb5;
+  --fg: #e2e8f0;
+  --fg-muted: #a3b1c6;
+  --heading: #f8fafc;
+
+  --primary: #2dd4bf;
+  --primary-hover: #5eead4;
+  --on-primary: #04211f;
+  --primary-soft: #0e2f2c;
+  --primary-soft-fg: #99f6e4;
+
+  --navy: #07182f;
+  --on-navy: #f8fafc;
+  --navy-muted: #b6c3d6;
+
+  --accent: #fbbf24;
+  --on-accent: #0b2545;
+  --accent-soft: #33240a;
+
+  --success: #4ade80;
+  --success-soft: #0f2e1d;
+  --warning: #fbbf24;
+  --warning-soft: #33240a;
+  --danger: #f87171;
+  --danger-solid: #dc2626;
+  --on-danger: #ffffff;
+  --danger-soft: #3a1414;
+
+  --focus: #5eead4;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
+
+/* High contrast: stronger text, borders and focus; links always underlined. */
+.hc {
+  --page: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --line: #0f172a;
+  --field: #0f172a;
+  --fg: #000000;
+  --fg-muted: #1e293b;
+  --heading: #000000;
+  --primary: #0b4f4a;
+  --primary-hover: #063632;
+  --primary-soft: #e6f4f2;
+  --primary-soft-fg: #063632;
+  --success: #0f5a2b;
+  --warning: #7c3a06;
+  --danger: #a51b1b;
+  --danger-solid: #a51b1b;
+  --focus: #000000;
+}
+.dark.hc {
+  --page: #000000;
+  --surface: #000000;
+  --surface-2: #111111;
+  --line: #ffffff;
+  --field: #ffffff;
+  --fg: #ffffff;
+  --fg-muted: #e5e7eb;
+  --heading: #ffffff;
+  --primary: #5eead4;
+  --primary-hover: #99f6e4;
+  --on-primary: #000000;
+  --primary-soft: #062b28;
+  --primary-soft-fg: #ccfbf1;
+  --success: #86efac;
+  --warning: #fde68a;
+  --danger: #fca5a5;
+  --focus: #ffffff;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-field: var(--field);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-heading: var(--heading);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-fg: var(--primary-soft-fg);
+  --color-navy: var(--navy);
+  --color-on-navy: var(--on-navy);
+  --color-navy-muted: var(--navy-muted);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-solid: var(--danger-solid);
+  --color-on-danger: var(--on-danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-focus: var(--focus);
+
+  --font-sans: var(--font-inter), var(--font-deva), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-jakarta), var(--font-deva), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: var(--shadow-card);
+  --radius-card: 1rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+/* Large-text mode (Settings → Accessibility). Everything is sized in rem,
+   so the whole interface scales, and still works at 200% browser zoom. */
+html.lt {
+  font-size: 112.5%;
+}
+html.xlt {
+  font-size: 125%;
+}
+
+body {
+  background: var(--page);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+:lang(hi) body,
+body:lang(hi) {
+  font-family: var(--font-inter), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.7;
+}
+:lang(ar) body,
+body:lang(ar) {
+  font-family: var(--font-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  color: var(--heading);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+}
+
+.hc a:not([data-button]) {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.hc :focus-visible {
+  outline-width: 4px;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--fg);
+}
+
+/* Keep anchored headings clear of the sticky header. */
+:target,
+[id] {
+  scroll-margin-top: 5rem;
+}
+
+/* Comfortable defaults for form controls on small phones. */
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+/* Reduced motion: honour the OS setting and the in-app toggle. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html.rm *,
+html.rm *::before,
+html.rm *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Small helpers that Tailwind utilities don't cover.
+   --------------------------------------------------------------------------- */
+@utility container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (min-width: 640px) {
+    padding-inline: 1.5rem;
+  }
+}
+
+@utility card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+@utility tap {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+@utility prose-calm {
+  max-width: 68ch;
+  & h2 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  & h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  & p,
+  & ul,
+  & ol {
+    margin-top: 0.75rem;
+  }
+  & ul {
+    list-style: disc;
+    padding-inline-start: 1.25rem;
+  }
+  & ol {
+    list-style: decimal;
+    padding-inline-start: 1.25rem;
+  }
+  & li {
+    margin-top: 0.25rem;
+  }
+  & a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  & strong {
+    font-weight: 600;
+    color: var(--heading);
+  }
+  & table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+  }
+  & th,
+  & td {
+    border: 1px solid var(--line);
+    padding: 0.5rem 0.75rem;
+    text-align: start;
+    vertical-align: top;
+  }
+}
+
+/* Success tick drawn after a booking. */
+@keyframes tick-draw {
+  from {
+    stroke-dashoffset: 48;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@utility animate-tick {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: tick-draw 0.5s 0.25s ease-out forwards;
+}
+@utility animate-pop {
+  animation: pop-in 0.45s ease-out both;
+}
+@utility skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.5rem;
+}
+
+/* Leaflet maps (CSS is inlined here to keep the CSP to 'self'). */
+.leaflet-container {
+  font: inherit;
+  border-radius: 1rem;
+  z-index: 0;
+}
+
+@media print {
+  header,
+  footer,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
