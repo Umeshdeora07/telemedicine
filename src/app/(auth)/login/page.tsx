@@ -20,6 +20,7 @@ export const metadata: Metadata = { title: "Log in" };
 const DEMO_ACCOUNTS = [
   { label: "Asha Verma", note: "Patient, 62, prefers Hindi", phone: "+919810000001" },
   { label: "Rahul Mehta", note: "Patient with wife and son", phone: "+919810000002" },
+  { label: "Sunita Rao", note: "Diabetes care plan, home readings and medicine reminders", phone: "+919810000003" },
   { label: "Arjun Nair", note: "Son in London, parents in Kochi", phone: "+447700900123" },
   { label: "Fatima Rahman", note: "International patient, Dhaka", phone: "+8801711000000" },
   { label: "John Carter", note: "Patient in New York", phone: "+12125550100" },

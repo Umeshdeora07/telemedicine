@@ -11,6 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { env } from "@/config/env";
 import * as schema from "./schema";
 
 export type DB = PostgresJsDatabase<typeof schema>;
@@ -88,7 +89,7 @@ async function init(): Promise<State> {
   const ready = (async () => {
     await client.waitReady;
     await migrate(db as never, { migrationsFolder: MIGRATIONS });
-    if (process.env.DEMO_AUTO_SEED !== "false") {
+    if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") {
       const { ensureDemoData } = await import("./seed/ensure");
       await ensureDemoData(db);
     }

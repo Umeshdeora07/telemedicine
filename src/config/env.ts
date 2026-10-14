@@ -13,9 +13,6 @@ export const env = {
   get appUrl() {
     return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
   },
-  get runScheduler() {
-    return bool(process.env.RUN_SCHEDULER, true);
-  },
   get cronSecret() {
     return process.env.CRON_SECRET || "";
   },

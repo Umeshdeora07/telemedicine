@@ -100,6 +100,19 @@ const dict: Dict = {
   "Full refund if the doctor doesn't join": "डॉक्टर न आएं तो पूरा पैसा वापस",
   "Not for emergencies: call 112 in India.": "आपातकाल के लिए नहीं: भारत में 112 पर कॉल करें।",
   "Consult verified doctors online and in clinic": "सत्यापित डॉक्टरों से ऑनलाइन और क्लिनिक में परामर्श",
+  // Demo account notes on the login page
+  "Patient, 62, prefers Hindi": "मरीज़, 62 वर्ष, हिंदी पसंद करती हैं",
+  "Patient with wife and son": "मरीज़, पत्नी और बेटे के साथ",
+  "Diabetes care plan, home readings and medicine reminders": "डायबिटीज़ केयर प्लान, घर की रीडिंग और दवा रिमाइंडर",
+  "Son in London, parents in Kochi": "बेटा लंदन में, माता-पिता कोच्चि में",
+  "International patient, Dhaka": "अंतरराष्ट्रीय मरीज़, ढाका",
+  "Patient in New York": "न्यूयॉर्क में मरीज़",
+  "Needs a clinic visit": "क्लिनिक विज़िट की ज़रूरत",
+  "Doctor (general physician)": "डॉक्टर (जनरल फ़िज़िशियन)",
+  "Doctor (cardiology, licensed in NY/NJ)": "डॉक्टर (हृदय रोग, NY/NJ में लाइसेंस)",
+  "Hospital coordinator, Sunrise Valley": "अस्पताल कोऑर्डिनेटर, सनराइज़ वैली",
+  "Care coordinator": "केयर कोऑर्डिनेटर",
+  "Super admin": "सुपर एडमिन",
 };
 
 // Patient-facing screens are translated in hi-app-*.ts; this file wins on overlap.

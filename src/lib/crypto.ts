@@ -6,6 +6,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { env } from "@/config/env";
 
 type Secrets = { encryptionKey: string; signingPrivateKey: string; signingPublicKey: string; hashSecret: string };
 
@@ -23,8 +24,7 @@ function loadSecrets(): Secrets {
     cached = fromEnv as Secrets;
     return cached;
   }
-  const demo = process.env.DEMO_MODE !== "false" || process.env.NODE_ENV !== "production";
-  if (!demo) {
+  if (!env.demoMode) {
     throw new Error(
       "Missing DATA_ENCRYPTION_KEY, SIGNING_PRIVATE_KEY, SIGNING_PUBLIC_KEY or HASH_SECRET. Run `npm run keys` to generate them.",
     );
