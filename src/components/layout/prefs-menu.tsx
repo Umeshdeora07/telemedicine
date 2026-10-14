@@ -60,13 +60,6 @@ export function PrefsMenu({ className }: { className?: string }) {
     void savePreferencesAction({ [key]: value });
   };
 
-  const groups: { key: Key; label: string; options: [string, string][] }[] = [
-    { key: "text", label: t("Text size"), options: [["normal", t("Normal")], ["large", t("Large")], ["xlarge", t("Extra large")]] },
-    { key: "contrast", label: t("Contrast"), options: [["normal", t("Normal")], ["high", t("High contrast")]] },
-    { key: "theme", label: t("Appearance"), options: [["system", t("Same as device")], ["light", t("Light")], ["dark", t("Dark")]] },
-    { key: "motion", label: t("Motion"), options: [["system", t("Same as device")], ["reduce", t("Reduce motion")]] },
-  ];
-
   return (
     <div className={cn("relative", className)} ref={ref}>
       <button
@@ -82,6 +75,24 @@ export function PrefsMenu({ className }: { className?: string }) {
       </button>
       {open ? (
         <div role="dialog" aria-label={t("Display settings")} className="card absolute end-0 top-12 z-50 w-72 space-y-4 p-4">
+          <PrefGroups state={state} onSet={set} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function PrefGroups({ state, onSet }: { state: Record<Key, string>; onSet: (key: Key, value: string) => void }) {
+  const { t } = useI18n();
+  const groups: { key: Key; label: string; options: [string, string][] }[] = [
+    { key: "text", label: t("Text size"), options: [["normal", t("Normal")], ["large", t("Large")], ["xlarge", t("Extra large")]] },
+    { key: "contrast", label: t("Contrast"), options: [["normal", t("Normal")], ["high", t("High contrast")]] },
+    { key: "theme", label: t("Appearance"), options: [["system", t("Same as device")], ["light", t("Light")], ["dark", t("Dark")]] },
+    { key: "motion", label: t("Motion"), options: [["system", t("Same as device")], ["reduce", t("Reduce motion")]] },
+  ];
+
+  return (
+    <>
           {groups.map((g) => (
             <fieldset key={g.key}>
               <legend className="mb-1.5 text-sm font-semibold text-heading">{g.label}</legend>
@@ -93,7 +104,7 @@ export function PrefsMenu({ className }: { className?: string }) {
                       key={v}
                       type="button"
                       aria-pressed={active}
-                      onClick={() => set(g.key, v)}
+                      onClick={() => onSet(g.key, v)}
                       className={cn(
                         "tap inline-flex items-center gap-1 rounded-lg border px-3 text-sm",
                         active ? "border-primary bg-primary-soft font-semibold text-primary-soft-fg" : "border-line hover:bg-surface-2",
@@ -107,8 +118,21 @@ export function PrefsMenu({ className }: { className?: string }) {
               </div>
             </fieldset>
           ))}
-        </div>
-      ) : null}
+    </>
+  );
+}
+
+/** The same display options, inline (Settings page). */
+export function DisplayPrefsPanel({ initial }: { initial: Record<Key, string> }) {
+  const [state, setState] = useState(initial);
+  const set = (key: Key, value: string) => {
+    applyPreference(key, value);
+    setState((s) => ({ ...s, [key]: value }));
+    void savePreferencesAction({ [key]: value });
+  };
+  return (
+    <div className="space-y-4">
+      <PrefGroups state={state} onSet={set} />
     </div>
   );
 }

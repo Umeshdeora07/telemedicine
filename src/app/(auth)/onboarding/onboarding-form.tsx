@@ -94,7 +94,7 @@ export function OnboardingForm({
             ))}
           </Select>
         </Field>
-        <Field label={t("City")} htmlFor="city">
+        <Field label={t("City")} htmlFor="city" optional={t("optional")}>
           <Input id="city" name="city" autoComplete="address-level2" />
         </Field>
         <Field label={t("Language")} htmlFor="language" required>
@@ -118,7 +118,7 @@ export function OnboardingForm({
       </div>
 
       {!defaults.hasEmail ? (
-        <Field label={t("Email for receipts")} htmlFor="email" hint={t("We send invoices and prescriptions here.")}>
+        <Field label={t("Email for receipts")} htmlFor="email" optional={t("optional")} hint={t("We send invoices and prescriptions here.")}>
           <Input id="email" name="email" type="email" autoComplete="email" />
         </Field>
       ) : null}

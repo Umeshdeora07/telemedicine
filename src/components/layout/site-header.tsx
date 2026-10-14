@@ -61,7 +61,7 @@ export async function SiteHeader({ minimal = false }: { minimal?: boolean }) {
         <div className="ms-auto flex items-center gap-0.5 sm:gap-1">
           <Link
             href="/emergency"
-            className="tap inline-flex items-center gap-1.5 rounded-xl px-2.5 text-sm font-semibold text-danger hover:bg-danger-soft"
+            className="tap inline-flex items-center gap-1.5 rounded-xl px-2 text-sm font-semibold text-danger hover:bg-danger-soft sm:px-2.5"
           >
             <Siren className="size-5" aria-hidden />
             <span className="hidden xl:inline">{t("Emergency")}</span>

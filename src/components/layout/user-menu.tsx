@@ -23,7 +23,7 @@ export function UserMenu({ name, role, links, unread }: { name: string; role: st
     };
   }, [open]);
   return (
-    <div className="flex items-center gap-1" ref={ref}>
+    <div className="flex items-center gap-0.5 sm:gap-1" ref={ref}>
       <Link href="/notifications" className="tap relative grid place-items-center rounded-xl hover:bg-surface-2" aria-label={unread ? t("Notifications ({count} new)", { count: unread }) : t("Notifications")}>
         <Bell className="size-5" aria-hidden />
         {unread ? <span className="absolute end-1.5 top-1.5 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-xs font-bold text-on-accent">{unread}</span> : null}

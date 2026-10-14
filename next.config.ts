@@ -37,6 +37,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Native/WASM packages that must not be bundled.
   serverExternalPackages: ["@electric-sql/pglite", "postgres", "web-push", "pdf-lib", "qrcode"],
+  // Some containers and network drives drop file-change events; set NEXT_WATCH_POLL_MS=1000 there.
+  watchOptions: process.env.NEXT_WATCH_POLL_MS ? { pollIntervalMs: Number(process.env.NEXT_WATCH_POLL_MS) } : undefined,
   turbopack: {
     rules: {
       "*.css": {

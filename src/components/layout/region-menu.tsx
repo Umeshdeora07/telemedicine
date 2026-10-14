@@ -38,11 +38,11 @@ export function RegionMenu({ locales, currency }: { locales: Locale[]; currency:
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={t("Language and currency")}
-        className="tap inline-flex items-center gap-1.5 rounded-xl px-2.5 text-fg hover:bg-surface-2"
+        className="tap inline-flex items-center gap-1.5 rounded-xl px-2 text-fg hover:bg-surface-2 sm:px-2.5"
       >
         <Globe className="size-5" aria-hidden />
         <span className="hidden text-sm font-semibold sm:inline">{LOCALES[locale].native}</span>
-        <span className="text-sm font-semibold uppercase sm:hidden">{locale}</span>
+        <span className="text-sm font-semibold uppercase max-[399px]:sr-only sm:hidden">{locale}</span>
       </button>
       {open ? (
         <div role="dialog" aria-label={t("Language and currency")} className={cn("card absolute end-0 top-12 z-50 w-64 space-y-4 p-4", pending && "opacity-70")}>

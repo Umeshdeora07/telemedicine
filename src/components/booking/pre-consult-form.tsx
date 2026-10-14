@@ -66,7 +66,7 @@ export function PreConsultForm({
       <Field label={t("Past illnesses or operations")} htmlFor="pastConditions" required>
         <Textarea id="pastConditions" name="pastConditions" defaultValue={defaults.pastConditions} rows={2} />
       </Field>
-      <Field label={t("Questions you want to ask the doctor")} htmlFor="questions" hint={t("It's easy to forget during the call — write them here.")}>
+      <Field label={t("Questions you want to ask the doctor")} htmlFor="questions" optional={t("optional")} hint={t("It's easy to forget during the call — write them here.")}>
         <div className="flex items-start gap-2">
           <Textarea id="questions" name="questions" defaultValue={defaults.questions} rows={2} />
           <VoiceInput targetId="questions" />

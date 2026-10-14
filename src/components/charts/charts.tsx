@@ -223,3 +223,115 @@ export function HBars({ data, title, tableCaption, valueHeader }: { data: { labe
     </figure>
   );
 }
+
+/** Time series with crosshair tooltip. Optional target lines (e.g. BP goal). One y-axis. */
+export function LineChart({ points, series, title, unit, targets = [], height = 240, tableCaption }: { points: { at: string; label: string; values: (number | null)[] }[]; series: Series[]; title: string; unit: string; targets?: { value: number; label: string }[]; height?: number; tableCaption: string }) {
+  const { t, intl } = useI18n();
+  const [ref, width] = useWidth<HTMLDivElement>();
+  const [active, setActive] = useState<number | null>(null);
+  const titleId = useId();
+  const pad = { top: 14, right: 44, bottom: 26, left: 40 };
+  const w = width - pad.left - pad.right;
+  const h = height - pad.top - pad.bottom;
+  const all = points.flatMap((p) => p.values.filter((v): v is number => v !== null)).concat(targets.map((x) => x.value));
+  const lo = Math.min(...all);
+  const hi = Math.max(...all);
+  const span = Math.max(1, hi - lo);
+  const { ticks: rawTicks } = niceTicks(span);
+  const step = rawTicks[1] ?? 1;
+  const yMin = Math.floor((lo - span * 0.1) / step) * step;
+  const yMax = Math.ceil((hi + span * 0.1) / step) * step;
+  const ticks = Array.from({ length: Math.round((yMax - yMin) / step) + 1 }, (_, i) => yMin + i * step).filter((_, i, a) => a.length <= 7 || i % 2 === 0);
+  const times = points.map((p) => new Date(p.at).getTime());
+  const t0 = Math.min(...times);
+  const t1 = Math.max(...times);
+  const x = (ms: number) => pad.left + (t1 === t0 ? w / 2 : ((ms - t0) / (t1 - t0)) * w);
+  const y = (v: number) => pad.top + h - ((v - yMin) / (yMax - yMin)) * h;
+  const nearest = (px: number) => {
+    let best = 0;
+    for (let i = 1; i < points.length; i++) if (Math.abs(x(times[i]!) - px) < Math.abs(x(times[best]!) - px)) best = i;
+    return best;
+  };
+  const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(1, Math.floor(w / 70))));
+  if (!points.length) return <p className="text-fg-muted">{t("No readings yet.")}</p>;
+  return (
+    <figure className="space-y-3">
+      <figcaption className="flex flex-wrap items-center justify-between gap-2">
+        <span id={titleId} className="font-semibold text-heading">{title}</span>
+        {series.length > 1 ? (
+          <span className="flex flex-wrap gap-3 text-sm text-fg-muted" aria-label={t("Legend")}>
+            {series.map((s) => <span key={s.key} className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-4 rounded" style={{ background: s.color }} aria-hidden />{s.name}</span>)}
+          </span>
+        ) : null}
+      </figcaption>
+      <div ref={ref} className="relative">
+        <svg
+          width={width}
+          height={height}
+          role="img"
+          aria-labelledby={titleId}
+          tabIndex={0}
+          className="block touch-pan-y rounded-lg focus-visible:outline-3 focus-visible:outline-offset-2"
+          onPointerMove={(e) => setActive(nearest(e.clientX - e.currentTarget.getBoundingClientRect().left))}
+          onPointerLeave={() => setActive(null)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") setActive((a) => Math.min(points.length - 1, (a ?? -1) + 1));
+            else if (e.key === "ArrowLeft") setActive((a) => Math.max(0, (a ?? points.length) - 1));
+            else if (e.key === "Escape") setActive(null);
+            else return;
+            e.preventDefault();
+          }}
+          onBlur={() => setActive(null)}
+        >
+          {ticks.map((v) => (
+            <g key={v}>
+              <line x1={pad.left} x2={width - pad.right} y1={y(v)} y2={y(v)} stroke="var(--chart-grid)" strokeWidth={1} shapeRendering="crispEdges" />
+              <text x={pad.left - 6} y={y(v)} dy="0.32em" textAnchor="end" className="fill-fg-muted text-[11px] tabular-nums">{compact(v, intl)}</text>
+            </g>
+          ))}
+          {targets.map((tg) => (
+            <g key={tg.label}>
+              <line x1={pad.left} x2={width - pad.right} y1={y(tg.value)} y2={y(tg.value)} stroke="var(--chart-axis)" strokeWidth={1} />
+              <text x={width - pad.right + 4} y={y(tg.value)} dy="0.32em" className="fill-fg-muted text-[10.5px]">{tg.label}</text>
+            </g>
+          ))}
+          {points.map((p, i) => (i % labelEvery === 0 ? <text key={p.at} x={x(times[i]!)} y={height - 8} textAnchor="middle" className="fill-fg-muted text-[11px]">{p.label}</text> : null))}
+          {active !== null ? <line x1={x(times[active]!)} x2={x(times[active]!)} y1={pad.top} y2={pad.top + h} stroke="var(--chart-axis)" strokeWidth={1} /> : null}
+          {series.map((s, si) => {
+            const pts = points.map((p, i) => (p.values[si] == null ? null : [x(times[i]!), y(p.values[si]!)] as const)).filter(Boolean) as (readonly [number, number])[];
+            const last = pts[pts.length - 1];
+            return (
+              <g key={s.key}>
+                <polyline points={pts.map(([a, b]) => `${a},${b}`).join(" ")} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+                {last ? <circle cx={last[0]} cy={last[1]} r={4.5} fill={s.color} stroke="var(--surface)" strokeWidth={2} /> : null}
+                {active !== null && points[active]!.values[si] != null ? <circle cx={x(times[active]!)} cy={y(points[active]!.values[si]!)} r={4.5} fill={s.color} stroke="var(--surface)" strokeWidth={2} /> : null}
+              </g>
+            );
+          })}
+        </svg>
+        {active !== null ? (
+          <Tooltip x={x(times[active]!)} y={Math.min(...points[active]!.values.filter((v): v is number => v !== null).map(y))} width={width}>
+            <p className="mb-1 text-fg-muted">{points[active]!.label}</p>
+            {series.map((s, si) => (points[active]!.values[si] != null ? (
+              <p key={s.key} className="flex items-center gap-2">
+                <span className="inline-block h-0.5 w-3 rounded" style={{ background: s.color }} aria-hidden />
+                <strong className="tabular-nums text-fg">{points[active]!.values[si]}</strong>
+                <span className="text-fg-muted">{series.length > 1 ? s.name : unit}</span>
+              </p>
+            ) : null))}
+          </Tooltip>
+        ) : null}
+      </div>
+      <details className="text-sm">
+        <summary className="tap inline-flex cursor-pointer items-center text-primary underline">{t("Show as table")}</summary>
+        <div className="mt-2 max-h-64 overflow-auto rounded-lg border border-line">
+          <table className="w-full text-left">
+            <caption className="sr-only">{tableCaption}</caption>
+            <thead className="sticky top-0 bg-surface"><tr><th scope="col" className="p-2">{t("When")}</th>{series.map((s) => <th key={s.key} scope="col" className="p-2 text-end">{s.name} ({unit})</th>)}</tr></thead>
+            <tbody className="divide-y divide-line">{[...points].reverse().map((p) => <tr key={p.at}><th scope="row" className="p-2 font-normal">{p.label}</th>{p.values.map((v, i) => <td key={i} className="p-2 text-end tabular-nums">{v ?? "—"}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      </details>
+    </figure>
+  );
+}

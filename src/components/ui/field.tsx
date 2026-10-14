@@ -13,7 +13,7 @@ export function Field({
   required,
   children,
   className,
-  optionalLabel = "optional",
+  optional,
 }: {
   label: ReactNode;
   htmlFor: string;
@@ -22,13 +22,14 @@ export function Field({
   required?: boolean;
   children: ReactNode;
   className?: string;
-  optionalLabel?: string;
+  /** Pass the translated word (e.g. t("optional")) to mark a field as optional. */
+  optional?: string;
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
       <label htmlFor={htmlFor} className="block font-medium text-heading">
         {label}
-        {required ? null : <span className="ms-1 text-sm font-normal text-fg-muted">({optionalLabel})</span>}
+        {optional && !required ? <span className="ms-1 text-sm font-normal text-fg-muted">({optional})</span> : null}
       </label>
       {hint ? (
         <p id={`${htmlFor}-hint`} className="text-sm text-fg-muted">
