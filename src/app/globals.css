@@ -43,7 +43,7 @@
   --success-soft: #dcfce7;
   --warning: #b45309;
   --warning-soft: #fef3c7;
-  --danger: #dc2626;
+  --danger: #b91c1c; /* 5.3:1 on danger-soft, 6.5:1 on white */
   --danger-solid: #dc2626;
   --on-danger: #ffffff;
   --danger-soft: #fee2e2;
@@ -175,6 +175,8 @@
 /* ---------------------------------------------------------------------------
    Base
    --------------------------------------------------------------------------- */
+/* Element defaults live in the base layer so utility classes always win. */
+@layer base {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -256,6 +258,7 @@ select,
 textarea,
 button {
   font: inherit;
+}
 }
 
 /* Reduced motion: honour the OS setting and the in-app toggle. */

@@ -49,7 +49,7 @@ export default async function EmergencyPage({ searchParams }: { searchParams: Pr
           {selfHarm ? t("You don't have to face this alone") : t("This may be an emergency")}
         </p>
         <h1 className="mt-2 text-3xl font-extrabold text-on-danger">{selfHarm ? t("Please talk to someone now") : t("Get help now — don't wait for an online consult")}</h1>
-        <p className="mt-2 text-on-danger/90">{t("Location: {place}. Numbers are free to call.", { place: country.name })}</p>
+        <p className="mt-2 text-on-danger">{t("Location: {place}. Numbers are free to call.", { place: country.name })}</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {selfHarm && em.crisisLine ? (
             <a href={`tel:${em.crisisLine.replace(/\s/g, "")}`} className="tap flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xl font-extrabold text-danger">
@@ -68,7 +68,7 @@ export default async function EmergencyPage({ searchParams }: { searchParams: Pr
             </a>
           ) : null}
         </div>
-        {selfHarm && em.crisisLineName ? <p className="mt-3 text-on-danger/90">{em.crisisLineName}</p> : null}
+        {selfHarm && em.crisisLineName ? <p className="mt-3 text-on-danger">{em.crisisLineName}</p> : null}
       </div>
 
       {sp.from === "booking" ? (
