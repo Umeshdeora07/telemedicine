@@ -180,6 +180,7 @@ html.xlt {
 }
 
 body {
+  overflow-x: clip;
   background: var(--page);
   color: var(--fg);
   font-family: var(--font-sans);

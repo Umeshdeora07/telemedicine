@@ -4,7 +4,8 @@ import type { NextConfig } from "next";
 // encrypted); payment gateways load their own checkout scripts.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://js.stripe.com",
+  // 'unsafe-eval' is only needed by React's development tooling.
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://checkout.razorpay.com https://js.stripe.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
@@ -44,9 +45,11 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  serverActions: {
-    // Reports and photos are uploaded through route handlers; actions stay small.
-    bodySizeLimit: "2mb",
+  experimental: {
+    serverActions: {
+      // Reports and photos are uploaded through route handlers; actions stay small.
+      bodySizeLimit: "2mb",
+    },
   },
   async headers() {
     return [

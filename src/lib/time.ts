@@ -69,3 +69,25 @@ export const COMMON_TIME_ZONES = [
   "Australia/Sydney",
   "Australia/Perth",
 ] as const;
+
+const LEGACY_ZONES: Record<string, string> = {
+  "Asia/Calcutta": "Asia/Kolkata",
+  "Asia/Katmandu": "Asia/Kathmandu",
+  "Asia/Dacca": "Asia/Dhaka",
+  "Asia/Saigon": "Asia/Ho_Chi_Minh",
+  "Asia/Rangoon": "Asia/Yangon",
+  "Europe/Kiev": "Europe/Kyiv",
+  "America/Buenos_Aires": "America/Argentina/Buenos_Aires",
+};
+
+/** Browsers sometimes report old zone names (Chrome: Asia/Calcutta). */
+export function canonicalZone(tz: string) {
+  return LEGACY_ZONES[tz] ?? tz;
+}
+
+/** Two zones show the same clock time at this moment. */
+export function sameClock(a: string, b: string, at: Date = new Date()) {
+  if (canonicalZone(a) === canonicalZone(b)) return true;
+  const f = (z: string) => new Intl.DateTimeFormat("en-GB", { timeZone: z, hour: "2-digit", minute: "2-digit", day: "2-digit", hourCycle: "h23" }).format(at);
+  return f(a) === f(b);
+}

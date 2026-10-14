@@ -1,0 +1,17 @@
+export const DIAL_CODES = [
+  { code: "+91", country: "IN", label: "India (+91)" },
+  { code: "+44", country: "GB", label: "United Kingdom (+44)" },
+  { code: "+1", country: "US", label: "USA / Canada (+1)" },
+  { code: "+971", country: "AE", label: "UAE (+971)" },
+  { code: "+966", country: "SA", label: "Saudi Arabia (+966)" },
+  { code: "+968", country: "OM", label: "Oman (+968)" },
+  { code: "+880", country: "BD", label: "Bangladesh (+880)" },
+  { code: "+977", country: "NP", label: "Nepal (+977)" },
+  { code: "+94", country: "LK", label: "Sri Lanka (+94)" },
+  { code: "+65", country: "SG", label: "Singapore (+65)" },
+  { code: "+61", country: "AU", label: "Australia (+61)" },
+  { code: "+49", country: "DE", label: "Germany (+49)" },
+  { code: "+33", country: "FR", label: "France (+33)" },
+  { code: "+254", country: "KE", label: "Kenya (+254)" },
+  { code: "+234", country: "NG", label: "Nigeria (+234)" },
+] as const;
