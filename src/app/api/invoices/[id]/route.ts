@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { payments } from "@/db/schema";
+import { appointments, payments } from "@/db/schema";
 import { getSession } from "@/server/auth/session";
 import { canActForPatient } from "@/server/booking";
 import { renderInvoice } from "@/server/invoices";
 import { getViewerRegion } from "@/lib/prefs";
+import { staffClinicIds } from "@/server/cases";
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -15,7 +16,15 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const [p] = await db.select().from(payments).where(eq(payments.id, id));
   if (!p) return new NextResponse("Not found", { status: 404 });
   const allowed = p.userId === session.user.id || session.user.role === "super_admin" || (p.patientId ? (await canActForPatient(db, session.user.id, p.patientId, "records")).ok : false);
-  if (!allowed) return new NextResponse("Not found", { status: 404 });
+  // Reception staff can reprint invoices for visits at their clinic.
+  const clinicAllowed =
+    !allowed && session.user.role === "clinic_coordinator" && p.appointmentId
+      ? await (async () => {
+          const [a] = await db.select({ clinicId: appointments.clinicId }).from(appointments).where(eq(appointments.id, p.appointmentId!));
+          return Boolean(a?.clinicId && (await staffClinicIds(session.user.id)).includes(a.clinicId));
+        })()
+      : false;
+  if (!allowed && !clinicAllowed) return new NextResponse("Not found", { status: 404 });
   const { tz } = await getViewerRegion(session.user);
   const pdf = await renderInvoice(p.id, tz);
   if (!pdf) return new NextResponse("No invoice", { status: 404 });

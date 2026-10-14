@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +61,9 @@ export function Select({ className, children, ...rest }: ComponentProps<"select"
   );
 }
 
-export function Checkbox({ label, hint, className, id, ...rest }: ComponentProps<"input"> & { label: ReactNode; hint?: ReactNode }) {
+export function Checkbox({ label, hint, className, id: idProp, ...rest }: ComponentProps<"input"> & { label: ReactNode; hint?: ReactNode }) {
+  const auto = useId();
+  const id = idProp ?? auto;
   return (
     <div className={cn("flex items-start gap-3", className)}>
       <input id={id} type="checkbox" className="mt-0.5 size-6 shrink-0 cursor-pointer rounded-md border-field accent-[var(--primary)]" {...rest} />
