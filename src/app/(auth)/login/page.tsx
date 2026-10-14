@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { getI18n } from "@/i18n/server";
 import { env } from "@/config/env";
@@ -73,8 +74,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         ) : null}
         <p className="text-sm text-fg-muted">
           {t("By continuing you agree to the {brand} Terms and Privacy policy.", { brand: brand.name })}{" "}
-          <a href="/legal/terms" className="text-primary underline">{t("Terms of use")}</a> ·{" "}
-          <a href="/legal/privacy" className="text-primary underline">{t("Privacy policy")}</a>
+          <Link href="/legal/terms" className="text-primary underline">{t("Terms of use")}</Link> ·{" "}
+          <Link href="/legal/privacy" className="text-primary underline">{t("Privacy policy")}</Link>
         </p>
       </Card>
       {env.demoMode ? (

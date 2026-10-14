@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
@@ -43,7 +44,7 @@ export default async function HospitalPage({ params }: { params: Promise<{ slug:
       <nav aria-label={t("Breadcrumb")} className="text-sm text-fg-muted"><Link href="/hospitals" className="hover:underline">{t("Hospitals")}</Link> › {c.name}</nav>
       <PageHeader title={c.name} description={<span className="flex items-center gap-1.5"><MapPin className="size-4" aria-hidden />{c.addressLine}, {c.city}, {c.state} {c.postcode}</span>} />
       {c.photos.length ? (
-        <div className="grid gap-3 sm:grid-cols-2">{c.photos.slice(0, 2).map((p) => <img key={p.url} src={p.url} alt={p.alt} width={800} height={400} className="aspect-[2/1] w-full rounded-2xl object-cover" />)}</div>
+        <div className="grid gap-3 sm:grid-cols-2">{c.photos.slice(0, 2).map((p) => <Image key={p.url} src={p.url} alt={p.alt} width={800} height={400} className="aspect-[2/1] w-full rounded-2xl object-cover" unoptimized />)}</div>
       ) : null}
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-6">

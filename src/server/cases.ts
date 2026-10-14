@@ -1,4 +1,5 @@
 import "server-only";
+import { UserError } from "@/lib/errors";
 import { and, asc, desc, eq, inArray, ne, or } from "drizzle-orm";
 import { getDb, type Executor } from "@/db";
 import { caseEstimates, caseEvents, clinicStaff, clinics, documents, doctors, internationalCases, messages, patients, payments, specialties, users, visaLetters } from "@/db/schema";
@@ -33,7 +34,7 @@ export const CASE_STEPS: { status: CaseStatus; label: string }[] = [
   { status: "closed", label: "Closed" },
 ];
 
-export class CaseError extends Error {}
+export class CaseError extends UserError {}
 
 /** Clinics this coordinator works for. */
 export async function staffClinicIds(userId: string) {

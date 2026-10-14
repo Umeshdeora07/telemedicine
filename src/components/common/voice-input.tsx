@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useClientValue } from "@/lib/use-client-value";
+import { useRef, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils";
@@ -24,14 +25,12 @@ const SPEECH_LANG: Record<string, string> = { en: "en-IN", hi: "hi-IN", ar: "ar-
  */
 export function VoiceInput({ targetId, className, append = true }: { targetId: string; className?: string; append?: boolean }) {
   const { t, locale } = useI18n();
-  const [supported, setSupported] = useState(false);
+  const supported = useClientValue(() => {
+    const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
+  }, false);
   const [listening, setListening] = useState(false);
   const rec = useRef<SR | null>(null);
-
-  useEffect(() => {
-    const w = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
-    setSupported(Boolean(w.SpeechRecognition || w.webkitSpeechRecognition));
-  }, []);
 
   if (!supported) return null;
 

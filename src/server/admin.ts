@@ -29,6 +29,7 @@ import type { SessionUser } from "@/server/auth/session";
 import { audit } from "@/server/audit";
 import { notifyUser } from "@/server/notify";
 import { refundPayment } from "@/server/booking";
+import { UserError } from "@/lib/errors";
 
 const actor = (u: SessionUser) => ({ id: u.id, role: u.role });
 
@@ -114,7 +115,7 @@ export async function verifyLicence(admin: SessionUser, licenceId: string, input
     .set({ status: input.status, verifiedBy: admin.id, verifiedAt: new Date(), verificationReference: input.reference, notes: input.notes || null, evidenceDocumentId: input.evidenceDocumentId ?? undefined })
     .where(eq(doctorLicences.id, licenceId))
     .returning();
-  if (!l) throw new Error("Licence not found");
+  if (!l) throw new UserError("Licence not found");
   await audit({ actor: actor(admin), action: `licence.${input.status}`, entityType: "doctor", entityId: l.doctorId, metadata: { licenceId, country: l.country, region: l.region, reference: input.reference } });
   return l;
 }
@@ -122,12 +123,12 @@ export async function verifyLicence(admin: SessionUser, licenceId: string, input
 export async function decideDoctor(admin: SessionUser, doctorId: string, decision: "approve" | "reject" | "suspend" | "reinstate", reason: string) {
   const db = await getDb();
   const [d] = await db.select().from(doctors).where(eq(doctors.id, doctorId));
-  if (!d) throw new Error("Doctor not found");
+  if (!d) throw new UserError("Doctor not found");
   if (decision === "approve" || decision === "reinstate") {
     const lic = await db.select().from(doctorLicences).where(and(eq(doctorLicences.doctorId, doctorId), eq(doctorLicences.status, "verified")));
-    if (!lic.length) throw new Error("Verify at least one licence before approving.");
+    if (!lic.length) throw new UserError("Verify at least one licence before approving.");
   }
-  if (decision !== "approve" && decision !== "reinstate" && reason.trim().length < 5) throw new Error("Write the reason the doctor will see.");
+  if (decision !== "approve" && decision !== "reinstate" && reason.trim().length < 5) throw new UserError("Write the reason the doctor will see.");
   const now = new Date();
   const status = decision === "approve" || decision === "reinstate" ? "approved" : decision === "reject" ? "rejected" : "suspended";
   await db
@@ -176,7 +177,7 @@ export async function searchUsers(q: string) {
 }
 
 export async function setUserStatus(admin: SessionUser, userId: string, status: "active" | "suspended") {
-  if (userId === admin.id) throw new Error("You can't change your own account here.");
+  if (userId === admin.id) throw new UserError("You can't change your own account here.");
   const db = await getDb();
   await db.update(users).set({ status }).where(eq(users.id, userId));
   if (status === "suspended") await db.delete(sessions).where(eq(sessions.userId, userId));
@@ -207,12 +208,12 @@ export async function paymentsWithRefunds() {
 export async function adminRefund(admin: SessionUser, paymentId: string, amountMinor: number, reason: string) {
   const db = await getDb();
   const [p] = await db.select().from(payments).where(eq(payments.id, paymentId));
-  if (!p) throw new Error("Payment not found");
+  if (!p) throw new UserError("Payment not found");
   const left = p.amountMinor - p.refundedMinor;
-  if (amountMinor <= 0 || amountMinor > left) throw new Error("Amount must be more than zero and not more than what's left.");
-  if (reason.trim().length < 5) throw new Error("Write a reason.");
+  if (amountMinor <= 0 || amountMinor > left) throw new UserError("Amount must be more than zero and not more than what's left.");
+  if (reason.trim().length < 5) throw new UserError("Write a reason.");
   const r = await refundPayment(p.id, amountMinor, reason, "admin", admin.id); // also writes the audit entry
-  if (!r || r.status !== "processed") throw new Error("The payment gateway didn't accept the refund. Try again or refund manually.");
+  if (!r || r.status !== "processed") throw new UserError("The payment gateway didn't accept the refund. Try again or refund manually.");
 }
 
 /* ------------------------------------------------- complaints / grievances */
@@ -225,7 +226,7 @@ export async function complaintList() {
 export async function updateComplaint(admin: SessionUser, id: string, input: { status: "acknowledged" | "in_progress" | "resolved" | "closed"; note: string; public: boolean; resolution?: string }) {
   const db = await getDb();
   const [c] = await db.select().from(complaints).where(eq(complaints.id, id));
-  if (!c) throw new Error("Not found");
+  if (!c) throw new UserError("Not found");
   const update: ComplaintUpdate = { at: new Date().toISOString(), by: admin.name, note: input.note, status: input.status, public: input.public };
   await db
     .update(complaints)
@@ -343,7 +344,7 @@ export async function saveArticle(admin: SessionUser, input: { id?: string; titl
   const db = await getDb();
   const { articles } = await import("@/db/schema");
   const slug = input.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
-  if (input.publish && !input.reviewedByDoctorId) throw new Error("A doctor must review health content before it's published.");
+  if (input.publish && !input.reviewedByDoctorId) throw new UserError("A doctor must review health content before it's published.");
   const values = { title: input.title, summary: input.summary, body: input.body, category: input.category, language: input.language, reviewedByDoctorId: input.reviewedByDoctorId, reviewedAt: input.reviewedByDoctorId ? new Date() : null, readMinutes: input.readMinutes, published: input.publish, publishedAt: input.publish ? new Date() : null, updatedAt: new Date() };
   const [row] = input.id
     ? await db.update(articles).set(values).where(eq(articles.id, input.id)).returning()
@@ -356,8 +357,8 @@ export async function setArticlePublished(admin: SessionUser, id: string, publis
   const db = await getDb();
   const { articles } = await import("@/db/schema");
   const [a] = await db.select().from(articles).where(eq(articles.id, id));
-  if (!a) throw new Error("Not found");
-  if (publish && !a.reviewedByDoctorId) throw new Error("A doctor must review health content before it's published.");
+  if (!a) throw new UserError("Not found");
+  if (publish && !a.reviewedByDoctorId) throw new UserError("A doctor must review health content before it's published.");
   await db.update(articles).set({ published: publish, publishedAt: publish ? (a.publishedAt ?? new Date()) : a.publishedAt }).where(eq(articles.id, id));
   await audit({ actor: actor(admin), action: publish ? "article.publish" : "article.unpublish", entityType: "article", entityId: id });
 }

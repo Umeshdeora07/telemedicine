@@ -8,6 +8,7 @@ import { createInvite } from "@/server/room";
 import { notifyUser } from "@/server/notify";
 import { audit } from "@/server/audit";
 import type { Currency } from "@/config/currencies";
+import { UserError } from "@/lib/errors";
 
 export async function callbackQueue() {
   const db = await getDb();
@@ -59,8 +60,8 @@ export async function patientWithOwner(patientId: string) {
 export async function assistedBooking(user: SessionUser, input: { patientId: string; doctorId: string; mode: "video" | "audio" | "chat" | "in_clinic"; slotId: string; country: string; region: string | null; interpreterLanguage: string | null; patientAgreed: boolean }) {
   const db = await getDb();
   const [row] = await db.select({ p: patients, owner: users }).from(patients).innerJoin(users, eq(users.id, patients.ownerUserId)).where(eq(patients.id, input.patientId));
-  if (!row) throw new Error("Patient not found");
-  if (!input.patientAgreed) throw new Error("Confirm the patient asked for this booking.");
+  if (!row) throw new UserError("Patient not found");
+  if (!input.patientAgreed) throw new UserError("Confirm the patient asked for this booking.");
   const appt = await createDraftAppointment({
     userId: row.owner.id,
     doctorId: input.doctorId,

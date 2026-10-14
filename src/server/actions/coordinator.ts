@@ -6,6 +6,7 @@ import { getT } from "@/i18n/server";
 import { requireUser } from "@/server/auth/session";
 import { assignInterpreter, assistedBooking, updateCallback } from "@/server/coordinator";
 import { BookingError } from "@/server/booking";
+import { publicMessage } from "@/lib/errors";
 
 const COORD = { roles: ["care_coordinator", "super_admin"] as ("care_coordinator" | "super_admin")[] };
 
@@ -39,8 +40,8 @@ export async function assistedBookingAction(_prev: AssistState, form: FormData):
     revalidatePath("/coordinator");
     return { ok: true, apptId: a.id, ref: a.ref };
   } catch (e) {
-    if (e instanceof BookingError || e instanceof Error) return { error: t(e.message) };
-    throw e;
+    if (e instanceof BookingError) return { error: t(e.message) };
+    return { error: t(publicMessage(e, "Something went wrong. Please try another time slot.")) };
   }
 }
 

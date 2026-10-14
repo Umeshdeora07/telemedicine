@@ -5,7 +5,6 @@ import { BedDouble, FileText, Globe2, Languages, Plane, ShieldCheck, Stethoscope
 import { getDb } from "@/db";
 import { clinics } from "@/db/schema";
 import { getViewContext } from "@/server/context";
-import { PageHeader } from "@/components/ui/page-header";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlobeIllustration } from "@/components/illustrations/hero";

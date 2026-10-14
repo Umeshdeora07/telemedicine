@@ -213,8 +213,13 @@ function RxBuilder({ apptId, mode, consultType, allergies, currentMedicines, med
   const [pending, start] = useTransition();
   const allowed = allowedLists(mode, consultType);
 
-  useEffect(() => setDiagnosis((d) => d || notes.diagnosis), [notes.diagnosis]);
-  useEffect(() => setAdvice((a) => a || notes.advice), [notes.advice]);
+  // When the notes panel changes diagnosis/advice, carry them into the prescription if still empty.
+  const [seen, setSeen] = useState({ diagnosis: notes.diagnosis, advice: notes.advice });
+  if (seen.diagnosis !== notes.diagnosis || seen.advice !== notes.advice) {
+    setSeen({ diagnosis: notes.diagnosis, advice: notes.advice });
+    if (!diagnosis) setDiagnosis(notes.diagnosis);
+    if (!advice) setAdvice(notes.advice);
+  }
 
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();

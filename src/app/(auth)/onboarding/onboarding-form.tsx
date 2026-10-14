@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useClientValue } from "@/lib/use-client-value";
+import { useActionState, useState } from "react";
 import { useI18n } from "@/i18n/client";
 import { completeOnboarding, type OnboardingState } from "@/server/actions/auth";
 import { Checkbox, Field, Input, RadioCard, Select } from "@/components/ui/field";
@@ -24,11 +25,9 @@ export function OnboardingForm({
   const { t } = useI18n();
   const [state, action] = useActionState(completeOnboarding, {} as OnboardingState);
   const [forWhom, setForWhom] = useState("self");
-  const [tz, setTz] = useState(defaults.timeZone);
-  useEffect(() => {
-    const device = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (device) setTz(device);
-  }, []);
+  const deviceTz = useClientValue(() => Intl.DateTimeFormat().resolvedOptions().timeZone || defaults.timeZone, defaults.timeZone);
+  const [chosenTz, setTz] = useState<string | null>(null);
+  const tz = chosenTz ?? deviceTz;
   const fe = state.fieldErrors ?? {};
   const zones = Array.from(new Set([tz, ...COMMON_TIME_ZONES]));
   return (

@@ -1,4 +1,5 @@
 import "server-only";
+import { UserError } from "@/lib/errors";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb, withRls } from "@/db";
 import {
@@ -29,7 +30,7 @@ import { notifyAppointment } from "./notify";
 import { audit } from "./audit";
 import { postRoomMessage, type RoomAccess } from "./room";
 
-export class ConsultError extends Error {}
+export class ConsultError extends UserError {}
 
 export async function doctorForUser(user: SessionUser) {
   const db = await getDb();

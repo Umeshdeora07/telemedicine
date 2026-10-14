@@ -18,12 +18,15 @@ export function LoginForm({ next, defaultDial }: { next?: string; defaultDial: s
   const codeRef = useRef<HTMLInputElement>(null);
   const sentKey = state.step === "verify" ? `${state.identifier}:${state.devCode ?? ""}:${state.info ?? ""}` : "";
 
+  // A new code was sent: start the resend cooldown (adjusting state during render, not in an effect).
+  const [lastSent, setLastSent] = useState("");
+  if (sentKey !== lastSent) {
+    setLastSent(sentKey);
+    if (state.step === "verify" && !state.error) setCooldown(30);
+  }
   useEffect(() => {
-    if (state.step === "verify" && !state.error) {
-      setCooldown(30);
-      codeRef.current?.focus();
-    }
-  }, [sentKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (sentKey) codeRef.current?.focus();
+  }, [sentKey]);
   useEffect(() => {
     if (cooldown <= 0) return;
     const id = setTimeout(() => setCooldown((c) => c - 1), 1000);

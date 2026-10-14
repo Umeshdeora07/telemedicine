@@ -1,5 +1,6 @@
 "use client";
 
+import { useClientValue } from "@/lib/use-client-value";
 import { useEffect, useState } from "react";
 import { Download, Smartphone } from "lucide-react";
 import { useI18n } from "@/i18n/client";
@@ -11,11 +12,9 @@ type BIPEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ out
 export function InstallPrompt() {
   const { t } = useI18n();
   const [evt, setEvt] = useState<BIPEvent | null>(null);
-  const [ios, setIos] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  const ios = useClientValue(() => /iphone|ipad|ipod/i.test(navigator.userAgent), false);
+  const installed = useClientValue(() => window.matchMedia("(display-mode: standalone)").matches, false);
   useEffect(() => {
-    setInstalled(window.matchMedia("(display-mode: standalone)").matches);
-    setIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
     const handler = (e: Event) => {
       e.preventDefault();
       setEvt(e as BIPEvent);

@@ -21,7 +21,7 @@ export function FollowUpChat({ apptId, initial, open, closedText, note }: { appt
     if (!open) return;
     const id = setInterval(refresh, 8000);
     return () => clearInterval(id);
-  }); // eslint-disable-line react-hooks/exhaustive-deps
+  });
   return (
     <div className="card flex h-96 flex-col overflow-hidden">
       <p className="border-b border-line px-4 py-2 text-sm text-fg-muted">{open ? (note ?? t("Free follow-up chat. The doctor usually replies within a few hours.")) : closedText}</p>

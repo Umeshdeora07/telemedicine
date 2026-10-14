@@ -35,14 +35,19 @@ export function PrefsMenu({ className }: { className?: string }) {
   const [state, setState] = useState<Record<Key, string>>({ theme: "system", text: "normal", contrast: "normal", motion: "system" });
   const ref = useRef<HTMLDivElement>(null);
 
+  const toggle = () => {
+    if (!open)
+      setState({
+        theme: readCookie("pref_theme") ?? "system",
+        text: readCookie("pref_text") ?? "normal",
+        contrast: readCookie("pref_contrast") ?? "normal",
+        motion: readCookie("pref_motion") ?? "system",
+      });
+    setOpen((o) => !o);
+  };
+
   useEffect(() => {
     if (!open) return;
-    setState({
-      theme: readCookie("pref_theme") ?? "system",
-      text: readCookie("pref_text") ?? "normal",
-      contrast: readCookie("pref_contrast") ?? "normal",
-      motion: readCookie("pref_motion") ?? "system",
-    });
     const close = (e: MouseEvent | KeyboardEvent) => {
       if (e instanceof KeyboardEvent ? e.key === "Escape" : !ref.current?.contains(e.target as Node)) setOpen(false);
     };
@@ -64,7 +69,7 @@ export function PrefsMenu({ className }: { className?: string }) {
     <div className={cn("relative", className)} ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         aria-expanded={open}
         aria-haspopup="dialog"
         title={t("Text size, contrast and theme")}

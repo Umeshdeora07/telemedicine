@@ -1,5 +1,6 @@
 "use server";
 
+import { publicMessage } from "@/lib/errors";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -124,7 +125,7 @@ export async function cancelBookingAction(apptId: string, reason: string) {
     const r = await cancelAppointment(apptId, { userId: user.id, role: "patient" }, reason || "Cancelled by patient");
     return { ok: true as const, refunded: r.refunded };
   } catch (e) {
-    return { ok: false as const, error: e instanceof Error ? t(e.message) : t("Something went wrong.") };
+    return { ok: false as const, error: t(publicMessage(e)) };
   }
 }
 
@@ -135,6 +136,6 @@ export async function rescheduleAction(apptId: string, slotId: string) {
     await rescheduleAppointment(apptId, user.id, slotId);
     return { ok: true as const };
   } catch (e) {
-    return { ok: false as const, error: e instanceof Error ? t(e.message) : t("Something went wrong.") };
+    return { ok: false as const, error: t(publicMessage(e)) };
   }
 }

@@ -15,7 +15,11 @@ export function AddFamilyForm({ countries, defaultCountry, pendingLinkId }: { co
   const { t } = useI18n();
   const [s, action] = useActionState(addFamilyAction, (pendingLinkId ? { linkId: pendingLinkId } : {}) as PState);
   const [dob, setDob] = useState("");
-  const age = dob ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 86400_000)) : null;
+  const [age, setAge] = useState<number | null>(null);
+  const onDob = (v: string) => {
+    setDob(v);
+    setAge(v ? Math.floor((Date.now() - new Date(v).getTime()) / (365.25 * 86400_000)) : null);
+  };
   if (s.linkId) return <ConsentStep linkId={s.linkId} devCode={s.devCode} note={s.message} />;
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
@@ -24,7 +28,7 @@ export function AddFamilyForm({ countries, defaultCountry, pendingLinkId }: { co
       <Field label={t("Relationship to you")} htmlFor="relationship" required>
         <Select id="relationship" name="relationship">{RELS.map((r) => <option key={r} value={r}>{t(r)}</option>)}</Select>
       </Field>
-      <Field label={t("Date of birth")} htmlFor="dob" required><Input id="dob" name="dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} max={new Date().toISOString().slice(0, 10)} /></Field>
+      <Field label={t("Date of birth")} htmlFor="dob" required><Input id="dob" name="dob" type="date" value={dob} onChange={(e) => onDob(e.target.value)} /></Field>
       <Field label={t("Sex")} htmlFor="sex" required>
         <Select id="sex" name="sex"><option value="female">{t("Female")}</option><option value="male">{t("Male")}</option><option value="other">{t("Other")}</option></Select>
       </Field>

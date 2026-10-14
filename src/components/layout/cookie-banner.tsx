@@ -1,21 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useClientValue } from "@/lib/use-client-value";
 import { useI18n } from "@/i18n/client";
 import { Button } from "@/components/ui/button";
 
 /** We only use essential cookies by default; analytics need opt-in. */
 export function CookieBanner() {
   const { t } = useI18n();
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    setShow(!document.cookie.includes("cookie_choice="));
-  }, []);
-  if (!show) return null;
+  const hasChoice = useClientValue(() => document.cookie.includes("cookie_choice="), true);
+  const [dismissed, setDismissed] = useState(false);
+  if (hasChoice || dismissed) return null;
   const choose = (v: "essential" | "all") => {
     document.cookie = `cookie_choice=${v}; path=/; max-age=${60 * 60 * 24 * 180}; samesite=lax`;
-    setShow(false);
+    setDismissed(true);
   };
   return (
     <div role="region" aria-label={t("Cookies")} className="fixed inset-x-3 bottom-20 z-50 md:bottom-4 md:start-auto md:end-4 md:w-[26rem]">

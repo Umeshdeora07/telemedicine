@@ -1,4 +1,5 @@
 import "server-only";
+import { UserError } from "@/lib/errors";
 import { and, asc, desc, eq, gt, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { getDb, withRls } from "@/db";
 import {
@@ -34,7 +35,7 @@ import { env } from "@/config/env";
 import { addDays, dayInZone, zonedTimeToUtc } from "@/lib/time";
 import { FREQUENCIES, TIMINGS } from "@/lib/tpg";
 
-export class PatientError extends Error {}
+export class PatientError extends UserError {}
 
 const who = (u: SessionUser) => ({ id: u.id, role: u.role });
 

@@ -26,7 +26,6 @@ export function TechCheck({ wantVideo, onReady, joinLabel }: { wantVideo: boolea
   const [videoOn, setVideoOn] = useState(wantVideo);
 
   const start = useCallback(async () => {
-    setErr(null);
     stream?.getTracks().forEach((tr) => tr.stop());
     try {
       const s = await navigator.mediaDevices.getUserMedia({
@@ -34,6 +33,7 @@ export function TechCheck({ wantVideo, onReady, joinLabel }: { wantVideo: boolea
         video: videoOn ? { ...(camId ? { deviceId: { exact: camId } } : { facingMode: "user" }), width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24, max: 30 } } : false,
       });
       setStream(s);
+      setErr(null);
       const devices = await navigator.mediaDevices.enumerateDevices();
       setCams(devices.filter((d) => d.kind === "videoinput"));
       setMics(devices.filter((d) => d.kind === "audioinput"));
@@ -51,7 +51,10 @@ export function TechCheck({ wantVideo, onReady, joinLabel }: { wantVideo: boolea
     }
   }, [camId, micId, videoOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // (Re)start the camera when the chosen devices change. State is only set after
+  // the async getUserMedia call resolves, so this doesn't cascade renders.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camId, micId, videoOn]);

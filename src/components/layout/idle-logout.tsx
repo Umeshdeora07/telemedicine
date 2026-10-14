@@ -12,10 +12,12 @@ import { Button } from "@/components/ui/button";
 export function IdleLogout({ minutes }: { minutes: number }) {
   const { t } = useI18n();
   const [warn, setWarn] = useState(false);
-  const last = useRef(Date.now());
-  const lastPing = useRef(Date.now());
+  const last = useRef(0);
+  const lastPing = useRef(0);
 
   useEffect(() => {
+    last.current = Date.now();
+    lastPing.current = Date.now();
     const activity = () => {
       last.current = Date.now();
       if (Date.now() - lastPing.current > 4 * 60_000) {
@@ -28,6 +30,8 @@ export function IdleLogout({ minutes }: { minutes: number }) {
     const timer = setInterval(() => {
       const idle = (Date.now() - last.current) / 60_000;
       if (idle >= minutes) {
+        // A full page load (not client navigation) so the logout response can clear cookies and offline caches.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/api/auth/logout?reason=idle";
       } else setWarn(idle >= minutes - 2);
     }, 10_000);

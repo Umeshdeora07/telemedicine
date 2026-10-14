@@ -1,5 +1,6 @@
 "use client";
 
+import { useClientValue } from "@/lib/use-client-value";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -62,6 +63,10 @@ export function ConsultRoom(p: Props) {
   const [camOn, setCamOn] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [captionsOn, setCaptionsOn] = useState(false);
+  const captionsSupported = useClientValue(() => {
+    const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
+  }, false);
   const [chatOpen, setChatOpen] = useState(p.mode === "chat");
   const [panelOpen, setPanelOpen] = useState(isDoctor);
   const [menu, setMenu] = useState(false);
@@ -126,11 +131,7 @@ export function ConsultRoom(p: Props) {
     if (!captionsOn || !micOn) return;
     const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!Ctor) {
-      setAnnounce(t("Live captions aren't supported in this browser. Try Chrome."));
-      setCaptionsOn(false);
-      return;
-    }
+    if (!Ctor) return;
     const rec = new Ctor();
     rec.lang = SPEECH_LANG[locale] ?? "en-IN";
     rec.continuous = true;
@@ -211,6 +212,8 @@ export function ConsultRoom(p: Props) {
           return;
         }
       }
+      // MediaStreamTrack is a browser object we own; enabling it here (in an event handler) is intended.
+      // eslint-disable-next-line react-hooks/immutability
       track.enabled = true;
       await room.replaceVideo(track);
       if (selfVideo.current) selfVideo.current.srcObject = choice.stream;
@@ -414,7 +417,7 @@ export function ConsultRoom(p: Props) {
           ) : null}
           {p.mode === "video" && choice?.stream ? <CtrlButton on={camOn} onClick={() => void setVideo(!camOn)} label={camOn ? t("Turn camera off") : t("Turn camera on")} Icon={camOn ? Video : VideoOff} /> : null}
           <CtrlButton on={chatOpen} onClick={() => { setChatOpen((o) => !o); setUnread(0); }} label={t("Chat")} Icon={MessageSquare} badge={unread} />
-          {p.mode !== "chat" ? <CtrlButton on={captionsOn} onClick={() => setCaptionsOn((c) => !c)} label={captionsOn ? t("Turn captions off") : t("Turn captions on")} Icon={captionsOn ? Captions : CaptionsOff} className="max-sm:hidden" /> : null}
+          {p.mode !== "chat" && captionsSupported ? <CtrlButton on={captionsOn} onClick={() => setCaptionsOn((c) => !c)} label={captionsOn ? t("Turn captions off") : t("Turn captions on")} Icon={captionsOn ? Captions : CaptionsOff} className="max-sm:hidden" /> : null}
           {p.mode !== "chat" && typeof navigator !== "undefined" && "getDisplayMedia" in (navigator.mediaDevices ?? {}) ? (
             <CtrlButton on={sharing} onClick={() => void toggleShare()} label={sharing ? t("Stop sharing") : t("Share screen or report")} Icon={MonitorUp} className="max-sm:hidden" />
           ) : null}
@@ -424,7 +427,7 @@ export function ConsultRoom(p: Props) {
               <div className="absolute bottom-14 end-0 z-50 w-64 space-y-1 rounded-2xl bg-surface p-2 text-fg shadow-2xl">
                 {p.mode !== "chat" ? (
                   <>
-                    <MenuItem onClick={() => { setCaptionsOn((c) => !c); setMenu(false); }}>{captionsOn ? t("Turn captions off") : t("Turn captions on")}</MenuItem>
+                    {captionsSupported ? <MenuItem onClick={() => { setCaptionsOn((c) => !c); setMenu(false); }}>{captionsOn ? t("Turn captions off") : t("Turn captions on")}</MenuItem> : null}
                     {"getDisplayMedia" in (navigator.mediaDevices ?? {}) ? <MenuItem onClick={() => { void toggleShare(); setMenu(false); }}>{sharing ? t("Stop sharing") : t("Share screen or report")}</MenuItem> : null}
                     {camOn ? <MenuItem onClick={() => { void setVideo(false); setMenu(false); }}>{t("Switch to audio only")}</MenuItem> : null}
                     <MenuItem onClick={() => { void switchToChat(); setMenu(false); }}>{t("Switch to chat")}</MenuItem>

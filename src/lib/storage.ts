@@ -44,7 +44,7 @@ export async function saveFile(data: Buffer) {
     String(now.getUTCMonth() + 1).padStart(2, "0"),
     `${crypto.randomUUID()}.bin`,
   );
-  const file = path.join(root(), key);
+  const file = path.join(/*turbopackIgnore: true*/ root(), key);
   await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, encryptBuffer(data), { mode: 0o600 });
   return { storageKey: key, sha256: sha256(data), sizeBytes: data.length };
@@ -52,11 +52,12 @@ export async function saveFile(data: Buffer) {
 
 export async function readFile(storageKey: string) {
   if (storageKey.includes("..")) throw new Error("Invalid key");
-  const blob = await fs.readFile(path.join(root(), storageKey));
+  // Uploaded files live outside the app bundle; tell the bundler not to trace this path.
+  const blob = await fs.readFile(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ root(), storageKey));
   return decryptBuffer(blob);
 }
 
 export async function deleteFile(storageKey: string) {
   if (storageKey.includes("..")) return;
-  await fs.rm(path.join(root(), storageKey), { force: true });
+  await fs.rm(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ root(), storageKey), { force: true });
 }

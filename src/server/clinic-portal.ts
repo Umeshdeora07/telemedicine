@@ -1,4 +1,5 @@
 import "server-only";
+import { UserError } from "@/lib/errors";
 import { and, asc, desc, eq, gte, inArray, isNotNull, lt, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDb, withRls } from "@/db";
@@ -69,7 +70,7 @@ export async function clinicVisit(user: SessionUser, clinic: ClinicRow, apptId: 
   return { ...row, parent, payments: pays };
 }
 
-export class CheckInError extends Error {}
+export class CheckInError extends UserError {}
 
 /** Check a patient in by scanning the visit-pass QR, or typing the 6-character code. */
 export async function checkIn(user: SessionUser, clinicIds: string[], input: { token?: string; code?: string }) {

@@ -6,6 +6,7 @@ import { getT } from "@/i18n/server";
 import { requireUser } from "@/server/auth/session";
 import * as admin from "@/server/admin";
 import { CURRENCY_CODES } from "@/config/currencies";
+import { publicMessage } from "@/lib/errors";
 
 export type AdminState = { ok?: boolean; error?: string };
 
@@ -18,8 +19,7 @@ async function run(fn: (u: Awaited<ReturnType<typeof requireUser>>) => Promise<u
     return { ok: true };
   } catch (e) {
     if (e instanceof z.ZodError) return { error: t("Please check the form and try again.") };
-    if (e instanceof Error) return { error: t(e.message) };
-    throw e;
+    return { error: t(publicMessage(e)) };
   }
 }
 

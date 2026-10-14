@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { Globe, MapPin, ShieldCheck, Siren } from "lucide-react";
@@ -23,7 +24,7 @@ export default async function HospitalsPage() {
         {list.map((c) => (
           <li key={c.id}>
             <Link href={`/hospitals/${c.slug}`} className="card flex h-full flex-col overflow-hidden hover:border-primary">
-              {c.photos[0] ? <img src={c.photos[0].url} alt={c.photos[0].alt} width={640} height={320} className="aspect-[2/1] w-full object-cover" loading="lazy" /> : null}
+              {c.photos[0] ? <Image src={c.photos[0].url} alt={c.photos[0].alt} width={640} height={320} className="aspect-[2/1] w-full object-cover" unoptimized /> : null}
               <span className="flex flex-1 flex-col gap-2 p-5">
                 <span className="text-lg font-bold text-heading">{c.name}</span>
                 <span className="flex items-center gap-1.5 text-fg-muted"><MapPin className="size-4" aria-hidden />{c.city}, {c.state}</span>

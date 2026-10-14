@@ -39,7 +39,9 @@ export function useRoom(apptId: string, opts: { onCaption?: (c: Caption) => void
   const names = useRef(new Map<string, string>());
   const stopped = useRef(false);
   const captionCb = useRef(opts.onCaption);
-  captionCb.current = opts.onCaption;
+  useEffect(() => {
+    captionCb.current = opts.onCaption;
+  });
 
   const send = useCallback(
     async (to: string, kind: string, payload: unknown) => {

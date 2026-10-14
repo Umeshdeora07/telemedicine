@@ -10,7 +10,7 @@ const GREY = "#9a9894";
  * Deterministic from `seed`, so the same doctor always looks the same.
  */
 export function DoctorAvatar({
-  name,
+  name: _name, // kept for callers; the avatar is decorative next to the visible name
   seed,
   gender,
   photoUrl,

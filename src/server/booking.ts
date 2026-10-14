@@ -1,4 +1,5 @@
 import "server-only";
+import { UserError } from "@/lib/errors";
 import { and, desc, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { getDb, type Executor } from "@/db";
 import {
@@ -48,7 +49,7 @@ export function policyText(p: RefundPolicy) {
   };
 }
 
-export class BookingError extends Error {
+export class BookingError extends UserError {
   constructor(
     public code:
       | "not_allowed"
@@ -90,11 +91,14 @@ export async function canActForPatient(db: Executor, userId: string, patientId: 
 }
 
 /** Release holds and expire unpaid drafts (also run by the scheduler). */
+/** How long an unpaid booking keeps its slot. Draft expiry and slot holds use the same window. */
+export const HOLD_MINUTES = 15;
+
 export async function expireStaleDrafts(db: Executor, now = new Date()) {
   const stale = await db
     .update(appointments)
     .set({ status: "expired" })
-    .where(and(eq(appointments.status, "pending_payment"), lt(appointments.createdAt, addMinutes(now, -15))))
+    .where(and(eq(appointments.status, "pending_payment"), lt(appointments.createdAt, addMinutes(now, -HOLD_MINUTES))))
     .returning({ id: appointments.id });
   if (stale.length)
     await db
@@ -168,7 +172,7 @@ export async function createDraftAppointment(input: DraftInput) {
     const group = input.mode === "in_clinic" ? "in_clinic" : "online";
     const [slot] = await db
       .update(availabilitySlots)
-      .set({ status: "held", heldUntil: addMinutes(new Date(), 10) })
+      .set({ status: "held", heldUntil: addMinutes(new Date(), HOLD_MINUTES) })
       .where(
         and(
           eq(availabilitySlots.id, input.slotId),
@@ -180,6 +184,9 @@ export async function createDraftAppointment(input: DraftInput) {
       )
       .returning();
     if (!slot) throw new BookingError("slot_taken", "Sorry, someone just booked that time. Please pick another slot.");
+    if (slot.appointmentId) {
+      await db.update(appointments).set({ status: "expired" }).where(and(eq(appointments.id, slot.appointmentId), eq(appointments.status, "pending_payment")));
+    }
     startAt = slot.startAt;
     endAt = slot.endAt;
     clinicId = slot.clinicId;
@@ -359,7 +366,7 @@ export async function startAppointmentPayment(apptId: string, userId: string, me
   if (!appt) throw new BookingError("not_found", "Booking not found");
   if (appt.status !== "pending_payment") throw new BookingError("bad_state", "This booking is no longer waiting for payment");
   // Keep the slot held while paying.
-  if (appt.slotId) await db.update(availabilitySlots).set({ status: "held", heldUntil: addMinutes(new Date(), 10) }).where(eq(availabilitySlots.id, appt.slotId));
+  if (appt.slotId) await db.update(availabilitySlots).set({ status: "held", heldUntil: addMinutes(new Date(), HOLD_MINUTES) }).where(eq(availabilitySlots.id, appt.slotId));
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   const [patient] = await db.select().from(patients).where(eq(patients.id, appt.patientId));
   const [doctor] = await db.select().from(doctors).where(eq(doctors.id, appt.doctorId));
