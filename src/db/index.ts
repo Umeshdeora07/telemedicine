@@ -75,6 +75,16 @@ async function init(): Promise<State> {
     const db = drizzle(client, { schema, casing: "snake_case" });
     const ready = (async () => {
       if (process.env.DB_AUTO_MIGRATE !== "false") await migrate(db, { migrationsFolder: MIGRATIONS });
+      // Hosted demos (render.yaml) opt in to loading demo data into an empty
+      // database. One transaction: a failed load leaves nothing half-done, and
+      // the lock stops two starting servers from both loading it.
+      if (env.demoMode && process.env.DEMO_AUTO_SEED === "true") {
+        const { ensureDemoData } = await import("./seed/ensure");
+        await db.transaction(async (tx) => {
+          await tx.execute(sql`select pg_advisory_xact_lock(20261014)`);
+          await ensureDemoData(tx as unknown as DB);
+        });
+      }
     })();
     return { db, ready, kind: "postgres", close: () => client.end() };
   }

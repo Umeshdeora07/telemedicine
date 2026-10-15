@@ -1,0 +1,47 @@
+# Render Blueprint: a free, public demo of the site with its own PostgreSQL.
+# Deploy: https://render.com/deploy?repo=https://github.com/Umeshdeora07/telemedicine
+# Spec: https://render.com/docs/blueprint-spec
+#
+# Demo only: free plans in Singapore (Render's closest region to India),
+# DEMO_MODE on, sample data loaded on first start. The free database expires
+# after 30 days, the free server sleeps after 15 idle minutes (the next visit
+# takes about a minute), and uploaded files are lost on restart. Never put
+# real patient data here; see README "Deploying" for the production setup.
+
+services:
+  - type: web
+    name: telemedicine-demo
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: DEMO_MODE
+        value: "true"
+      # Load the demo patients, doctors and clinics into the empty database.
+      - key: DEMO_AUTO_SEED
+        value: "true"
+      # One random secret; the app derives its encryption and signing keys from it.
+      - key: APP_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: telemedicine-db
+          property: connectionString
+
+databases:
+  - name: telemedicine-db
+    plan: free
+    region: singapore
+    databaseName: telemedicine
+    user: telemedicine
+    ipAllowList: [] # private network only; the app uses the internal address
