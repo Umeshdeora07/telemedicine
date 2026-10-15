@@ -1,7 +1,8 @@
 /**
  * Encryption at rest (AES-256-GCM), prescription signing (Ed25519) and token
- * hashing. Keys come from the environment in production; for local demo runs
- * they are generated once into .data/secrets.json.
+ * hashing. Keys come from the environment in production: either the four keys
+ * from `npm run keys`, or one APP_SECRET they are all derived from. For local
+ * demo runs they are generated once into .data/secrets.json.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -24,9 +25,13 @@ function loadSecrets(): Secrets {
     cached = fromEnv as Secrets;
     return cached;
   }
+  if (process.env.APP_SECRET) {
+    cached = secretsFromAppSecret(process.env.APP_SECRET);
+    return cached;
+  }
   if (!env.demoMode) {
     throw new Error(
-      "Missing DATA_ENCRYPTION_KEY, SIGNING_PRIVATE_KEY, SIGNING_PUBLIC_KEY or HASH_SECRET. Run `npm run keys` to generate them.",
+      "Missing secrets. Set APP_SECRET (32+ random characters), or DATA_ENCRYPTION_KEY, SIGNING_PRIVATE_KEY, SIGNING_PUBLIC_KEY and HASH_SECRET from `npm run keys`.",
     );
   }
   const file = path.join(process.cwd(), ".data", "secrets.json");
@@ -38,6 +43,29 @@ function loadSecrets(): Secrets {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(cached, null, 2), { mode: 0o600 });
   return cached;
+}
+
+// PKCS#8 DER header for an Ed25519 private key; the 32-byte seed follows it.
+const ED25519_PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
+
+/**
+ * Derives every key from one secret with HKDF-SHA256, one label per key, so a
+ * host that can only generate a single random value still gets stable keys
+ * across restarts. Changing APP_SECRET changes every key: stored files become
+ * unreadable and existing prescriptions no longer verify.
+ */
+export function secretsFromAppSecret(appSecret: string): Secrets {
+  if (appSecret.length < 32) throw new Error("APP_SECRET must be at least 32 characters.");
+  const ikm = Buffer.from(appSecret, "utf8");
+  const derive = (label: string) => Buffer.from(crypto.hkdfSync("sha256", ikm, Buffer.from("telemedicine/app-secret/v1"), Buffer.from(label), 32));
+  const signingPrivateKey = Buffer.concat([ED25519_PKCS8_PREFIX, derive("signing-ed25519")]);
+  const publicKey = crypto.createPublicKey(crypto.createPrivateKey({ key: signingPrivateKey, format: "der", type: "pkcs8" }));
+  return {
+    encryptionKey: derive("data-encryption").toString("base64"),
+    signingPrivateKey: signingPrivateKey.toString("base64"),
+    signingPublicKey: publicKey.export({ type: "spki", format: "der" }).toString("base64"),
+    hashSecret: derive("hash").toString("base64"),
+  };
 }
 
 export function generateSecrets(): Secrets {

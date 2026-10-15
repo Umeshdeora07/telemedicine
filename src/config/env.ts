@@ -10,8 +10,10 @@ export const env = {
   get demoMode() {
     return bool(process.env.DEMO_MODE, process.env.NODE_ENV !== "production");
   },
+  /** Public address. Falls back to the address Render or Railway give the service. */
   get appUrl() {
-    return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const railway = process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "";
+    return (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || railway || "http://localhost:3000").replace(/\/$/, "");
   },
   get cronSecret() {
     return process.env.CRON_SECRET || "";

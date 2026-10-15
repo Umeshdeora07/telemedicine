@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseVisitPassToken, visitPassToken } from "@/lib/visit-pass";
-import { canonicalJson, decryptText, encryptText, safeEqual } from "@/lib/crypto";
+import crypto from "node:crypto";
+import { canonicalJson, decryptText, encryptText, safeEqual, secretsFromAppSecret, signPayload, verifyPayload } from "@/lib/crypto";
 
 const id = "3f1c2a9e-5b7d-4c1e-9a2b-1234567890ab";
 
@@ -31,5 +32,34 @@ describe("crypto helpers", () => {
     expect(safeEqual("abc", "abc")).toBe(true);
     expect(safeEqual("abc", "abd")).toBe(false);
     expect(safeEqual("abc", "abcd")).toBe(false);
+  });
+});
+
+describe("keys derived from APP_SECRET", () => {
+  const secret = "a-long-random-app-secret-for-tests-0123456789";
+  it("are stable for the same secret and differ between secrets", () => {
+    expect(secretsFromAppSecret(secret)).toEqual(secretsFromAppSecret(secret));
+    expect(secretsFromAppSecret(secret + "x").encryptionKey).not.toBe(secretsFromAppSecret(secret).encryptionKey);
+  });
+  it("gives independent keys per purpose", () => {
+    const s = secretsFromAppSecret(secret);
+    expect(new Set([s.encryptionKey, s.hashSecret]).size).toBe(2);
+    expect(Buffer.from(s.encryptionKey, "base64")).toHaveLength(32);
+  });
+  it("produces a working Ed25519 key pair", () => {
+    const s = secretsFromAppSecret(secret);
+    const priv = crypto.createPrivateKey({ key: Buffer.from(s.signingPrivateKey, "base64"), format: "der", type: "pkcs8" });
+    const pub = crypto.createPublicKey({ key: Buffer.from(s.signingPublicKey, "base64"), format: "der", type: "spki" });
+    const sig = crypto.sign(null, Buffer.from("rx"), priv);
+    expect(crypto.verify(null, Buffer.from("rx"), pub, sig)).toBe(true);
+  });
+  it("rejects short secrets", () => {
+    expect(() => secretsFromAppSecret("too-short")).toThrow(/32 characters/);
+  });
+  it("signs and verifies prescriptions with the configured secret", () => {
+    const payload = { rx: "RX-1", items: [1, 2] };
+    const { signature } = signPayload(payload);
+    expect(verifyPayload(payload, signature)).toBe(true);
+    expect(verifyPayload({ ...payload, rx: "RX-2" }, signature)).toBe(false);
   });
 });
