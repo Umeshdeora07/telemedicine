@@ -160,25 +160,61 @@ setting is optional for a local demo. The main groups:
 
 ## Deploying
 
-The app runs as a standard Node.js server (`npm run build && npm start`)
-on any host with PostgreSQL 15+.
+### Free demo: Vercel (website) + Neon (database)
 
-1. Provision PostgreSQL (ideally in an Indian region) and durable encrypted
-   storage for `STORAGE_DIR`.
-2. Set `DATABASE_URL`, `APP_URL`, the secrets from `npm run keys`, and
-   `DEMO_MODE=false`.
-3. Run `npm run db:migrate` (or leave `DB_AUTO_MIGRATE` on).
-4. Configure payment webhooks: `$APP_URL/api/webhooks/razorpay` and
+The free plans suit a demo with sample data only: Vercel's Hobby plan is
+for non-commercial use, Neon's closest region to India is Singapore, and
+uploaded files are temporary. Keep `DEMO_MODE=true` and no real patients.
+
+1. Make two random strings of 32+ characters (a password manager's
+   generator): one for `APP_SECRET`, one for `CRON_SECRET`. Keep them safe;
+   changing `APP_SECRET` later makes stored files and signatures invalid.
+2. Vercel → Add New → Project → import this repository. Before deploying,
+   add environment variables: `APP_SECRET`, `CRON_SECRET`,
+   `DEMO_MODE=true`, `DEMO_AUTO_SEED=true`, and optionally
+   `DEMO_ACCESS_PASSWORD` (a password for the whole site). Deploy. Until a
+   database is connected the site answers with an error; that's expected.
+3. Project → Storage → Create Database → Neon, region Singapore
+   (aws-ap-southeast-1), Free plan → connect it to the project for all
+   environments. This sets `DATABASE_URL` (pooled; works as is).
+4. Deployments → ⋯ → Redeploy. The first visit creates the tables and loads
+   the demo data (about a minute); `/api/health` then returns `{"ok":true}`.
+5. Background jobs: `vercel.json` runs them daily (the most Hobby allows).
+   For reminders and no-show refunds, add a free job at cron-job.org:
+   GET `https://<your-site>/api/cron/tick` with header
+   `Authorization: Bearer <CRON_SECRET>`, every 15 minutes (every minute
+   keeps Neon's free database awake and uses up its monthly hours).
+
+`vercel.json` pins functions to Singapore (`sin1`), next to the database.
+The public address comes from Vercel; set `APP_URL` only for a custom domain.
+
+### Production: your own server in India
+
+For real patients, use a host in India with durable storage, e.g. a
+DigitalOcean Bangalore droplet running `docker-compose.yml` (app,
+PostgreSQL and HTTPS), or with DigitalOcean Managed PostgreSQL and a block
+storage volume for `STORAGE_DIR`. On a single server:
+
+1. Point your domain at the server; `cp .env.example .env` and set
+   `DOMAIN`, `POSTGRES_PASSWORD`, `APP_SECRET` and the `NEXT_PUBLIC_*`
+   brand and grievance details; keep `DEMO_MODE=false`.
+2. `docker compose up -d --build` (build needs ~2 GB RAM; add swap on
+   smaller servers). Migrations run on start; HTTPS is automatic.
+3. Configure payment webhooks: `$APP_URL/api/webhooks/razorpay` and
    `$APP_URL/api/webhooks/stripe`.
-5. On serverless hosting, set `DISABLE_INTERNAL_SCHEDULER=1` and call
-   `POST /api/cron/tick` every minute with
-   `Authorization: Bearer $CRON_SECRET`.
-6. Health check: `GET /api/health`.
+4. Back up the `pgdata` and `uploads` volumes every night, off the server,
+   and test a restore.
 
-Run a single scheduler: either one long-running server, or the cron
-endpoint, not several servers each with their own internal scheduler.
-Notifications are de-duplicated, but one scheduler keeps the load and logs
-predictable.
+Any other Node.js host works too (`npm run build && npm start`) with
+PostgreSQL 15+, `DATABASE_URL`, `APP_SECRET`, `APP_URL` and durable storage
+for `STORAGE_DIR`. On serverless hosts set `DISABLE_INTERNAL_SCHEDULER=1`
+and call `/api/cron/tick` every minute with `Authorization: Bearer
+$CRON_SECRET`. Background jobs and migrations take database locks, so
+several instances are safe. Health check: `GET /api/health`.
+
+The database user needs CREATEROLE (the default on Neon, Render, Supabase,
+RDS and DigitalOcean): the row-level security migration creates the
+`app_rls` role.
 
 ## Compliance notes
 
@@ -217,6 +253,10 @@ does not make a service compliant. What is in place:
 - [ ] Verify every doctor's registration with the NMC or State Medical
       Council, and every foreign licence with the issuing board.
 - [ ] Open live Razorpay and Stripe accounts and set up webhooks.
+- [ ] Finish Razorpay checkout for care plans, case deposits and second
+      opinions (today only consult bookings complete a Razorpay payment).
+- [ ] Move off free plans: Vercel Hobby is for non-commercial use, and
+      patient data should stay in India (see Deploying → Production).
 - [ ] Register SMS sender ID and DLT templates, WhatsApp message templates,
       and a sending domain for email.
 - [ ] Run a TURN server.

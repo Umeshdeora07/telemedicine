@@ -136,6 +136,10 @@ async function init(): Promise<State> {
     return { db, ready, kind: "postgres", close: () => client.end(), lock };
   }
 
+  if (process.env.VERCEL) {
+    // The embedded database needs a writable, lasting disk, which Vercel doesn't have.
+    throw new Error("No database connected. In Vercel, open the project's Storage tab, connect a Neon database (it sets DATABASE_URL), then redeploy.");
+  }
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
   const { migrate } = await import("drizzle-orm/pglite/migrator");
@@ -169,6 +173,7 @@ async function state(): Promise<State> {
     initPromise ??= init().then(
       (s) => (g.__telemedDb = s),
       (e) => {
+        console.error("[db] Database start failed; will retry on the next request.", e);
         initPromise = undefined;
         throw e;
       },

@@ -32,7 +32,7 @@ function loadSecrets(): Secrets {
   // Generated keys live in a local file, which only makes sense next to the
   // embedded database: a hosted PostgreSQL outlives the server's disk, and keys
   // regenerated on restart would orphan everything encrypted or signed with them.
-  if (!env.demoMode || process.env.DATABASE_URL) {
+  if (!env.demoMode || process.env.DATABASE_URL || process.env.VERCEL) {
     throw new Error(
       "Missing secrets. Set APP_SECRET (32+ random characters), or DATA_ENCRYPTION_KEY, SIGNING_PRIVATE_KEY, SIGNING_PUBLIC_KEY and HASH_SECRET from `npm run keys`.",
     );

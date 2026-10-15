@@ -10,10 +10,10 @@ export const env = {
   get demoMode() {
     return bool(process.env.DEMO_MODE, process.env.NODE_ENV !== "production");
   },
-  /** Public address. Falls back to the address Render or Railway give the service. */
+  /** Public address. Falls back to the address Vercel, Render or Railway give the service. */
   get appUrl() {
-    const railway = process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "";
-    return (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || railway || "http://localhost:3000").replace(/\/$/, "");
+    const host = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.RAILWAY_PUBLIC_DOMAIN;
+    return (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || (host ? `https://${host}` : "") || "http://localhost:3000").replace(/\/$/, "");
   },
   /** Secure cookies whenever the site is served over HTTPS (not just in production builds). */
   get secureCookies() {
