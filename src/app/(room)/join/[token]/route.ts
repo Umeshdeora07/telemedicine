@@ -8,6 +8,6 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
   const inv = await redeemInvite(token);
   if (!inv) return NextResponse.redirect(new URL("/help?invite=expired", req.url));
   const res = NextResponse.redirect(new URL(`/consult/${inv.appointmentId}`, req.url));
-  res.cookies.set(guestCookie(inv.appointmentId), token, { httpOnly: true, secure: env.isProd, sameSite: "lax", path: "/", expires: inv.expiresAt });
+  res.cookies.set(guestCookie(inv.appointmentId), token, { httpOnly: true, secure: env.secureCookies, sameSite: "lax", path: "/", expires: inv.expiresAt });
   return res;
 }

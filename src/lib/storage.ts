@@ -57,6 +57,16 @@ export async function readFile(storageKey: string) {
   return decryptBuffer(blob);
 }
 
+/** Like readFile, but null when the file is gone (e.g. a host whose disk was reset while the database kept its row). */
+export async function readFileIfPresent(storageKey: string) {
+  try {
+    return await readFile(storageKey);
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw e;
+  }
+}
+
 export async function deleteFile(storageKey: string) {
   if (storageKey.includes("..")) return;
   await fs.rm(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ root(), storageKey), { force: true });

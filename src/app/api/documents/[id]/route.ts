@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/server/auth/session";
 import { getDocumentForUser, softDeleteDocument } from "@/server/documents";
-import { readFile } from "@/lib/storage";
+import { readFileIfPresent } from "@/lib/storage";
 
 /** Download a document the signed-in user may see (row-level security + audit log). */
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -10,7 +10,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   const { id } = await ctx.params;
   const doc = await getDocumentForUser(session.user, id);
   if (!doc) return new NextResponse("Not found", { status: 404 });
-  const data = await readFile(doc.storageKey);
+  const data = await readFileIfPresent(doc.storageKey);
+  if (!data) return new NextResponse("This file is no longer stored on the server. Please upload it again.", { status: 410, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   const inline = req.nextUrl.searchParams.get("download") !== "1";
   return new NextResponse(new Uint8Array(data), {
     headers: {

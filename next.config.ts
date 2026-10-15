@@ -30,7 +30,9 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(self), microphone=(self), geolocation=(self), display-capture=(self), payment=(self), interest-cohort=()",
   },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Not plain same-origin: Razorpay opens bank and UPI steps in a pop-up and
+  // needs the link back to it.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
 ];
 
 // Server Actions only accept requests from the app's own host. Behind a proxy

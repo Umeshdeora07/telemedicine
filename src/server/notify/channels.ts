@@ -8,10 +8,29 @@
  *   Email     Resend (RESEND_API_KEY, EMAIL_FROM)
  *   Push      Web Push with VAPID (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT)
  */
+import { env } from "@/config/env";
+
 type Result = { ok: true; id?: string; simulated?: boolean } | { ok: false; error: string };
 
+/**
+ * Without a provider the message is only logged. Outside local and demo runs
+ * the log never holds the text or the full recipient: it may contain login
+ * codes and health details, and hosted logs are widely readable.
+ */
 function log(channel: string, to: string, body: string) {
+  if (process.env.NODE_ENV === "production" && !env.demoMode) {
+    console.warn(`[notify:${channel}] no provider configured; not sent to …${to.slice(-4)}`);
+    return;
+  }
   console.log(`[notify:${channel}] → ${to}\n${body.split("\n").map((l) => "    " + l).join("\n")}`);
+}
+
+export function smsConfigured() {
+  return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM);
+}
+
+export function emailConfigured() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }
 
 export async function sendSms(to: string, body: string): Promise<Result> {

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ provider: s
   if (!oauthConfigured(provider as Provider)) return NextResponse.redirect(new URL("/login?error=oauth_not_configured", req.url));
   const { url, state, verifier } = authorizationUrl(provider as Provider);
   const jar = await cookies();
-  const opts = { httpOnly: true, secure: env.isProd, path: "/", maxAge: 600, sameSite: provider === "apple" ? ("none" as const) : ("lax" as const) };
+  const opts = { httpOnly: true, secure: env.secureCookies, path: "/", maxAge: 600, sameSite: provider === "apple" ? ("none" as const) : ("lax" as const) };
   jar.set("oauth_state", state, opts);
   jar.set("oauth_verifier", verifier, opts);
   const next = req.nextUrl.searchParams.get("next");

@@ -1,7 +1,8 @@
 # The whole site on one server: the app, PostgreSQL and Caddy (automatic HTTPS).
 #   1. Point your domain's DNS "A" record at the server's IP address.
 #   2. cp .env.example .env, then set DOMAIN, POSTGRES_PASSWORD and APP_SECRET
-#      (and DEMO_MODE=true for a demo with sample data).
+#      (openssl rand -base64 32), and the NEXT_PUBLIC_* brand details.
+#      For a demo with sample data also set DEMO_MODE=true and DEMO_AUTO_SEED=true.
 #   3. docker compose up -d --build
 # Data lives in Docker volumes: pgdata (database) and uploads (encrypted files).
 # Back up both, e.g. nightly: docker compose exec db pg_dump -U caremitra caremitra > backup.sql
@@ -22,12 +23,28 @@ services:
       retries: 30
 
   app:
-    build: .
+    build:
+      context: .
+      # Brand and legal details are built into the pages.
+      args:
+        NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-}
+        NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-}
+        NEXT_PUBLIC_SUPPORT_PHONE: ${NEXT_PUBLIC_SUPPORT_PHONE:-}
+        NEXT_PUBLIC_SUPPORT_WHATSAPP: ${NEXT_PUBLIC_SUPPORT_WHATSAPP:-}
+        NEXT_PUBLIC_LEGAL_ENTITY: ${NEXT_PUBLIC_LEGAL_ENTITY:-}
+        NEXT_PUBLIC_REGISTERED_ADDRESS: ${NEXT_PUBLIC_REGISTERED_ADDRESS:-}
+        NEXT_PUBLIC_GSTIN: ${NEXT_PUBLIC_GSTIN:-}
+        NEXT_PUBLIC_GRIEVANCE_OFFICER_NAME: ${NEXT_PUBLIC_GRIEVANCE_OFFICER_NAME:-}
+        NEXT_PUBLIC_GRIEVANCE_EMAIL: ${NEXT_PUBLIC_GRIEVANCE_EMAIL:-}
+        NEXT_PUBLIC_GRIEVANCE_PHONE: ${NEXT_PUBLIC_GRIEVANCE_PHONE:-}
+        NEXT_PUBLIC_ENABLED_LOCALES: ${NEXT_PUBLIC_ENABLED_LOCALES:-}
     restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgres://caremitra:${POSTGRES_PASSWORD}@db:5432/caremitra
       APP_URL: https://${DOMAIN:?Set DOMAIN in .env}
+      # Every key is derived from this; keep it safe and never change it.
+      APP_SECRET: ${APP_SECRET:?Set APP_SECRET in .env (32+ random characters)}
     volumes:
       - uploads:/data
     depends_on:

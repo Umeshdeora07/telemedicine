@@ -1,6 +1,6 @@
 import "server-only";
 import { and, eq, isNotNull, lt, lte } from "drizzle-orm";
-import { getDb } from "@/db";
+import { getDb, withExclusiveLock } from "@/db";
 import { appointments, doctorLicences, doctors, medicineReminders, patients, familyLinks, secondOpinions, subscriptions, settings } from "@/db/schema";
 import { dispatchDue, notifyUser } from "@/server/notify";
 import { expireStaleDrafts, handleDoctorNoShows } from "@/server/booking";
@@ -118,6 +118,16 @@ let running = false;
 export async function tick(now = new Date()): Promise<JobResult> {
   if (running) return { skipped: "already running" };
   running = true;
+  try {
+    // Another server (a deploy overlapping the old one, a second instance, or
+    // the cron endpoint) may be ticking too: only one runs, so messages go once.
+    return (await withExclusiveLock(20261016, () => runJobs(now))) ?? { skipped: "another server is running jobs" };
+  } finally {
+    running = false;
+  }
+}
+
+async function runJobs(now: Date): Promise<JobResult> {
   const out: JobResult = {};
   const step = async (name: string, fn: () => Promise<unknown>) => {
     try {
@@ -152,8 +162,8 @@ export async function tick(now = new Date()): Promise<JobResult> {
       await step("licences", () => licenceChecks(now));
       await markRun("daily", now);
     }
-  } finally {
-    running = false;
+  } catch (e) {
+    console.error("[jobs] tick failed", e);
   }
   return out;
 }

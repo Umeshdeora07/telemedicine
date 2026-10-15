@@ -11,6 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type { ReservedSql } from "postgres";
 import { env } from "@/config/env";
 import * as schema from "./schema";
 
@@ -18,7 +19,14 @@ export type DB = PostgresJsDatabase<typeof schema>;
 export type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
 export type Executor = DB | Tx;
 
-type State = { db: DB; ready: Promise<void>; kind: "postgres" | "pglite"; close: () => Promise<void> };
+type State = {
+  db: DB;
+  ready: Promise<void>;
+  kind: "postgres" | "pglite";
+  close: () => Promise<void>;
+  /** PostgreSQL only: a dedicated connection, for session-level advisory locks. */
+  reserve?: () => Promise<ReservedSql>;
+};
 
 const g = globalThis as unknown as { __telemedDb?: State };
 
@@ -74,19 +82,25 @@ async function init(): Promise<State> {
     });
     const db = drizzle(client, { schema, casing: "snake_case" });
     const ready = (async () => {
-      if (process.env.DB_AUTO_MIGRATE !== "false") await migrate(db, { migrationsFolder: MIGRATIONS });
-      // Hosted demos (render.yaml) opt in to loading demo data into an empty
-      // database. One transaction: a failed load leaves nothing half-done, and
-      // the lock stops two starting servers from both loading it.
-      if (env.demoMode && process.env.DEMO_AUTO_SEED === "true") {
-        const { ensureDemoData } = await import("./seed/ensure");
-        await db.transaction(async (tx) => {
-          await tx.execute(sql`select pg_advisory_xact_lock(20261014)`);
-          await ensureDemoData(tx as unknown as DB);
-        });
+      // Servers starting together (a deploy overlapping the old instance, or
+      // several instances) take turns: one migrates, the rest then find
+      // nothing to do. The lock lives on one reserved connection.
+      const lock = await client.reserve();
+      try {
+        await lock`select pg_advisory_lock(20261015)`;
+        if (process.env.DB_AUTO_MIGRATE !== "false") await migrate(db, { migrationsFolder: MIGRATIONS });
+        // Hosted demos (render.yaml) opt in to loading demo data, and reloading
+        // it each new day, in one transaction so a failure leaves nothing half-done.
+        if (env.demoMode && process.env.DEMO_AUTO_SEED === "true") {
+          const { loadOrRefreshDemoData } = await import("./seed/ensure");
+          await db.transaction((tx) => loadOrRefreshDemoData(tx as unknown as DB));
+        }
+      } finally {
+        await lock`select pg_advisory_unlock(20261015)`.catch(() => {});
+        lock.release();
       }
     })();
-    return { db, ready, kind: "postgres", close: () => client.end() };
+    return { db, ready, kind: "postgres", close: () => client.end(), reserve: () => client.reserve() };
   }
 
   const { PGlite } = await import("@electric-sql/pglite");
@@ -118,10 +132,28 @@ async function init(): Promise<State> {
 let initPromise: Promise<State> | undefined;
 
 async function state(): Promise<State> {
-  if (g.__telemedDb) return g.__telemedDb;
-  initPromise ??= init().then((s) => (g.__telemedDb = s));
-  const s = await initPromise;
-  await s.ready;
+  if (!g.__telemedDb) {
+    initPromise ??= init().then(
+      (s) => (g.__telemedDb = s),
+      (e) => {
+        initPromise = undefined;
+        throw e;
+      },
+    );
+  }
+  const s = g.__telemedDb ?? (await initPromise!);
+  try {
+    await s.ready;
+  } catch (e) {
+    // Don't keep a failed start (database unreachable, migration error) for
+    // the life of the process: drop it so the next request tries again.
+    if (g.__telemedDb === s) {
+      g.__telemedDb = undefined;
+      initPromise = undefined;
+      await s.close().catch(() => {});
+    }
+    throw e;
+  }
   return s;
 }
 
@@ -142,6 +174,28 @@ export async function closeDb() {
     await s.close();
     g.__telemedDb = undefined;
     initPromise = undefined;
+  }
+}
+
+/**
+ * Runs fn only if no other server holds the lock right now, else returns null.
+ * Used so background jobs run on one server at a time. The embedded database
+ * has a single process, so there it always runs.
+ */
+export async function withExclusiveLock<T>(key: number, fn: () => Promise<T>): Promise<T | null> {
+  const s = await state();
+  if (!s.reserve) return fn();
+  const conn = await s.reserve();
+  try {
+    const [row] = await conn<{ ok: boolean }[]>`select pg_try_advisory_lock(${key}) as ok`;
+    if (!row?.ok) return null;
+    try {
+      return await fn();
+    } finally {
+      await conn`select pg_advisory_unlock(${key})`.catch(() => {});
+    }
+  } finally {
+    conn.release();
   }
 }
 

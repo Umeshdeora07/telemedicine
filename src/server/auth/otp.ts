@@ -5,7 +5,7 @@ import { otpCodes } from "@/db/schema";
 import { env } from "@/config/env";
 import { brand } from "@/config/brand";
 import { keyedHash, numericCode, safeEqual } from "@/lib/crypto";
-import { sendEmail, sendSms } from "../notify/channels";
+import { emailConfigured, sendEmail, sendSms, smsConfigured } from "../notify/channels";
 
 const TTL_MINUTES = 10;
 const MAX_SENDS_PER_15_MIN = 5;
@@ -33,6 +33,13 @@ export function parseIdentifier(raw: string, dialCode = "+91"): Identifier | nul
 const hashFor = (identifier: string, purpose: string, code: string) => keyedHash(`otp:${purpose}:${identifier}:${code}`);
 
 export async function requestOtp(id: Identifier, purpose = "login", meta?: Record<string, unknown>) {
+  // A real site must not pretend to send a code it can't deliver.
+  if (!env.demoMode && process.env.NODE_ENV === "production" && !(id.kind === "phone" ? smsConfigured() : emailConfigured())) {
+    return {
+      ok: false as const,
+      error: id.kind === "phone" ? "Sign-in by text message isn't available yet. Please use your email address." : "Sign-in by email isn't available yet. Please use your mobile number.",
+    };
+  }
   const db = await getDb();
   const since = new Date(Date.now() - 15 * 60_000);
   const recent = await db

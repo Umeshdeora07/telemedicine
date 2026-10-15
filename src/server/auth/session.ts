@@ -40,7 +40,7 @@ export async function createSession(userId: string, opts: { mfaVerified?: boolea
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: env.isProd,
+    secure: env.secureCookies,
     sameSite: "lax",
     path: "/",
     expires: expiresAt,

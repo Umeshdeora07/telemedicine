@@ -18,6 +18,7 @@ import { createSession, getSession, markMfaVerified, requireSession } from "@/se
 import { parseIdentifier, requestOtp, verifyOtp } from "@/server/auth/otp";
 import { homeFor, isStaff } from "@/server/auth/roles";
 import { audit } from "@/server/audit";
+import { ACCOUNTS } from "@/db/seed/data/people";
 import { DIAL_CODES } from "@/config/dial-codes";
 
 export type LoginState =
@@ -119,6 +120,13 @@ async function verifyLoginCode(prev: LoginState, form: FormData): Promise<LoginS
   return prev;
 }
 
+const DEMO_PHONES = new Set(ACCOUNTS.map((a) => a.phone));
+
+/** Seeded accounts use reserved .example addresses or the demo phone numbers. */
+function isDemoAccount(user: { email: string | null; phone: string | null }) {
+  return Boolean(user.email?.toLowerCase().endsWith(".example") || (user.phone && DEMO_PHONES.has(user.phone)));
+}
+
 /** Demo only: sign in as a seeded account without a code. */
 export async function demoLogin(form: FormData) {
   if (!env.demoMode) throw new Error("Demo login is disabled");
@@ -126,7 +134,9 @@ export async function demoLogin(form: FormData) {
   const email = String(form.get("email") ?? "");
   const phone = String(form.get("phone") ?? "");
   const [user] = await db.select().from(users).where(email ? sql`lower(${users.email}) = ${email.toLowerCase()}` : eq(users.phone, phone));
-  if (!user) redirect("/login?error=demo");
+  // Only the seeded demo accounts: never someone who signed up with a real
+  // number or address on a public demo.
+  if (!user || !isDemoAccount(user)) redirect("/login?error=demo");
   await createSession(user.id, { mfaVerified: true });
   await audit({ actor: { id: user.id, role: user.role }, action: "auth.demo_login", entityType: "user", entityId: user.id });
   const next = safeNext(form.get("next"));
@@ -142,7 +152,7 @@ export async function startMfaEnrollment(): Promise<{ secret: string }> {
   const session = await requireSession({ allowWithoutMfa: true });
   if (session.user.mfaEnabledAt) throw new Error("Already enrolled");
   const secret = generateTotpSecret();
-  (await cookies()).set("mfa_enroll", encryptText(secret), { httpOnly: true, sameSite: "lax", path: "/mfa", maxAge: 600, secure: env.isProd });
+  (await cookies()).set("mfa_enroll", encryptText(secret), { httpOnly: true, sameSite: "lax", path: "/mfa", maxAge: 600, secure: env.secureCookies });
   return { secret };
 }
 

@@ -15,6 +15,10 @@ export const env = {
     const railway = process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "";
     return (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || railway || "http://localhost:3000").replace(/\/$/, "");
   },
+  /** Secure cookies whenever the site is served over HTTPS (not just in production builds). */
+  get secureCookies() {
+    return this.appUrl.startsWith("https://");
+  },
   get cronSecret() {
     return process.env.CRON_SECRET || "";
   },

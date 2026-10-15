@@ -29,7 +29,10 @@ function loadSecrets(): Secrets {
     cached = secretsFromAppSecret(process.env.APP_SECRET);
     return cached;
   }
-  if (!env.demoMode) {
+  // Generated keys live in a local file, which only makes sense next to the
+  // embedded database: a hosted PostgreSQL outlives the server's disk, and keys
+  // regenerated on restart would orphan everything encrypted or signed with them.
+  if (!env.demoMode || process.env.DATABASE_URL) {
     throw new Error(
       "Missing secrets. Set APP_SECRET (32+ random characters), or DATA_ENCRYPTION_KEY, SIGNING_PRIVATE_KEY, SIGNING_PUBLIC_KEY and HASH_SECRET from `npm run keys`.",
     );
@@ -43,6 +46,11 @@ function loadSecrets(): Secrets {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(cached, null, 2), { mode: 0o600 });
   return cached;
+}
+
+/** Throws now if the keys are missing, so a misconfigured server fails at boot. */
+export function checkSecrets() {
+  loadSecrets();
 }
 
 // PKCS#8 DER header for an Ed25519 private key; the 32-byte seed follows it.
