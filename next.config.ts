@@ -33,8 +33,23 @@ const securityHeaders = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
+// Server Actions only accept requests from the app's own host. Behind a proxy
+// that forwards its own host instead (GitHub Codespaces, some tunnels), list
+// the address people open in ALLOWED_ORIGINS (comma-separated host[:port]).
+// Inside a Codespace the forwarded address is added automatically.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+if (process.env.CODESPACE_NAME) {
+  const domain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || "app.github.dev";
+  allowedOrigins.push(`${process.env.CODESPACE_NAME}-${process.env.PORT || 3000}.${domain}`);
+}
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Same hosts for the development server's own assets (hostnames only).
+  allowedDevOrigins: allowedOrigins.length ? allowedOrigins.map((h) => h.replace(/:\d+$/, "")) : undefined,
   // Native/WASM packages that must not be bundled.
   serverExternalPackages: ["@electric-sql/pglite", "postgres", "web-push", "pdf-lib", "qrcode"],
   // Some containers and network drives drop file-change events; set NEXT_WATCH_POLL_MS=1000 there.
@@ -51,6 +66,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       // Reports and photos are uploaded through route handlers; actions stay small.
       bodySizeLimit: "2mb",
+      allowedOrigins: allowedOrigins.length ? allowedOrigins : undefined,
     },
   },
   async headers() {

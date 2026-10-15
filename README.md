@@ -12,6 +12,22 @@ and the other `NEXT_PUBLIC_*` settings in `.env.example`.
 > through the [launch checklist](#launch-checklist) — especially the legal
 > review, payment and messaging accounts, and production secrets.
 
+## Try it in your browser (no install)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Umeshdeora07/telemedicine/tree/claude/eager-bohr-v7fs20)
+
+1. Click the button (or on GitHub: **Code → Codespaces → Create codespace**).
+2. Wait 3–5 minutes the first time while it installs and builds.
+3. The site opens in a new tab. If it doesn't, open the **Ports** tab and
+   click the globe next to port 3000.
+4. Pick any demo account on the login page.
+
+The codespace runs the production build in demo mode
+(`.devcontainer/devcontainer.json`, `scripts/codespace-start.sh`) and reloads
+the demo data once a day so "today's" appointments stay current. The address
+is private to your GitHub account; to show someone else, right-click port
+3000 in the Ports tab and set its visibility to Public.
+
 ## Quick start
 
 Requires Node.js 20.9 or newer.

@@ -1,0 +1,21 @@
+// Runs the demo website in GitHub Codespaces, in your browser, with nothing
+// to install. On GitHub: Code → Codespaces → Create codespace. The first start
+// takes a few minutes (install and build); the site then opens in a new tab.
+{
+  "name": "CareMitra demo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "containerEnv": {
+    "DEMO_MODE": "true",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "postCreateCommand": "npm ci && npm run build",
+  "postAttachCommand": "bash scripts/codespace-start.sh",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Website", "onAutoForward": "openBrowser" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] },
+    "vscode": { "extensions": ["dbaeumer.vscode-eslint", "bradlc.vscode-tailwindcss"] }
+  }
+}
