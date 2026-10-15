@@ -10,7 +10,9 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { decryptBuffer, encryptBuffer, sha256 } from "./crypto";
 
-const root = () => process.env.STORAGE_DIR || path.join(process.cwd(), ".data", "uploads");
+// On Vercel only /tmp is writable, and it is per instance and temporary: fine
+// for a demo; real records need durable storage (see README "Deploying").
+const root = () => process.env.STORAGE_DIR || (process.env.VERCEL ? "/tmp/uploads" : path.join(process.cwd(), ".data", "uploads"));
 
 export const ALLOWED_UPLOAD_TYPES: Record<string, string> = {
   "application/pdf": "pdf",

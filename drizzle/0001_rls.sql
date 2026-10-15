@@ -19,15 +19,27 @@
 --   * Care coordinators and admins see patient profiles (for bookings and
 --     support) but never notes, prescriptions, documents or messages.
 
+-- The app's database user needs CREATEROLE (true for Neon, Render, Supabase,
+-- RDS and DigitalOcean defaults). Roles belong to the whole server, so if
+-- app_rls already exists, made by another user, an administrator must grant it.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_rls') THEN
     CREATE ROLE app_rls NOLOGIN;
   END IF;
+  -- Always grant, even right after CREATE ROLE: since PostgreSQL 16 the
+  -- creator is made a member automatically but without the right to SET ROLE.
+  BEGIN
+    EXECUTE format('GRANT app_rls TO %I', current_user);
+  EXCEPTION WHEN insufficient_privilege THEN
+    -- Fine if an administrator has already granted it.
+    IF NOT pg_has_role(current_user, 'app_rls', 'MEMBER') THEN
+      RAISE EXCEPTION 'Role app_rls exists but % may not use it.', current_user
+        USING HINT = format('As an administrator, run: GRANT app_rls TO %I;', current_user);
+    END IF;
+  END;
 END
 $$;
---> statement-breakpoint
-GRANT app_rls TO CURRENT_USER;
 --> statement-breakpoint
 GRANT USAGE ON SCHEMA public TO app_rls;
 --> statement-breakpoint

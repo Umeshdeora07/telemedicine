@@ -21,7 +21,9 @@ export async function register() {
     }
   }
 
-  if (["1", "true", "yes"].includes((process.env.DISABLE_INTERNAL_SCHEDULER ?? "").toLowerCase())) return;
+  // Serverless hosts (Vercel) freeze instances between requests, so a timer
+  // can't run there: /api/cron/tick is called by a cron service instead.
+  if (process.env.VERCEL || ["1", "true", "yes"].includes((process.env.DISABLE_INTERNAL_SCHEDULER ?? "").toLowerCase())) return;
   if (g.__schedulerStarted) return;
   g.__schedulerStarted = true;
   const { startScheduler } = await import("./server/scheduler");

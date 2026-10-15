@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Same hosts for the development server's own assets (hostnames only).
   allowedDevOrigins: allowedOrigins.length ? allowedOrigins.map((h) => h.replace(/:\d+$/, "")) : undefined,
+  // Migrations are read from disk when the database starts, which can happen
+  // on any route: ship them with every server function (Vercel, standalone).
+  outputFileTracingIncludes: {
+    "/**": ["./drizzle/**/*"],
+  },
   // Native/WASM packages that must not be bundled.
   serverExternalPackages: ["@electric-sql/pglite", "postgres", "web-push", "pdf-lib", "qrcode"],
   // Some containers and network drives drop file-change events; set NEXT_WATCH_POLL_MS=1000 there.
