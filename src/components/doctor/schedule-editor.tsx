@@ -16,7 +16,7 @@ export function ScheduleEditor({ initial, timeZone, clinics, defaultSlot }: { in
   const [tz, setTz] = useState(timeZone);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
-  const days = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(intl, { weekday: "long" }).format(new Date(Date.UTC(2024, 0, 7 + i))));
+  const days = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(intl, { timeZone: "UTC", weekday: "long" }).format(new Date(Date.UTC(2024, 0, 7 + i))));
   const update = (key: string, patch: Partial<Rule>) => setRules((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   return (
     <div className="space-y-4">
@@ -39,10 +39,10 @@ export function ScheduleEditor({ initial, timeZone, clinics, defaultSlot }: { in
                   <option value="online">{t("Online")}</option>
                   {clinics.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
-                <Input type="time" value={r.startTime} onChange={(e) => update(r.key, { startTime: e.target.value })} aria-label={t("From")} className="w-32" />
+                <Input type="time" value={r.startTime} onChange={(e) => update(r.key, { startTime: e.target.value })} aria-label={t("From")} className="w-36" />
                 <span aria-hidden>–</span>
-                <Input type="time" value={r.endTime} onChange={(e) => update(r.key, { endTime: e.target.value })} aria-label={t("To")} className="w-32" />
-                <Select value={String(r.slotMinutes)} onChange={(e) => update(r.key, { slotMinutes: Number(e.target.value) })} aria-label={t("Slot length")} className="w-32">
+                <Input type="time" value={r.endTime} onChange={(e) => update(r.key, { endTime: e.target.value })} aria-label={t("To")} className="w-36" />
+                <Select value={String(r.slotMinutes)} onChange={(e) => update(r.key, { slotMinutes: Number(e.target.value) })} aria-label={t("Slot length")} className="w-40">
                   {[10, 15, 20, 30, 45, 60].map((m) => <option key={m} value={m}>{t("{n} min slots", { n: m })}</option>)}
                 </Select>
                 <button type="button" onClick={() => setRules((rs) => rs.filter((x) => x.key !== r.key))} className="tap grid place-items-center rounded-lg text-fg-muted hover:text-danger" aria-label={t("Remove")}>

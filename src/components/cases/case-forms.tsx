@@ -45,11 +45,11 @@ export function AssignForm({ caseId, clinics, doctors, clinicId, doctorId }: { c
 }
 
 export function EstimateForm({ caseId, currency, rate, doctorId, treatment }: { caseId: string; currency: string; rate: number; doctorId: string | null; treatment: string }) {
-  const { t } = useI18n();
+  const { t, intl } = useI18n();
   const [state, action] = useActionState(sendEstimateAction, {});
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
-  const conv = (v: string) => (Number(v) > 0 && currency !== "INR" ? `≈ ${currency} ${Math.round(Number(v) * rate).toLocaleString()}` : "");
+  const conv = (v: string) => (Number(v) > 0 && currency !== "INR" ? `≈ ${currency} ${Math.round(Number(v) * rate).toLocaleString(intl)}` : "");
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="caseId" value={caseId} />
@@ -132,26 +132,26 @@ export function StatusForm({ caseId, options }: { caseId: string; options: { val
 export type CaseMsg = { id: number; senderName: string; senderRole: string; body: string; createdAt: string; mine: boolean };
 
 export function CaseChat({ caseId, messages }: { caseId: string; messages: CaseMsg[] }) {
-  const { t, intl } = useI18n();
+  const { t, intl, tz } = useI18n();
   const router = useRouter();
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const end = useRef<HTMLLIElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  // Scroll the message list (not the page) to the newest message.
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "nearest" });
+    if (list.current) list.current.scrollTop = list.current.scrollHeight;
   }, [messages.length]);
   return (
     <div className="card flex h-[28rem] flex-col overflow-hidden">
-      <ul className="flex-1 space-y-2 overflow-y-auto p-4" aria-live="polite">
+      <ul ref={list} className="flex-1 space-y-2 overflow-y-auto p-4" aria-live="polite">
         {messages.length ? null : <li className="text-center text-fg-muted">{t("No messages yet. Ask anything about your treatment, costs or travel.")}</li>}
         {messages.map((m) => (
           <li key={m.id} className={cn("max-w-[85%] rounded-2xl px-3 py-2", m.mine ? "ms-auto bg-primary text-on-primary" : "bg-surface-2")}>
-            <p className={cn("text-xs font-semibold", m.mine ? "opacity-90" : "text-fg-muted")}>{m.senderName} · {new Date(m.createdAt).toLocaleString(intl, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>
+            <p className={cn("text-xs font-semibold", m.mine ? "opacity-90" : "text-fg-muted")}>{m.senderName} · {new Date(m.createdAt).toLocaleString(intl, { timeZone: tz, day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>
             <p className="whitespace-pre-line">{m.body}</p>
           </li>
         ))}
-        <li ref={end} aria-hidden />
       </ul>
       <form
         className="flex items-end gap-2 border-t border-line p-3"

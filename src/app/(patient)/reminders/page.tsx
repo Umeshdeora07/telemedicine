@@ -30,7 +30,7 @@ export default async function RemindersPage() {
             {r.today.map((d) => (
               <li key={`${d.reminderId}-${d.at.toISOString()}`} className="flex flex-wrap items-center gap-3 p-3">
                 <span className="w-20 font-bold tabular-nums">{fmt.time(d.at)}</span>
-                <span className="min-w-0 flex-1"><span className="block font-semibold">{d.name}</span><span className="block text-sm text-fg-muted">{d.dose}{people.length > 1 ? ` · ${d.patientName}` : ""}</span></span>
+                <span className="min-w-40 flex-1"><span className="block font-semibold">{d.name}</span><span className="block text-sm text-fg-muted">{d.dose}{people.length > 1 ? ` · ${d.patientName}` : ""}</span></span>
                 <DoseButtons reminderId={d.reminderId} at={d.at.toISOString()} status={d.status} />
               </li>
             ))}

@@ -172,13 +172,13 @@ export default async function DoctorsPage({ searchParams }: { searchParams: Prom
               <h2 id="results-heading" className="font-semibold" aria-live="polite">
                 {ctx.tp("{count} doctor found", "{count} doctors found", results.length)}
               </h2>
-              <div className="flex items-center gap-2">
-                <form action="/doctors" className="flex items-center gap-2">
+              <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
+                <form action="/doctors" className="flex min-w-0 max-w-full items-center gap-2">
                   {Object.entries(sp).map(([k, v]) => (k !== "sort" && v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
                   <label htmlFor="sort" className="text-sm text-fg-muted">
                     {t("Sort by")}
                   </label>
-                  <Select id="sort" name="sort" defaultValue={filters.sort} className="w-auto">
+                  <Select id="sort" name="sort" defaultValue={filters.sort} className="w-auto min-w-0">
                     <option value="soonest">{t("Soonest available")}</option>
                     <option value="rating">{t("Rating")}</option>
                     <option value="fee">{t("Fee: low to high")}</option>

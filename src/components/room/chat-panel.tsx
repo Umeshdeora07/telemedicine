@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 /** Chat with file sharing. Used inside calls and for the free follow-up chat. */
 export function ChatPanel({ apptId, messages, onSent, disabled, disabledText, className }: { apptId: string; messages: ChatMessage[]; onSent?: () => void; disabled?: boolean; disabledText?: string; className?: string }) {
-  const { t, intl } = useI18n();
+  const { t, intl, tz } = useI18n();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export function ChatPanel({ apptId, messages, onSent, disabled, disabledText, cl
     await post(t("Shared a file: {name}", { name: json.title }), json.id);
   };
 
-  const time = (iso: string) => new Intl.DateTimeFormat(intl, { hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+  const time = (iso: string) => new Intl.DateTimeFormat(intl, { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 
   return (
     <section className={cn("flex min-h-0 flex-col", className)} aria-label={t("Chat")}>

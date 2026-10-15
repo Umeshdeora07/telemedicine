@@ -293,7 +293,7 @@ export function ConsultRoom(p: Props) {
     return (
       <LocationConfirm
         apptId={p.apptId}
-        patientName={p.role === "patient" ? t("you") : p.patientName}
+        patientName={p.role === "patient" ? null : p.patientName}
         options={p.locationOptions}
         initial={p.bookedLocation}
         error={room.error}
@@ -537,7 +537,7 @@ function WaitingRoom({ queue, doctorName }: { queue: ReturnType<typeof useRoom>[
   );
 }
 
-function LocationConfirm({ apptId, patientName, options, initial, onConfirmed, error }: { apptId: string; patientName: string; options: LocOption[]; initial: { country: string; region: string | null }; onConfirmed: () => void; error: string | null }) {
+function LocationConfirm({ apptId, patientName, options, initial, onConfirmed, error }: { apptId: string; patientName: string | null; options: LocOption[]; initial: { country: string; region: string | null }; onConfirmed: () => void; error: string | null }) {
   const { t } = useI18n();
   const [country, setCountry] = useState(initial.country);
   const [region, setRegion] = useState(initial.region ?? "");
@@ -557,7 +557,7 @@ function LocationConfirm({ apptId, patientName, options, initial, onConfirmed, e
   };
   return (
     <div className="container-page max-w-lg space-y-5 py-8">
-      <h1 className="text-2xl font-extrabold">{t("Where is {name} right now?", { name: patientName })}</h1>
+      <h1 className="text-2xl font-extrabold">{patientName ? t("Where is {name} right now?", { name: patientName }) : t("Where are you right now?")}</h1>
       <p className="text-fg-muted">{t("We ask before every consult. Doctors may only treat patients in places where they are licensed.")}</p>
       {blocked ? (
         <Alert tone="danger" title={t("This doctor can't consult a patient in {place}", { place: blocked })}>

@@ -8,6 +8,7 @@ const dict: Dict = {
   Where: "कहाँ",
   "Where is the patient right now?": "मरीज़ अभी कहाँ है?",
   "Where is {name} right now?": "{name} अभी कहाँ हैं?",
+  "Where are you right now?": "आप अभी कहाँ हैं?",
   "Where to stay after discharge": "छुट्टी के बाद कहाँ रहें",
   "Where will {name} be during the consult?": "परामर्श के समय {name} कहाँ होंगे?",
   "Which doctor do I need?": "मुझे कौन-सा डॉक्टर चाहिए?",

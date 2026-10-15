@@ -60,7 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:font-semibold focus:shadow-lg">
           {t("Skip to main content")}
         </a>
-        <I18nProvider value={{ locale, dir, intl, dict }}>
+        <I18nProvider value={{ locale, dir, intl, dict, tz }}>
           {children}
           <CookieBanner />
           <ClientEffects serverTz={tz} hasTzCookie={tzFromCookie} />
