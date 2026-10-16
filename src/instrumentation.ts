@@ -13,7 +13,13 @@ export async function register() {
     g.__bootChecked = true;
     const { env } = await import("./config/env");
     const { checkSecrets } = await import("./lib/crypto");
-    checkSecrets();
+    // Logged, not thrown: a crash here would only show "Internal Server Error",
+    // while the proxy's setup page tells the owner what to fix.
+    try {
+      checkSecrets();
+    } catch (e) {
+      console.error(`[boot] ${(e as Error).message}`);
+    }
     // Links in messages, OAuth callbacks and the QR codes printed on
     // prescriptions use this address; a wrong one can't be fixed afterwards.
     if (!env.appUrl.startsWith("https://")) {

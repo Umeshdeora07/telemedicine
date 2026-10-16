@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { setupProblems } from "@/lib/setup-check";
+import { statusPage } from "@/lib/setup-page";
 
 const LOCALES = ["en", "hi", "ar", "bn", "fr", "ru", "sw"];
 
@@ -23,12 +25,23 @@ function basicPassword(request: NextRequest) {
 
 /**
  * Runs before every page request:
+ *  - if an essential setting is missing (secret key, database on Vercel),
+ *    shows a page saying what to do instead of a bare server error
  *  - DEMO_ACCESS_PASSWORD, when set, puts a password on the whole site so a
  *    public demo link isn't open to strangers (the browser asks once)
  *  - passes the current path to server components (for "return to" links after login)
  *  - `?lang=hi` switches language (shareable links)
  */
 export function proxy(request: NextRequest) {
+  const problems = setupProblems();
+  if (problems.length) {
+    const html = statusPage({
+      heading: "Almost there: the site needs setting up",
+      intro: `Fix ${problems.length === 1 ? "this" : `these ${problems.length} things`}, then reload this page. Detailed checks: /status`,
+      rows: problems.map((p) => ({ label: p.title, state: "problem" as const, detail: "What to do:", steps: p.steps })),
+    });
+    return new NextResponse(html, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Retry-After": "60" } });
+  }
   const password = process.env.DEMO_ACCESS_PASSWORD;
   if (password) {
     const given = basicPassword(request);

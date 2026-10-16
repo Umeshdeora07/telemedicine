@@ -13,6 +13,7 @@ import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type { Sql } from "postgres";
 import { env } from "@/config/env";
+import { databaseUrl } from "@/lib/setup-check";
 import * as schema from "./schema";
 
 export type DB = PostgresJsDatabase<typeof schema>;
@@ -105,7 +106,7 @@ function connectionUrl(raw: string) {
 }
 
 async function init(): Promise<State> {
-  const url = process.env.DATABASE_URL;
+  const url = databaseUrl()?.url;
   if (url) {
     const { default: postgres } = await import("postgres");
     const { drizzle } = await import("drizzle-orm/postgres-js");
@@ -126,9 +127,10 @@ async function init(): Promise<State> {
     // find nothing to do.
     const ready = lock(20261015, true, async () => {
       if (process.env.DB_AUTO_MIGRATE !== "false") await migrate(db, { migrationsFolder: MIGRATIONS });
-      // Hosted demos opt in to loading demo data, and reloading it each new
-      // day, in one transaction so a failure leaves nothing half-done.
-      if (env.demoMode && process.env.DEMO_AUTO_SEED === "true") {
+      // Demo mode loads demo data into an empty database and reloads it each
+      // new day, in one transaction so a failure leaves nothing half-done.
+      // A database with users that this didn't load is never touched.
+      if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") {
         const { loadOrRefreshDemoData } = await import("./seed/ensure");
         await db.transaction((tx) => loadOrRefreshDemoData(tx as unknown as DB));
       }

@@ -171,14 +171,15 @@ uploaded files are temporary. Keep `DEMO_MODE=true` and no real patients.
    changing `APP_SECRET` later makes stored files and signatures invalid.
 2. Vercel → Add New → Project → import this repository. Before deploying,
    add environment variables: `APP_SECRET`, `CRON_SECRET`,
-   `DEMO_MODE=true`, `DEMO_AUTO_SEED=true`, and optionally
-   `DEMO_ACCESS_PASSWORD` (a password for the whole site). Deploy. Until a
-   database is connected the site answers with an error; that's expected.
+   `DEMO_MODE=true`, and optionally `DEMO_ACCESS_PASSWORD` (a password for
+   the whole site). Deploy. Until a database is connected the site shows a
+   "needs setting up" page listing what's missing.
 3. Project → Storage → Create Database → Neon, region Singapore
    (aws-ap-southeast-1), Free plan → connect it to the project for all
    environments. This sets `DATABASE_URL` (pooled; works as is).
 4. Deployments → ⋯ → Redeploy. The first visit creates the tables and loads
-   the demo data (about a minute); `/api/health` then returns `{"ok":true}`.
+   the demo data (about a minute). `/status` shows a checklist (secret key,
+   database, demo data, background jobs) with what to fix for any red cross.
 5. Background jobs: `vercel.json` runs them daily (the most Hobby allows).
    For reminders and no-show refunds, add a free job at cron-job.org:
    GET `https://<your-site>/api/cron/tick` with header
