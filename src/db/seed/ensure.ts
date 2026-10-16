@@ -1,6 +1,8 @@
-import { sql } from "drizzle-orm";
+import { getTableName, is, sql } from "drizzle-orm";
+import { PgTable } from "drizzle-orm/pg-core";
 import type { DB } from "@/db";
 import { rows } from "@/db";
+import * as schema from "@/db/schema";
 import { dayInZone } from "@/lib/time";
 
 const LOADED_ON = "demo:loaded_on";
@@ -33,8 +35,11 @@ export async function loadOrRefreshDemoData(db: DB, now = new Date()) {
   if (hasData && !marker) return "not a demo database";
   if (hasData) {
     console.log(`[db] Demo data is from ${marker!.value}: reloading it for ${today}…`);
-    const tables = rows<{ name: string }>(await db.execute(sql`select quote_ident(tablename) as name from pg_tables where schemaname = 'public'`));
-    await db.execute(sql.raw(`truncate table ${tables.map((t) => t.name).join(", ")} restart identity cascade`));
+    // Only this app's own tables, never anything else sharing the database.
+    const tables = Object.values(schema)
+      .filter((t) => is(t, PgTable))
+      .map((t) => `"${getTableName(t as PgTable).replace(/"/g, '""')}"`);
+    await db.execute(sql.raw(`truncate table ${tables.join(", ")} restart identity cascade`));
   }
   await ensureDemoData(db);
   await db.execute(sql`insert into settings (key, value) values (${LOADED_ON}, to_jsonb(${today}::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`);

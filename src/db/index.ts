@@ -95,7 +95,7 @@ function lockRunner(client: Sql): LockRunner {
 }
 
 /** postgres.js sends unknown URL options to the server as settings; drop the libpq-only one Neon's URLs carry. */
-function connectionUrl(raw: string) {
+export function connectionUrl(raw: string) {
   try {
     const u = new URL(raw);
     u.searchParams.delete("channel_binding");

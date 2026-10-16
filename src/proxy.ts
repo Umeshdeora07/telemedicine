@@ -33,12 +33,14 @@ function basicPassword(request: NextRequest) {
  *  - `?lang=hi` switches language (shareable links)
  */
 export function proxy(request: NextRequest) {
-  const problems = setupProblems();
+  // /status runs its own checks (including the database), so it stays reachable.
+  const problems = request.nextUrl.pathname === "/status" ? [] : setupProblems();
   if (problems.length) {
     const html = statusPage({
       heading: "Almost there: the site needs setting up",
-      intro: `Fix ${problems.length === 1 ? "this" : `these ${problems.length} things`}, then reload this page. Detailed checks: /status`,
+      intro: `Fix ${problems.length === 1 ? "this" : `these ${problems.length} things`}, then reload this page.`,
       rows: problems.map((p) => ({ label: p.title, state: "problem" as const, detail: "What to do:", steps: p.steps })),
+      footer: '<a href="/status">Detailed checks, including the database</a>',
     });
     return new NextResponse(html, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Retry-After": "60" } });
   }

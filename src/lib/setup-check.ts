@@ -8,21 +8,31 @@ import { env } from "@/config/env";
 
 export type SetupProblem = { id: string; title: string; steps: string[] };
 
+/** Prefixes of database settings added by Vercel's storage integrations (e.g. STORAGE in STORAGE_DATABASE_URL). */
+function databasePrefixes() {
+  const prefixes = new Set<string>();
+  for (const [k, v] of Object.entries(process.env)) {
+    const m = v ? /^(.+)_(DATABASE_URL|POSTGRES_URL)$/.exec(k) : null;
+    if (m) prefixes.add(m[1]);
+  }
+  return [...prefixes].sort();
+}
+
 /**
- * The PostgreSQL connection string, and the name of the setting it came from.
- * Besides DATABASE_URL this accepts the names Vercel's storage integrations
- * use, including a custom prefix chosen when connecting (e.g. STORAGE_DATABASE_URL).
+ * The PostgreSQL connection string, and the name of the setting it came from:
+ * DATABASE_URL, POSTGRES_URL, or the one prefixed pair Vercel adds when a
+ * database is connected with a custom prefix (e.g. STORAGE_DATABASE_URL).
+ * With several prefixed databases and no DATABASE_URL it returns null rather
+ * than guess, and setupProblems() asks the owner to choose.
  */
 export function databaseUrl(): { url: string; name: string } | null {
   const vars = process.env;
   const named = ["DATABASE_URL", "POSTGRES_URL"].find((k) => vars[k]);
   if (named) return { url: vars[named]!, name: named };
-  const keys = Object.keys(vars).sort();
-  const prefixed =
-    keys.find((k) => k.endsWith("_DATABASE_URL") && vars[k]) ??
-    keys.find((k) => k.endsWith("_POSTGRES_URL") && vars[k]) ??
-    keys.find((k) => k.endsWith("_DATABASE_URL_UNPOOLED") && vars[k]);
-  return prefixed ? { url: vars[prefixed]!, name: prefixed } : null;
+  const prefixes = databasePrefixes();
+  if (prefixes.length !== 1) return null;
+  const name = [`${prefixes[0]}_DATABASE_URL`, `${prefixes[0]}_POSTGRES_URL`].find((k) => vars[k])!;
+  return { url: vars[name]!, name };
 }
 
 const hasExplicitKeys = () =>
@@ -60,12 +70,23 @@ export function setupProblems(): SetupProblem[] {
       problems.push({
         id: "secret-short",
         title: "The secret key (APP_SECRET) is too short",
-        steps: [settingsPlace, `Make APP_SECRET at least 32 characters long (it is ${secret.length} now).`, redeploy],
+        steps: [settingsPlace, "Make APP_SECRET at least 32 characters long.", redeploy],
       });
     }
   }
 
-  if (!db && onVercel()) {
+  const prefixes = databasePrefixes();
+  if (!db && prefixes.length > 1) {
+    problems.push({
+      id: "database-ambiguous",
+      title: "More than one database is connected",
+      steps: [
+        settingsPlace,
+        `Several database settings exist (${prefixes.map((p) => `${p}_DATABASE_URL`).join(", ")}). Add a setting named DATABASE_URL and paste in the value of the one this site should use.`,
+        redeploy,
+      ],
+    });
+  } else if (!db && onVercel()) {
     problems.push({
       id: "database-missing",
       title: "No database is connected",
@@ -81,7 +102,9 @@ export function setupProblems(): SetupProblem[] {
   const canSignIn =
     env.demoMode ||
     Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) ||
-    Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+    Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM) ||
+    Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ||
+    Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY);
   if (!canSignIn) {
     problems.push({
       id: "no-sign-in",
@@ -89,7 +112,7 @@ export function setupProblems(): SetupProblem[] {
       steps: [
         settingsPlace,
         "For a demo with sample patients and doctors, add DEMO_MODE with the value true.",
-        "For real use instead, connect an SMS service (Twilio) or an email service (Resend) so login codes can be sent.",
+        "For real use instead, connect an SMS service (Twilio) or an email service (Resend) so login codes can be sent, or Google or Apple sign-in.",
         redeploy,
       ],
     });

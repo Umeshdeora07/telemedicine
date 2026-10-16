@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { getDb, rows } from "@/db";
+import { connectionUrl, getDb, rows } from "@/db";
 import { env } from "@/config/env";
 import { databaseUrl, setupProblems } from "@/lib/setup-check";
 import { statusPage, type StatusRow } from "@/lib/setup-page";
@@ -36,10 +36,36 @@ function explain(e: unknown): { detail: string; steps: string[] } {
 }
 
 async function withTimeout<T>(p: Promise<T>, ms: number) {
-  return Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(Object.assign(new Error("timeout"), { code: "STATUS_TIMEOUT" })), ms))]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error("timeout"), { code: "STATUS_TIMEOUT" })), ms);
+  });
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-/** Setup checklist for the site owner: settings, database, demo data, background jobs. No secrets are shown. */
+/** Can we log in to the database at all? Independent of the app's own setup (tables, demo data, secrets). */
+async function ping(url: string) {
+  const { default: postgres } = await import("postgres");
+  const client = postgres(connectionUrl(url), { max: 1, connect_timeout: 15, idle_timeout: 1, prepare: false, onnotice: () => {} });
+  try {
+    await withTimeout(client`select 1`, 20_000);
+    return null;
+  } catch (e) {
+    return e;
+  } finally {
+    await client.end({ timeout: 1 }).catch(() => {});
+  }
+}
+
+/**
+ * Setup checklist for the site owner: settings, database, demo data,
+ * background jobs. It is public, so it answers yes or no: no secrets,
+ * addresses, setting names, counts or times.
+ */
 export async function GET() {
   const rowsOut: StatusRow[] = [];
   const problems = setupProblems();
@@ -55,29 +81,38 @@ export async function GET() {
   const dbProblem = problems.find((p) => p.id === "database-missing");
   if (dbProblem) rowsOut.push({ label: "Database", state: "problem", detail: dbProblem.title, steps: dbProblem.steps });
   else if (!db) rowsOut.push({ label: "Database", state: "info", detail: "Using the built-in local database (fine on a computer, not on a hosting service)." });
-  else {
+  else if (secretProblem) {
+    // The app's own database setup needs the secret, so only check the connection.
+    const err = await ping(db.url);
+    if (err) {
+      const x = explain(err);
+      rowsOut.push({ label: "Database", state: "problem", detail: x.detail, steps: x.steps });
+    } else rowsOut.push({ label: "Database", state: "ok", detail: "Connected. Setup finishes once the secret key is set." });
+  } else {
     try {
       const conn = await withTimeout(getDb(), 90_000);
-      rowsOut.push({ label: "Database", state: "ok", detail: `Connected and set up (setting ${db.name}).` });
+      rowsOut.push({ label: "Database", state: "ok", detail: "Connected and set up." });
       try {
-        const [u] = rows<{ n: number }>(await conn.execute(sql`select count(*)::int as n from users`));
-        const [d] = rows<{ value: string | null }>(await conn.execute(sql`select value #>> '{}' as value from settings where key = 'demo:loaded_on'`));
-        const n = Number(u?.n ?? 0);
+        const [u] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from users) as found`));
+        const [d] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from settings where key = 'demo:loaded_on') as found`));
+        const seedingOff = process.env.DEMO_AUTO_SEED === "false";
         rowsOut.push(
-          n > 0
-            ? { label: "Accounts", state: "ok", detail: `${n} accounts${d?.value ? `; demo data loaded on ${d.value}` : ""}.` }
-            : {
-                label: "Accounts",
-                state: env.demoMode ? "problem" : "info",
-                detail: env.demoMode ? "The database is empty: demo data didn't load." : "No accounts yet.",
-                steps: env.demoMode ? ["Make sure DEMO_AUTO_SEED isn't set to false, then redeploy.", "Open Vercel → Logs and look for lines starting with [db]."] : undefined,
-              },
+          u?.found
+            ? { label: "Accounts", state: "ok", detail: d?.found ? "Demo patients, doctors and clinics are loaded." : "Accounts exist." }
+            : env.demoMode && !seedingOff
+              ? {
+                  label: "Accounts",
+                  state: "problem",
+                  detail: "The database is empty: demo data didn't load.",
+                  steps: ["Open Vercel → your project → Logs and look for lines starting with [db].", "Then redeploy."],
+                }
+              : { label: "Accounts", state: "info", detail: seedingOff ? "No accounts yet (loading demo data is turned off)." : "No accounts yet." },
         );
-        const [job] = rows<{ value: string | null }>(await conn.execute(sql`select value #>> '{}' as value from settings where key = 'job:hourly'`));
+        const [job] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from settings where key = 'job:hourly') as found`));
         rowsOut.push({
           label: "Background jobs (reminders, refunds)",
           state: "info",
-          detail: job?.value ? `Last ran ${new Date(job.value).toUTCString()}.` : "Haven't run yet.",
+          detail: job?.found ? "Have run." : "Haven't run yet.",
           steps: process.env.VERCEL ? ["For reminders, set up a free job at cron-job.org that opens /api/cron/tick every 15 minutes with the header Authorization: Bearer <your CRON_SECRET>."] : undefined,
         });
       } catch (e) {
@@ -86,7 +121,7 @@ export async function GET() {
       }
     } catch (e) {
       if ((e as { code?: string }).code === "STATUS_TIMEOUT") {
-        rowsOut.push({ label: "Database", state: "info", detail: "Still setting up the database (the first visit can take a minute).", steps: ["Reload this page in a minute."] });
+        rowsOut.push({ label: "Database", state: "problem", detail: "Still setting up the database, or it isn't answering (the first visit can take a minute).", steps: ["Reload this page in a minute."] });
       } else {
         const x = explain(e);
         rowsOut.push({ label: "Database", state: "problem", detail: x.detail, steps: x.steps });
