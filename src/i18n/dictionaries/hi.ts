@@ -6,6 +6,12 @@ import app4 from "./hi-app-4";
 import app5 from "./hi-app-5";
 import app6 from "./hi-app-6";
 import app7 from "./hi-app-7";
+import redesignA1 from "./hi-redesign-a1";
+import redesignA2 from "./hi-redesign-a2";
+import redesignB1 from "./hi-redesign-b1";
+import redesignB2 from "./hi-redesign-b2";
+import redesignB3 from "./hi-redesign-b3";
+import redesignC from "./hi-redesign-c";
 
 // Hindi. Keys are the English strings used on screen. Plain, everyday Hindi
 // (not overly formal) so it is easy for older users to read.
@@ -115,5 +121,21 @@ const dict: Dict = {
   "Super admin": "सुपर एडमिन",
 };
 
-// Patient-facing screens are translated in hi-app-*.ts; this file wins on overlap.
-export default { ...app1, ...app2, ...app3, ...app4, ...app5, ...app6, ...app7, ...dict } as Dict;
+// Patient-facing screens are translated in hi-app-*.ts; this file wins on overlap,
+// and the redesign files (hi-redesign-*.ts) win over both.
+export default {
+  ...app1,
+  ...app2,
+  ...app3,
+  ...app4,
+  ...app5,
+  ...app6,
+  ...app7,
+  ...dict,
+  ...redesignA1,
+  ...redesignA2,
+  ...redesignB1,
+  ...redesignB2,
+  ...redesignB3,
+  ...redesignC,
+} as Dict;
