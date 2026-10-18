@@ -120,7 +120,7 @@ export function ConsultTools({
       {tab === "notes" ? (
         <div className="space-y-3">
           <p className="text-end text-xs text-fg-muted" aria-live="polite">
-            {saved === "saving" ? t("Saving…") : saved === "saved" ? t("Saved") : saved === "error" ? t("Not saved — check connection") : ""}
+            {saved === "saving" ? t("Saving…") : saved === "saved" ? t("Saved") : saved === "error" ? t("Not saved. Check your connection.") : ""}
           </p>
           <Field label={t("Chief complaint")} htmlFor="n-complaint" required>
             <Textarea id="n-complaint" rows={2} value={notes.complaint} onChange={(e) => set("complaint", e.target.value)} />
@@ -147,7 +147,7 @@ export function ConsultTools({
           <Field label={t("Summary for the patient, in simple words")} htmlFor="n-sum" required hint={t("No jargon. This is what the patient and family will read.")}>
             <Textarea id="n-sum" rows={3} value={notes.patientSummary} onChange={(e) => set("patientSummary", e.target.value)} />
           </Field>
-          <Field label={t("Follow-up date")} htmlFor="n-fu">
+          <Field label={t("Follow up date")} htmlFor="n-fu">
             <Input id="n-fu" type="date" value={notes.followUpDate ?? ""} onChange={(e) => set("followUpDate", e.target.value || null)} />
           </Field>
           <Field label={t("Private notes (not shown to the patient)")} htmlFor="n-priv">
@@ -181,7 +181,7 @@ function IdentityCheck({ apptId, isMinor, needsExplicitConsent, onDone }: { appt
           <Input placeholder={t("Relationship")} value={gRel} onChange={(e) => setGRel(e.target.value)} aria-label={t("Relationship")} />
         </div>
       ) : null}
-      {needsExplicitConsent ? <Checkbox id="xc" checked={consent} onChange={(e) => setConsent(e.target.checked)} label={t("The patient agreed to this teleconsultation (booked by a family member — record explicit consent).")} /> : null}
+      {needsExplicitConsent ? <Checkbox id="xc" checked={consent} onChange={(e) => setConsent(e.target.checked)} label={t("The patient agreed to this teleconsultation. It was booked by a family member, so record explicit consent.")} /> : null}
       {err ? <p role="alert" className="text-sm text-danger">{err}</p> : null}
       <Button
         size="sm"
@@ -247,7 +247,7 @@ function RxBuilder({ apptId, mode, consultType, allergies, currentMedicines, med
     <div className="space-y-4">
       <Alert tone="info">
         {t("This is a {type} by {mode}. Allowed: {lists}.", {
-          type: consultType === "first" ? t("first consult") : t("follow-up"),
+          type: consultType === "first" ? t("first consult") : t("follow up consult"),
           mode: t(mode === "in_clinic" ? "clinic visit" : mode),
           lists: allowed.map((l) => listLabel(l)).join(", "),
         })}{" "}
@@ -327,7 +327,7 @@ function RxBuilder({ apptId, mode, consultType, allergies, currentMedicines, med
                 <datalist id={`str-${it.key}`}>{medicines.find((m) => m.id === it.medicineId)?.strengths.map((s) => <option key={s} value={s} />)}</datalist>
                 <Input value={it.dose} onChange={(e) => update(it.key, { dose: e.target.value })} aria-label={t("Dose")} placeholder={t("Dose")} />
                 <Select value={it.frequency} onChange={(e) => update(it.key, { frequency: e.target.value })} aria-label={t("How often")}>
-                  {Object.entries(FREQUENCIES).map(([k, v]) => <option key={k} value={k}>{k} — {t(v.label)}</option>)}
+                  {Object.entries(FREQUENCIES).map(([k, v]) => <option key={k} value={k}>{k} ({t(v.label)})</option>)}
                 </Select>
                 <Select value={it.timing} onChange={(e) => update(it.key, { timing: e.target.value })} aria-label={t("When")}>
                   {Object.entries(TIMINGS).map(([k, v]) => <option key={k} value={k}>{v ? t(v) : t("any time")}</option>)}
@@ -372,7 +372,7 @@ function RxBuilder({ apptId, mode, consultType, allergies, currentMedicines, med
           })
         }
       >
-        {t("Sign and send e-prescription")}
+        {t("Sign and send digital prescription")}
       </Button>
       <p className="text-xs text-fg-muted">{t("The prescription is digitally signed and carries a QR code that pharmacists can verify.")}</p>
     </div>
@@ -411,7 +411,7 @@ function Actions({ apptId, clinics, specialties, done }: { apptId: string; clini
             <Button size="sm" disabled={pending || !tests.trim()} onClick={() => run("tests", { tests: tests.split(",").map((s) => s.trim()).filter(Boolean), reason })}>{t("Order")}</Button>
           </div>
         ) : null}
-        {btn("visit", t("Needs in-person visit"), Building2)}
+        {btn("visit", t("Needs a visit in person"), Building2)}
         {open === "visit" ? (
           <div className="space-y-2 rounded-xl bg-surface-2 p-3">
             <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("Reason, e.g. examination and ECG")} aria-label={t("Reason")} />
@@ -439,19 +439,19 @@ function Actions({ apptId, clinics, specialties, done }: { apptId: string; clini
             <Button size="sm" disabled={pending || !reason.trim()} onClick={() => run("specialist_referral", { specialtySlug: spec, reason })}>{t("Refer")}</Button>
           </div>
         ) : null}
-        {btn("fu", t("Schedule follow-up"), CalendarClock)}
+        {btn("fu", t("Schedule follow up"), CalendarClock)}
         {open === "fu" ? (
           <div className="space-y-2 rounded-xl bg-surface-2 p-3">
             <Select value={String(days)} onChange={(e) => setDays(Number(e.target.value))} aria-label={t("When")}>
               {[3, 7, 14, 28, 42, 90].map((d) => <option key={d} value={d}>{t("In {n} days", { n: d })}</option>)}
             </Select>
-            <Button size="sm" disabled={pending} onClick={() => run("follow_up", { dueInDays: days, reason: reason || undefined })}>{t("Recommend follow-up")}</Button>
+            <Button size="sm" disabled={pending} onClick={() => run("follow_up", { dueInDays: days, reason: reason || undefined })}>{t("Recommend follow up")}</Button>
           </div>
         ) : null}
         {btn("em", t("Emergency: go to hospital"), Siren, "danger")}
         {open === "em" ? (
           <div className="space-y-2 rounded-xl bg-danger-soft p-3">
-            <p className="text-sm">{t("This ends the consult and shows the patient the local emergency number and nearest hospitals.")}</p>
+            <p className="text-sm">{t("This ends the consult and tells the patient to go to the nearest hospital or call their local emergency number.")}</p>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("Reason (for the record)")} aria-label={t("Reason")} />
             <Button size="sm" variant="danger" disabled={pending} onClick={() => run("emergency", { reason })}>{t("Send to emergency")}</Button>
           </div>

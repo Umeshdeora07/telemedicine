@@ -12,7 +12,7 @@ export default async function CoordinatorLayout({ children }: { children: React.
     { href: "/coordinator/callbacks", label: t("Callbacks"), icon: "phone", badge: cb.filter((c) => c.status === "open").length },
     { href: "/coordinator/book", label: t("Book for a patient"), icon: "calendar" },
     { href: "/coordinator/interpreters", label: t("Interpreters"), icon: "message", badge: iq.filter((q) => !q.a.interpreterId).length },
-    { href: "/coordinator/cases", label: t("International"), icon: "globe" },
+    { href: "/coordinator/cases", label: t("Treatment in India"), icon: "globe" },
   ];
   return (
     <PortalShell title={t("Care team")} nav={nav} idleMinutes={session.idleMinutes}>

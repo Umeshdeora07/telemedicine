@@ -14,7 +14,7 @@ export function SlotToggle({ id, label, status, action = toggleSlotBlockAction }
       type="button"
       disabled={booked || pending}
       aria-pressed={status === "blocked"}
-      title={booked ? t("Booked") : status === "blocked" ? t("Blocked — tap to open") : t("Free — tap to block")}
+      title={booked ? t("Booked") : status === "blocked" ? t("Blocked. Tap to open.") : t("Free. Tap to block.")}
       onClick={() => start(() => action(id, status !== "blocked"))}
       className={cn("tap rounded-lg border px-2 text-sm", booked ? "border-primary bg-primary text-on-primary" : status === "blocked" ? "border-line bg-surface-2 text-fg-muted line-through" : "border-field hover:border-primary")}
     >

@@ -11,7 +11,7 @@ export default async function ClinicLayout({ children }: { children: React.React
   const nav = [
     { href: "/clinic", label: t("Today"), icon: "home" },
     { href: "/clinic/check-in", label: t("Check in"), icon: "qr" },
-    { href: "/clinic/cases", label: t("International"), icon: "globe" },
+    { href: "/clinic/cases", label: t("Treatment in India"), icon: "globe" },
     { href: "/clinic/doctors", label: t("Doctors and slots"), icon: "stethoscope" },
     { href: "/clinic/payments", label: t("Payments"), icon: "receipt" },
   ];

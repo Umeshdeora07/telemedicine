@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { CheckCircle2, Siren } from "lucide-react";
 import { useI18n } from "@/i18n/client";
 import { savePreConsultAction, type PrepState } from "@/server/actions/consult-prep";
@@ -31,11 +31,14 @@ export function PreConsultForm({
 }) {
   const { t } = useI18n();
   const [state, action] = useActionState(savePreConsultAction, {} as PrepState);
+  // Urgent warning signs stay in the browser: if any is ticked, we ask the
+  // patient to get urgent care instead of waiting for the consultation.
+  const [flags, setFlags] = useState<string[]>([]);
   if (state.saved) {
     return (
       <div className="space-y-4 text-center" role="status">
         <CheckCircle2 className="mx-auto size-12 text-success" aria-hidden />
-        <p className="text-lg font-bold">{t("Thank you. {doctor} will read this before the consult.", { doctor: doctorName })}</p>
+        <p className="text-lg font-bold">{t("Thank you. {doctor} will read this before the consultation.", { doctor: doctorName })}</p>
         <ButtonLink href={nextHref} size="lg">
           {t("Continue")}
         </ButtonLink>
@@ -56,17 +59,17 @@ export function PreConsultForm({
         <Input id="since" name="since" defaultValue={defaults.since} placeholder={t("For example: 3 days, since last Monday")} required />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("Medicines {name} takes now", { name: patientName })} htmlFor="currentMedicines" required hint={t("Include tablets, syrups, creams, supplements.")}>
+        <Field label={t("Medicines {name} takes now", { name: patientName })} htmlFor="currentMedicines" required hint={t("Include tablets, syrups, creams and supplements.")}>
           <Textarea id="currentMedicines" name="currentMedicines" defaultValue={defaults.currentMedicines} rows={3} />
         </Field>
-        <Field label={t("Allergies")} htmlFor="allergies" required hint={t("To medicines or food. Write 'None' if none.")}>
+        <Field label={t("Allergies")} htmlFor="allergies" required hint={t("To medicines or food. Write None if there are none.")}>
           <Textarea id="allergies" name="allergies" defaultValue={defaults.allergies} rows={3} />
         </Field>
       </div>
       <Field label={t("Past illnesses or operations")} htmlFor="pastConditions" required>
         <Textarea id="pastConditions" name="pastConditions" defaultValue={defaults.pastConditions} rows={2} />
       </Field>
-      <Field label={t("Questions you want to ask the doctor")} htmlFor="questions" optional={t("optional")} hint={t("It's easy to forget during the call — write them here.")}>
+      <Field label={t("Questions you want to ask the doctor")} htmlFor="questions" optional={t("optional")} hint={t("It is easy to forget during the call, so write them here.")}>
         <div className="flex items-start gap-2">
           <Textarea id="questions" name="questions" defaultValue={defaults.questions} rows={2} />
           <VoiceInput targetId="questions" />
@@ -77,7 +80,7 @@ export function PreConsultForm({
         initial={uploaded}
         name="documentIds"
         label={t("Reports or photos (optional)")}
-        hint={t("Lab reports, prescriptions, or a photo of the problem area. Photos are compressed for slow networks.")}
+        hint={t("Lab reports, earlier prescriptions or a photo of the problem area. Photos are made smaller so they upload quickly on a slow connection.")}
       />
       {isMinor ? (
         <fieldset className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
@@ -98,18 +101,31 @@ export function PreConsultForm({
         <div className="mt-3 grid gap-1.5">
           {RED_FLAGS.slice(0, 8).map((f) => (
             <label key={f.id} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg p-1.5">
-              <input type="checkbox" name="redFlags" value={f.id} className="mt-0.5 size-6 shrink-0 accent-[var(--danger-solid)]" />
+              <input
+                type="checkbox"
+                value={f.id}
+                checked={flags.includes(f.id)}
+                onChange={(e) => setFlags(e.target.checked ? [...flags, f.id] : flags.filter((x) => x !== f.id))}
+                className="mt-0.5 size-6 shrink-0 accent-[var(--danger-solid)]"
+              />
               <span>{t(f.label)}</span>
             </label>
           ))}
         </div>
+        {flags.length ? (
+          <Alert tone="danger" title={t("Please get urgent care now")} className="mt-3">
+            {t("Do not wait for the online consultation. Go to the nearest hospital or call your local emergency number now.")}
+            {flags.includes("self_harm") ? ` ${t("If you are thinking about harming yourself, please also tell someone you trust now.")}` : ""}
+          </Alert>
+        ) : null}
       </details>
       <div className="space-y-3 rounded-xl bg-surface-2 p-4">
-        <Checkbox id="shareHistory" name="shareHistory" defaultChecked={defaults.shareHistory} label={t("Let this doctor see {name}'s past records", { name: patientName })} hint={t("Only for 30 days. You can stop sharing any time in Settings → Privacy.")} />
+        <Checkbox id="shareHistory" name="shareHistory" defaultChecked={defaults.shareHistory} label={t("Let this doctor see {name}'s past records", { name: patientName })} hint={t("Only for 30 days. You can stop sharing at any time in Settings.")} />
         <Checkbox id="updateProfile" name="updateProfile" defaultChecked label={t("Save medicines and allergies to the health profile")} />
-        <Checkbox id="consent" name="consent" required label={t("I agree to this teleconsultation and understand the doctor may advise an in-person visit.")} />
+        <Checkbox id="consent" name="consent" required label={t("I agree to this teleconsultation and understand that the doctor may advise a visit in person.")} />
       </div>
-      <SubmitButton size="lg" className="w-full" pendingText={t("Saving…")}>
+      {/* Pass disabled only when needed: SubmitButton lets an explicit value override its own pending state. */}
+      <SubmitButton size="lg" className="w-full" pendingText={t("Saving…")} {...(flags.length ? { disabled: true } : {})}>
         {t("Send to doctor")}
       </SubmitButton>
     </form>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { getRoomAccess } from "@/server/room";
 import { getSession } from "@/server/auth/session";
 import { getViewContext } from "@/server/context";
-import { locationOptions } from "@/server/location";
 import { joinWindow } from "@/server/room-guard";
 import { ConsultRoom } from "@/components/room/consult-room";
 import { ConsultPanel } from "@/components/doctor/consult-panel";
@@ -54,8 +53,6 @@ export default async function ConsultRoomPage({ params }: { params: Promise<{ id
       doctorName={access.doctor.fullName}
       patientName={access.patient.fullName}
       startAtLabel={`${fmt.dateTime(a.startAt)} (${fmt.zone()})`}
-      locationOptions={await locationOptions()}
-      bookedLocation={{ country: a.patientLocationCountry, region: a.patientLocationRegion }}
       summaryHref={summaryHref}
       backHref={isDoctor ? "/doctor" : access.userId ? `/consults/${a.id}` : "/"}
       canInvite={access.role !== "interpreter" && Boolean(access.userId)}

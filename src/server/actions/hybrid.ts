@@ -27,7 +27,6 @@ export async function bookClinicVisitAction(parentId: string, slotId: string, do
       mode: "in_clinic",
       slotId,
       patientId: parent.patientId,
-      location: { country: "IN", region: null },
       currency,
       patientTimeZone: "Asia/Kolkata",
       consultType: "follow_up",

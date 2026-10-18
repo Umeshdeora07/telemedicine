@@ -12,6 +12,7 @@ import redesignB1 from "./hi-redesign-b1";
 import redesignB2 from "./hi-redesign-b2";
 import redesignB3 from "./hi-redesign-b3";
 import redesignC from "./hi-redesign-c";
+import redesignC2 from "./hi-redesign-c2";
 
 // Hindi. Keys are the English strings used on screen. Plain, everyday Hindi
 // (not overly formal) so it is easy for older users to read.
@@ -138,4 +139,5 @@ export default {
   ...redesignB2,
   ...redesignB3,
   ...redesignC,
+  ...redesignC2,
 } as Dict;

@@ -22,7 +22,7 @@ export function ReviewForm({ apptId, doctorName }: { apptId: string; doctorName:
   return (
     <div className="space-y-3">
       <fieldset>
-        <legend className="mb-1 font-medium">{t("How was your consult with {name}?", { name: doctorName })}</legend>
+        <legend className="mb-1 font-medium">{t("How was your consultation with {name}?", { name: doctorName })}</legend>
         <div className="flex gap-1" role="radiogroup" aria-label={t("Rating")}>
           {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={t("{n} stars", { n })} onClick={() => setRating(n)} className="tap grid place-items-center rounded-lg">

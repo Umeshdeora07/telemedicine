@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -39,8 +38,7 @@ export async function savePreConsultAction(_prev: PrepState, form: FormData): Pr
   const t = await getT();
   const user = await requireUser();
   const flags = form.getAll("redFlags").map(String);
-  const apptId = String(form.get("apptId"));
-  if (flags.length) redirect(`/emergency?flags=${flags.join(",")}&from=preconsult&appt=${apptId}`);
+  if (flags.length) return { error: t("Some of your answers can be signs of an emergency. This service is not for emergencies. Please go to the nearest hospital now or call your local emergency number.") };
   const parsed = schema.safeParse(Object.fromEntries([...form.entries()].filter(([k]) => k !== "redFlags" && k !== "documentIds")));
   if (!parsed.success) {
     const missingConsent = parsed.error.issues.some((i) => i.path[0] === "consent");

@@ -30,7 +30,7 @@ export const CASE_STEPS: { status: CaseStatus; label: string }[] = [
   { status: "arrived", label: "Arrived in India" },
   { status: "in_treatment", label: "In treatment" },
   { status: "discharged", label: "Discharged" },
-  { status: "follow_up", label: "Follow-up from home" },
+  { status: "follow_up", label: "Follow up from home" },
   { status: "closed", label: "Closed" },
 ];
 
@@ -256,14 +256,14 @@ export async function issueVisaLetter(
       { heading: "To: The Visa Officer, Embassy / High Commission of India", lines: ["Subject: Invitation for medical treatment (e-Medical visa)"] },
       {
         heading: "Patient",
-        lines: [`Name: ${p!.fullName}`, `Nationality: ${v.nationality}`, `Passport number: ${v.passportNumber}`, `Date of birth: ${p!.dob ?? "—"}`],
+        lines: [`Name: ${p!.fullName}`, `Nationality: ${v.nationality}`, `Passport number: ${v.passportNumber}`, `Date of birth: ${p!.dob ?? "Not given"}`],
       },
       {
         heading: "Treatment",
         lines: [
           `We confirm that the above patient has been evaluated by our specialist and is advised: ${v.treatment}.`,
           v.expectedAdmission ? `Expected admission date: ${v.expectedAdmission}.` : "Admission date to be confirmed on arrival.",
-          v.expectedDays ? `Expected stay in India: about ${v.expectedDays} days, including recovery and follow-up.` : "",
+          v.expectedDays ? `Expected stay in India: about ${v.expectedDays} days, including recovery and follow up.` : "",
           "We request you to kindly grant an e-Medical visa to the patient.",
         ].filter(Boolean),
       },

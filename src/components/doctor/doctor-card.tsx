@@ -1,92 +1,129 @@
+import "server-only";
 import Link from "next/link";
-import { Clock, Languages, MapPin, Star, Video, Building2 } from "lucide-react";
+import { asc, inArray } from "drizzle-orm";
+import { CalendarClock, GraduationCap, Languages, Star, Video } from "lucide-react";
+import { getDb } from "@/db";
+import { doctorQualifications } from "@/db/schema";
 import { DoctorAvatar } from "@/components/ui/avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { ButtonLink } from "@/components/ui/button";
 import { languageName } from "@/config/languages";
+import { dayInZone } from "@/lib/time";
 import type { DoctorListItem } from "@/server/doctors";
 import type { ViewContext } from "@/server/context";
 
-export function DoctorCard({ d, ctx, forLocation }: { d: DoctorListItem; ctx: ViewContext; forLocation?: string }) {
-  const { t, fmt, priceFor } = ctx;
-  const online = d.modes.find((m) => m !== "in_clinic");
-  const price = online ? priceFor(d.fees, online) : priceFor(d.fees, "in_clinic");
-  const hasClinic = d.modes.includes("in_clinic");
-  const q = forLocation ? `?for=${forLocation}` : "";
+/**
+ * Qualification lines ("MBBS, MS (Orthopaedics)") for several doctors in one
+ * query. Pages that list doctors call this once and pass each line to
+ * DoctorCard; a card without one loads its own.
+ */
+export async function loadQualificationLines(doctorIds: string[]) {
+  const lines = new Map<string, string>();
+  if (!doctorIds.length) return lines;
+  const db = await getDb();
+  const rows = await db
+    .select({ doctorId: doctorQualifications.doctorId, degree: doctorQualifications.degree })
+    .from(doctorQualifications)
+    .where(inArray(doctorQualifications.doctorId, doctorIds))
+    .orderBy(asc(doctorQualifications.year));
+  for (const r of rows) lines.set(r.doctorId, lines.has(r.doctorId) ? `${lines.get(r.doctorId)}, ${r.degree}` : r.degree);
+  return lines;
+}
+
+/** The online mode a card or profile books by default: video when offered. */
+export function defaultOnlineMode(modes: readonly string[]) {
+  return (["video", "audio", "chat"] as const).find((m) => modes.includes(m)) ?? null;
+}
+
+/** Doctor card for listings: who they are, when they are free, the fee, and one clear button to book. */
+export async function DoctorCard({ d, ctx, qualifications }: { d: DoctorListItem; ctx: ViewContext; qualifications?: string }) {
+  const { t, tp, fmt, priceFor } = ctx;
+  const quals = qualifications ?? (await loadQualificationLines([d.id])).get(d.id) ?? "";
+  const mode = defaultOnlineMode(d.modes);
+  const price = mode ? priceFor(d.fees, mode) : null;
+  const profile = `/doctors/${d.slug}`;
+  const rated = Number(d.ratingCount) > 0;
+  const today = d.nextOnline ? dayInZone(d.nextOnline, ctx.tz) === dayInZone(new Date(), ctx.tz) : false;
+
   return (
-    <article className="card flex flex-col gap-4 p-4 sm:p-5" aria-labelledby={`doc-${d.id}`}>
-      <div className="flex gap-4">
-        <DoctorAvatar name={d.fullName} seed={d.avatarSeed} gender={d.gender} photoUrl={d.photoUrl} size={72} senior={d.experienceYears >= 20} />
-        <div className="min-w-0 flex-1 space-y-1">
-          <h3 id={`doc-${d.id}`} className="text-lg font-bold leading-snug">
-            <Link href={`/doctors/${d.slug}${q}`} className="hover:underline">
-              {d.fullName}
-            </Link>
-          </h3>
-          <p className="text-fg-muted">
-            {t(d.specialtyName)} · {t("{n} years", { n: d.experienceYears })}
-          </p>
-          <VerifiedBadge label={t("Verified")} title={d.lastVerifiedAt ? t("Licence checked on {date}", { date: fmt.date(d.lastVerifiedAt) }) : undefined} />
+    <article className="card @container flex flex-col p-4 sm:p-5" aria-labelledby={`doc-${d.id}`}>
+      <div className="flex flex-1 flex-col gap-4 @2xl:flex-row @2xl:items-stretch">
+        <div className="flex min-w-0 flex-1 gap-4">
+          <DoctorAvatar name={d.fullName} photoUrl={d.photoUrl} size={72} />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div>
+              <h3 id={`doc-${d.id}`} className="text-lg font-bold leading-snug">
+                <Link href={profile} className="text-primary hover:underline">
+                  {d.fullName}
+                </Link>
+              </h3>
+              <p className="font-medium text-heading">{t(d.specialtyName)}</p>
+              {quals ? <p className="text-sm text-fg-muted">{quals}</p> : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <VerifiedBadge label={t("Registration verified")} title={d.lastVerifiedAt ? t("Last checked on {date}", { date: fmt.date(d.lastVerifiedAt) }) : undefined} />
+              {rated ? (
+                <span className="inline-flex items-center gap-1 text-[0.9375rem]">
+                  <Star className="size-4 fill-accent text-accent" aria-hidden />
+                  <strong>{Number(d.ratingAvg).toFixed(1)}</strong>
+                  <span className="text-fg-muted">({tp("{count} review", "{count} reviews", Number(d.ratingCount))})</span>
+                </span>
+              ) : null}
+            </div>
+            <ul className="grid gap-1 text-[0.9375rem]">
+              <li className="flex items-start gap-2">
+                <GraduationCap className="mt-1 size-4 shrink-0 text-fg-muted" aria-hidden />
+                <span>{t("{n} years experience", { n: d.experienceYears })}</span>
+              </li>
+              {d.languages.length ? (
+                <li className="flex items-start gap-2">
+                  <Languages className="mt-1 size-4 shrink-0 text-fg-muted" aria-hidden />
+                  <span>{t("Speaks {languages}", { languages: d.languages.map((l) => t(languageName(l))).join(", ") })}</span>
+                </li>
+              ) : null}
+              <li className="flex items-start gap-2">
+                <CalendarClock className="mt-1 size-4 shrink-0 text-fg-muted" aria-hidden />
+                {d.nextOnline ? (
+                  <span>
+                    {today ? <span className="font-semibold text-success">{t("Available today")}</span> : t("Next available")}
+                    {": "}
+                    <strong className="font-semibold">{today ? fmt.time(d.nextOnline) : fmt.dateTime(d.nextOnline)}</strong>
+                  </span>
+                ) : (
+                  <span className="text-fg-muted">{t("No free times at the moment")}</span>
+                )}
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
-      <ul className="grid gap-1.5 text-[0.9375rem] text-fg">
-        <li className="flex items-center gap-2">
-          <Star className="size-4 fill-accent text-accent" aria-hidden />
-          {Number(d.ratingCount) > 0 ? (
-            <span>
-              <strong>{Number(d.ratingAvg).toFixed(1)}</strong> <span className="text-fg-muted">({t("{n} reviews", { n: d.ratingCount })})</span>
-            </span>
-          ) : (
-            <span className="text-fg-muted">{t("New doctor")}</span>
-          )}
-        </li>
-        <li className="flex items-center gap-2">
-          <Languages className="size-4 text-fg-muted" aria-hidden />
-          <span>{d.languages.map((l) => t(languageName(l))).join(", ")}</span>
-        </li>
-        {d.clinicName ? (
-          <li className="flex items-center gap-2">
-            <MapPin className="size-4 text-fg-muted" aria-hidden />
-            <span>
-              {d.clinicName}, {d.clinicCity}
-            </span>
-          </li>
-        ) : null}
-        <li className="flex items-center gap-2">
-          <Clock className="size-4 text-fg-muted" aria-hidden />
-          {d.nextOnline ? (
-            <span>
-              {t("Next online:")} <strong>{fmt.dateTime(d.nextOnline)}</strong>
-            </span>
-          ) : d.nextClinic ? (
-            <span>
-              {t("Next clinic slot:")} <strong>{fmt.dateTime(d.nextClinic)}</strong>
-            </span>
-          ) : (
-            <span className="text-fg-muted">{t("No slots in the next 2 weeks")}</span>
-          )}
-        </li>
-      </ul>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3">
-        <p>
+
+        <div className="flex flex-col justify-end gap-3 border-t border-line pt-4 @2xl:w-72 @2xl:shrink-0 @2xl:border-s @2xl:border-t-0 @2xl:ps-5 @2xl:pt-0">
           {price ? (
-            <>
-              <span className="text-xl font-extrabold text-heading">{price.label}</span>
-              <span className="block text-sm text-fg-muted">{online ? t("per online consult") : t("per clinic visit")}</span>
-            </>
+            <p>
+              <span className="block text-2xl font-extrabold text-heading">{price.label}</span>
+              <span className="text-sm text-fg-muted">{mode === "video" ? t("Video consultation fee") : t("Consultation fee")}</span>
+            </p>
           ) : null}
-        </p>
-        <div className="flex gap-2">
-          {hasClinic && online ? (
-            <ButtonLink href={`/book/${d.slug}?mode=in_clinic`} variant="outline" size="sm" aria-label={t("Book clinic visit with {name}", { name: d.fullName })}>
-              <Building2 className="size-4" aria-hidden />
-              <span className="hidden sm:inline">{t("Clinic")}</span>
+          <div className="flex flex-col gap-2 @md:flex-row @2xl:flex-col">
+            {mode ? (
+              <ButtonLink
+                href={`/book/${d.slug}?mode=${mode}`}
+                aria-label={mode === "video" ? t("Book video consultation with {name}", { name: d.fullName }) : t("Book consultation with {name}", { name: d.fullName })}
+                className="whitespace-normal @md:flex-1 @2xl:flex-none"
+              >
+                <Video className="size-5 shrink-0" aria-hidden />
+                {mode === "video" ? t("Book video consultation") : t("Book consultation")}
+              </ButtonLink>
+            ) : null}
+            <ButtonLink
+              href={profile}
+              variant={mode ? "outline" : "primary"}
+              aria-label={t("View profile of {name}", { name: d.fullName })}
+              className="whitespace-normal @md:flex-1 @2xl:flex-none"
+            >
+              {t("View profile")}
             </ButtonLink>
-          ) : null}
-          <ButtonLink href={`/book/${d.slug}${online ? "" : "?mode=in_clinic"}${q ? (online ? q : q.replace("?", "&")) : ""}`} size="sm" aria-label={t("Consult {name}", { name: d.fullName })}>
-            {online ? <Video className="size-4" aria-hidden /> : <Building2 className="size-4" aria-hidden />}
-            {online ? t("Consult") : t("Book visit")}
-          </ButtonLink>
+          </div>
         </div>
       </div>
     </article>

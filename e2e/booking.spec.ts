@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { demoLogin } from "./helpers";
 
-test("patient books a video consult, pays and fills the pre-consult form", async ({ page }) => {
+test("patient books a video consultation, pays and fills the health form", async ({ page }) => {
   await demoLogin(page, "Rahul Mehta");
   await page.goto("/doctors/dr-kavita-sharma");
-  await page.getByRole("link", { name: /Consult · / }).first().click();
+  await page.getByRole("link", { name: /Book video consultation/ }).first().click();
   await page.waitForURL(/\/book\//);
   await page.getByRole("radio").first().click();
   await page.getByRole("button", { name: "Continue" }).click();
@@ -21,5 +21,5 @@ test("patient books a video consult, pays and fills the pre-consult form", async
   await page.getByLabel(/Since when/i).fill("2 days");
   await page.getByLabel(/I agree to this teleconsultation/).check();
   await page.getByRole("button", { name: /Send to doctor/ }).click();
-  await expect(page.getByText(/(will read this before the consult|Your details are with the doctor)/).first()).toBeVisible();
+  await expect(page.getByText(/(will read this before the consultation|Your details are with the doctor)/).first()).toBeVisible();
 });

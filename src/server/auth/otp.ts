@@ -37,7 +37,7 @@ export async function requestOtp(id: Identifier, purpose = "login", meta?: Recor
   if (!env.demoMode && process.env.NODE_ENV === "production" && !(id.kind === "phone" ? smsConfigured() : emailConfigured())) {
     return {
       ok: false as const,
-      error: id.kind === "phone" ? "Sign-in by text message isn't available yet. Please use your email address." : "Sign-in by email isn't available yet. Please use your mobile number.",
+      error: id.kind === "phone" ? "Signing in by text message isn't available yet. Please use your email address." : "Signing in by email isn't available yet. Please use your mobile number.",
     };
   }
   const db = await getDb();

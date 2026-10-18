@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { getI18n } from "@/i18n/server";
-import { getDeclaredLocation, getViewerRegion } from "@/lib/prefs";
+import { getViewerRegion } from "@/lib/prefs";
 import { getSession } from "@/server/auth/session";
 import { getRates } from "@/server/queries/reference";
 import { formatDate, formatDateTime, formatMoney, formatTime, zoneLabel } from "@/lib/format";
@@ -15,7 +15,6 @@ export const getViewContext = cache(async () => {
   const user = session?.user ?? null;
   const { currency, tz } = await getViewerRegion(user);
   const rates = await getRates();
-  const declared = await getDeclaredLocation();
   const rate = rates[currency]?.rate ?? 1;
   const fmt = {
     money: (minor: number, cur: string = currency) => formatMoney(minor, cur, i18n.intl),
@@ -30,7 +29,7 @@ export const getViewContext = cache(async () => {
     const f = feeFor(fees, mode, cur, r);
     return f ? { ...f, label: formatMoney(f.amountMinor, cur, i18n.intl) } : null;
   };
-  return { ...i18n, session, user, currency, tz, rates, rate, ratesAsOf: rates[currency]?.asOf ?? "", declared, fmt, priceFor };
+  return { ...i18n, session, user, currency, tz, rates, rate, ratesAsOf: rates[currency]?.asOf ?? "", fmt, priceFor };
 });
 
 export type ViewContext = Awaited<ReturnType<typeof getViewContext>>;

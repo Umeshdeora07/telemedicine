@@ -1,8 +1,7 @@
 "use client";
 
 import { useClientValue } from "@/lib/use-client-value";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Captions,
   CaptionsOff,
@@ -25,13 +24,12 @@ import {
 import { useI18n } from "@/i18n/client";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Field, Input } from "@/components/ui/field";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { TechCheck, type JoinChoice } from "./tech-check";
 import { ChatPanel } from "./chat-panel";
 import { useRoom, type Caption } from "./use-room";
-import { detectLocation, type LocOption } from "@/components/location/location-picker";
 import { createInviteAction } from "@/server/actions/room";
 
 type Props = {
@@ -41,21 +39,26 @@ type Props = {
   doctorName: string;
   patientName: string;
   startAtLabel: string;
-  locationOptions: LocOption[];
-  bookedLocation: { country: string; region: string | null };
   panel?: ReactNode;
   summaryHref: string;
   backHref: string;
   canInvite: boolean;
 };
 
-const SPEECH_LANG: Record<string, string> = { en: "en-IN", hi: "hi-IN", ar: "ar-AE", bn: "bn-IN", fr: "fr-FR", ru: "ru-RU", sw: "sw-KE" };
+const SPEECH_LANG: Record<string, string> = { en: "en-IN", hi: "hi-IN" };
+
+/** What to tell the person when the server would not let them into the room. */
+const JOIN_ERRORS: Record<string, string> = {
+  too_early: "The room isn't open yet",
+  not_active: "This consult isn't active",
+  ended: "This consult has ended.",
+  in_clinic: "This is a clinic visit, so there is no online room.",
+};
 
 export function ConsultRoom(p: Props) {
   const { t, locale } = useI18n();
   const isDoctor = p.role === "doctor";
-  const needsLocation = p.role === "patient" || p.role === "caregiver";
-  const [phase, setPhase] = useState<"check" | "location" | "room">("check");
+  const [phase, setPhase] = useState<"check" | "room">("check");
   const [choice, setChoice] = useState<JoinChoice | null>(null);
   const [captions, setCaptions] = useState<Caption[]>([]);
   const room = useRoom(p.apptId, { onCaption: (c) => setCaptions((cs) => [...cs.slice(-3), c]) });
@@ -110,9 +113,9 @@ export function ConsultRoom(p: Props) {
       if (ok) {
         setPhase("room");
         room.reportMedia({ audio: c.audio, video: c.video });
-      } else setPhase(needsLocation ? "location" : "check");
+      } else setPhase("check");
     },
-    [room, needsLocation],
+    [room],
   );
 
   useEffect(() => {
@@ -270,38 +273,24 @@ export function ConsultRoom(p: Props) {
           <p className="text-fg-muted">{p.startAtLabel}</p>
         </div>
         <Alert tone="info" title={t("Quick check before you join")}>{t("Sit somewhere quiet with light in front of you. Calls are encrypted and not recorded unless everyone agrees.")}</Alert>
+        {room.error ? (
+          <Alert tone="warning">{t(JOIN_ERRORS[room.error] ?? "We couldn't connect you to the consult. Please try again.")}</Alert>
+        ) : null}
         {p.mode === "chat" ? (
-          <Button size="lg" className="w-full" onClick={() => (needsLocation ? (setChoice({ stream: null, video: false, audio: false }), setPhase("location")) : enterRoom({ stream: null, video: false, audio: false }))}>
+          <Button size="lg" className="w-full" onClick={() => { room.setError(null); void enterRoom({ stream: null, video: false, audio: false }); }}>
             {t("Open the chat")}
           </Button>
         ) : (
           <TechCheck
             wantVideo={p.mode === "video"}
-            joinLabel={isDoctor ? t("Start consult") : t("Continue")}
+            joinLabel={isDoctor ? t("Start consult") : t("Join consult")}
             onReady={(c) => {
-              setChoice(c);
-              if (needsLocation) setPhase("location");
-              else void enterRoom(c);
+              room.setError(null);
+              void enterRoom(c);
             }}
           />
         )}
       </div>
-    );
-  }
-
-  if (phase === "location") {
-    return (
-      <LocationConfirm
-        apptId={p.apptId}
-        patientName={p.role === "patient" ? null : p.patientName}
-        options={p.locationOptions}
-        initial={p.bookedLocation}
-        error={room.error}
-        onConfirmed={() => {
-          room.setError(null);
-          void enterRoom(choice ?? { stream: null, video: false, audio: false });
-        }}
-      />
     );
   }
 
@@ -533,75 +522,6 @@ function WaitingRoom({ queue, doctorName }: { queue: ReturnType<typeof useRoom>[
       {queue?.runningLate ? <p className="rounded-xl bg-accent/20 p-3">{t("The doctor is running about {n} minutes late. Sorry for the wait.", { n: queue.runningLate })}</p> : null}
       {queue?.doctorBusy ? <p className="text-navy-muted">{t("The doctor is finishing another consult.")}</p> : null}
       <p className="text-sm text-navy-muted">{t("If the doctor doesn't join within 10 minutes of your time, you get a full refund automatically.")}</p>
-    </div>
-  );
-}
-
-function LocationConfirm({ apptId, patientName, options, initial, onConfirmed, error }: { apptId: string; patientName: string | null; options: LocOption[]; initial: { country: string; region: string | null }; onConfirmed: () => void; error: string | null }) {
-  const { t } = useI18n();
-  const [country, setCountry] = useState(initial.country);
-  const [region, setRegion] = useState(initial.region ?? "");
-  const [msg, setMsg] = useState<string | null>(error === "confirm_location" ? null : error);
-  const [busy, setBusy] = useState(false);
-  const [blocked, setBlocked] = useState<string | null>(null);
-  const opt = useMemo(() => options.find((o) => o.code === country), [options, country]);
-  const submit = async (source = "self_declared", c = country, r = region) => {
-    setBusy(true);
-    setMsg(null);
-    const res = await fetch(`/api/rooms/${apptId}/location`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ country: c, region: r || null, source }) });
-    const json = await res.json();
-    setBusy(false);
-    if (res.ok) return onConfirmed();
-    if (json.error === "not_licensed") setBlocked(json.place);
-    else setMsg(json.error ?? t("Something went wrong."));
-  };
-  return (
-    <div className="container-page max-w-lg space-y-5 py-8">
-      <h1 className="text-2xl font-extrabold">{patientName ? t("Where is {name} right now?", { name: patientName }) : t("Where are you right now?")}</h1>
-      <p className="text-fg-muted">{t("We ask before every consult. Doctors may only treat patients in places where they are licensed.")}</p>
-      {blocked ? (
-        <Alert tone="danger" title={t("This doctor can't consult a patient in {place}", { place: blocked })}>
-          {t("Please reschedule for when the patient is back, or contact support for a refund.")}{" "}
-          <Link href={`/consults/${apptId}`} className="font-semibold underline">{t("Manage booking")}</Link>
-        </Alert>
-      ) : null}
-      {msg ? <Alert tone="warning">{msg}</Alert> : null}
-      <div className="space-y-3">
-        <div>
-          <label htmlFor="rc" className="text-sm font-medium">{t("Country")}</label>
-          <Select id="rc" value={country} onChange={(e) => { setCountry(e.target.value); setRegion(""); }}>
-            {options.map((o) => <option key={o.code} value={o.code}>{o.name}</option>)}
-          </Select>
-        </div>
-        {opt?.scope === "region" ? (
-          <div>
-            <label htmlFor="rr" className="text-sm font-medium">{t("State / province")}</label>
-            <Select id="rr" value={region} onChange={(e) => setRegion(e.target.value)}>
-              <option value="">{t("Choose")}</option>
-              {opt.regions.map((r) => <option key={r.code} value={r.code}>{r.name}</option>)}
-            </Select>
-          </div>
-        ) : null}
-      </div>
-      <div className="grid gap-2 sm:flex">
-        <Button size="lg" className="sm:flex-1" disabled={busy || (opt?.scope === "region" && !region)} onClick={() => void submit()}>
-          {t("Confirm and join")}
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          disabled={busy}
-          onClick={async () => {
-            const found = await detectLocation();
-            if (!found) return setMsg(t("We couldn't detect your location. Please choose it from the list."));
-            setCountry(found.country);
-            setRegion(found.region ?? "");
-            await submit("device", found.country, found.region ?? "");
-          }}
-        >
-          {t("Use my location")}
-        </Button>
-      </div>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 import "server-only";
 import { and, asc, desc, eq, gt, inArray, sql, type SQL } from "drizzle-orm";
-import { getDb, rows, type Executor } from "@/db";
+import { getDb, type Executor } from "@/db";
 import {
   availabilitySlots,
   clinics,
-  countries,
   doctorClinicLinks,
   doctorFees,
   doctorLicences,
@@ -14,47 +13,40 @@ import {
   specialties,
 } from "@/db/schema";
 
+/** Kept on bookings as the consult jurisdiction. It is always India (see server/location.ts). */
 export type PatientLocation = { country: string; region: string | null };
 
 /**
- * THE core safety rule: a doctor is shown (and can be booked) for a patient
- * location only if the doctor is approved, their 12-month re-verification is
- * not overdue, the country is switched on for consults, and they hold a
- * verified, unexpired licence for that country — and for that state/province
- * where licensing is regional (e.g. the USA).
+ * THE core safety rule: a doctor is listed (and can be booked) only if they
+ * are approved, their 12 month re-verification is not overdue, and they hold
+ * a verified, unexpired Indian registration (National Medical Commission, a
+ * State Medical Council, or the Rehabilitation Council of India for clinical
+ * psychologists). Every consult is given under India's telemedicine rules,
+ * wherever the patient lives, so a registration from another country never
+ * makes a doctor visible.
  */
-export function visibleForLocation(loc: PatientLocation): SQL {
-  return sql`(
-    ${doctors.verificationStatus} = 'approved'
-    and ${doctors.reverifyDueAt} is not null and ${doctors.reverifyDueAt} > now()
-    and exists (
-      select 1 from ${countries} c
-      where c.code = ${loc.country} and c.local_consults_enabled
-        and (c.licence_scope = 'country' or ${loc.region ?? ""} <> '')
-    )
-    and exists (
-      select 1 from ${doctorLicences} l
-      where l.doctor_id = ${doctors.id}
-        and l.status = 'verified'
-        and (l.expires_at is null or l.expires_at >= current_date)
-        and l.country = ${loc.country}
-        and (
-          (select licence_scope from ${countries} where code = ${loc.country}) = 'country'
-          or l.region = ${loc.region ?? ""}
-        )
-    )
-  )`;
-}
-
-/** Approved and holding at least one valid licence somewhere (for public profile pages). */
-export const listableAnywhere = sql`(
+export const visibleDoctor: SQL = sql`(
   ${doctors.verificationStatus} = 'approved'
   and ${doctors.reverifyDueAt} is not null and ${doctors.reverifyDueAt} > now()
   and exists (
     select 1 from ${doctorLicences} l
-    where l.doctor_id = ${doctors.id} and l.status = 'verified' and (l.expires_at is null or l.expires_at >= current_date)
+    where l.doctor_id = ${doctors.id}
+      and l.status = 'verified'
+      and (l.expires_at is null or l.expires_at >= current_date)
+      and l.country = 'IN'
   )
 )`;
+
+/**
+ * Same rule as visibleDoctor. The location argument is accepted for older
+ * callers and ignored: the patient's whereabouts never change who may consult.
+ */
+export function visibleForLocation(_loc?: PatientLocation): SQL {
+  return visibleDoctor;
+}
+
+/** Public profile pages use the same rule as listings. */
+export const listableAnywhere = visibleDoctor;
 
 const nextSlotSql = (group: "online" | "in_clinic") => sql<Date | null>`(
   select min(s.start_at) from ${availabilitySlots} s
@@ -73,29 +65,25 @@ export type DoctorFilters = {
   minExperience?: number;
   availableToday?: { start: Date; end: Date };
   mode?: "online" | "in_clinic" | "both";
-  licenceCountry?: string;
   clinic?: string;
   instantOnly?: boolean;
-  secondOpinion?: boolean;
   sort?: "soonest" | "rating" | "fee" | "experience";
   limit?: number;
 };
 
-export async function listDoctors(loc: PatientLocation, f: DoctorFilters = {}) {
+/** Visible doctors matching the filters. The location argument is ignored (see visibleForLocation). */
+export async function listDoctors(_loc: PatientLocation | null, f: DoctorFilters = {}) {
   const db = await getDb();
-  const conds: SQL[] = [visibleForLocation(loc)];
+  const conds: SQL[] = [visibleDoctor];
   if (f.specialty) conds.push(eq(specialties.slug, f.specialty));
   if (f.language) conds.push(sql`${f.language} = any(${doctors.languages})`);
   if (f.gender) conds.push(eq(doctors.gender, f.gender));
   if (f.minRating) conds.push(sql`${doctors.ratingAvg} >= ${f.minRating}`);
   if (f.minExperience) conds.push(sql`${doctors.experienceYears} >= ${f.minExperience}`);
   if (f.instantOnly) conds.push(eq(doctors.acceptsInstant, true));
-  if (f.secondOpinion) conds.push(eq(doctors.offersSecondOpinion, true));
   if (f.mode === "in_clinic") conds.push(sql`'in_clinic' = any(${doctors.modes})`);
   if (f.mode === "online") conds.push(sql`${doctors.modes} && array['video','audio','chat']::consult_mode[]`);
   if (f.mode === "both") conds.push(sql`'in_clinic' = any(${doctors.modes}) and ${doctors.modes} && array['video','audio','chat']::consult_mode[]`);
-  if (f.licenceCountry)
-    conds.push(sql`exists (select 1 from ${doctorLicences} l where l.doctor_id = ${doctors.id} and l.status = 'verified' and l.country = ${f.licenceCountry} and (l.expires_at is null or l.expires_at >= current_date))`);
   if (f.clinic)
     conds.push(sql`exists (select 1 from ${doctorClinicLinks} dl join ${clinics} c on c.id = dl.clinic_id where dl.doctor_id = ${doctors.id} and dl.active and c.slug = ${f.clinic})`);
   if (f.maxFeeInrMinor)
@@ -182,9 +170,9 @@ export async function listDoctors(loc: PatientLocation, f: DoctorFilters = {}) {
 
 export type DoctorListItem = Awaited<ReturnType<typeof listDoctors>>[number];
 
-/** True when the doctor may consult a patient at this location right now. */
-export async function isDoctorVisible(db: Executor, doctorId: string, loc: PatientLocation) {
-  const [r] = await db.select({ id: doctors.id }).from(doctors).where(and(eq(doctors.id, doctorId), visibleForLocation(loc)));
+/** True when the doctor may be booked right now (approved, re-verified and holding a valid Indian registration). */
+export async function isDoctorVisible(db: Executor, doctorId: string, _loc?: PatientLocation) {
+  const [r] = await db.select({ id: doctors.id }).from(doctors).where(and(eq(doctors.id, doctorId), visibleDoctor));
   return Boolean(r);
 }
 
@@ -237,24 +225,9 @@ export async function getOpenSlots(db: Executor, doctorId: string, group: "onlin
     .orderBy(asc(availabilitySlots.startAt));
 }
 
-/** Featured doctors for the home page: highest rated, visible in India. */
+/** Featured doctors for the home page: highest rated. */
 export async function featuredDoctors(limit = 6) {
-  return (await listDoctors({ country: "IN", region: null }, { sort: "rating", limit: 30 }))
+  return (await listDoctors(null, { sort: "rating", limit: 30 }))
     .filter((d) => Number(d.ratingCount) >= 3)
     .slice(0, limit);
-}
-
-/** Countries where at least one verified doctor can consult (for "Consult a doctor licensed in your country"). */
-export async function locationsWithDoctors() {
-  const db = await getDb();
-  return rows<{ country: string; region: string | null; n: number }>(
-    await db.execute(sql`
-      select l.country, l.region, count(distinct l.doctor_id)::int as n
-      from ${doctorLicences} l join ${doctors} d on d.id = l.doctor_id
-      join ${countries} c on c.code = l.country and c.local_consults_enabled
-      where l.status = 'verified' and (l.expires_at is null or l.expires_at >= current_date)
-        and d.verification_status = 'approved' and d.reverify_due_at > now()
-      group by l.country, l.region order by l.country
-    `),
-  );
 }

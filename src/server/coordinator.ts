@@ -57,7 +57,7 @@ export async function patientWithOwner(patientId: string) {
  * patient's own account, so they get the payment link and all reminders;
  * the audit log records which coordinator made it.
  */
-export async function assistedBooking(user: SessionUser, input: { patientId: string; doctorId: string; mode: "video" | "audio" | "chat" | "in_clinic"; slotId: string; country: string; region: string | null; interpreterLanguage: string | null; patientAgreed: boolean }) {
+export async function assistedBooking(user: SessionUser, input: { patientId: string; doctorId: string; mode: "video" | "audio" | "chat" | "in_clinic"; slotId: string; interpreterLanguage: string | null; patientAgreed: boolean }) {
   const db = await getDb();
   const [row] = await db.select({ p: patients, owner: users }).from(patients).innerJoin(users, eq(users.id, patients.ownerUserId)).where(eq(patients.id, input.patientId));
   if (!row) throw new UserError("Patient not found");
@@ -68,7 +68,6 @@ export async function assistedBooking(user: SessionUser, input: { patientId: str
     mode: input.mode,
     slotId: input.slotId,
     patientId: row.p.id,
-    location: { country: input.country, region: input.region },
     currency: row.owner.currency as Currency,
     patientTimeZone: row.owner.timeZone,
     interpreterLanguage: input.interpreterLanguage,

@@ -24,7 +24,7 @@ export function FollowUpChat({ apptId, initial, open, closedText, note }: { appt
   });
   return (
     <div className="card flex h-96 flex-col overflow-hidden">
-      <p className="border-b border-line px-4 py-2 text-sm text-fg-muted">{open ? (note ?? t("Free follow-up chat. The doctor usually replies within a few hours.")) : closedText}</p>
+      <p className="border-b border-line px-4 py-2 text-sm text-fg-muted">{open ? (note ?? t("Free follow up chat. The doctor usually replies within a few hours.")) : closedText}</p>
       <ChatPanel apptId={apptId} messages={messages} onSent={refresh} disabled={!open} disabledText={closedText} className="flex-1" />
     </div>
   );

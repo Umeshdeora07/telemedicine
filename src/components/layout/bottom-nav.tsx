@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck, FolderHeart, Home, Search, UserRound } from "lucide-react";
+import { CalendarCheck, FolderHeart, Home, Stethoscope, UserRound } from "lucide-react";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
-/** Mobile bottom navigation: Home, Search, Consults, Records, Profile. */
+/** Mobile bottom navigation: Home, Doctors, Consults, Records, Profile. */
 export function BottomNav({ signedIn }: { signedIn: boolean }) {
   const { t } = useI18n();
   const path = usePathname();
   const items = [
     { href: signedIn ? "/dashboard" : "/", label: t("Home"), Icon: Home, match: (p: string) => p === "/" || p === "/dashboard" },
-    { href: "/doctors", label: t("Search"), Icon: Search, match: (p: string) => p.startsWith("/doctors") || p.startsWith("/specialties") },
+    { href: "/doctors", label: t("Doctors"), Icon: Stethoscope, match: (p: string) => p.startsWith("/doctors") || p.startsWith("/specialties") || p.startsWith("/book") },
     { href: "/consults", label: t("Consults"), Icon: CalendarCheck, match: (p: string) => p.startsWith("/consults") || p.startsWith("/consult/") },
     { href: "/records", label: t("Records"), Icon: FolderHeart, match: (p: string) => p.startsWith("/records") || p.startsWith("/prescriptions") },
     { href: "/profile", label: t("Profile"), Icon: UserRound, match: (p: string) => p.startsWith("/profile") || p.startsWith("/settings") || p.startsWith("/family") },

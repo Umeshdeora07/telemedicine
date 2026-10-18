@@ -243,7 +243,7 @@ export async function setRecordingConsent(access: RoomAccess, agree: boolean) {
   await db.update(appointments).set({ recording: next }).where(eq(appointments.id, access.appointment.id));
   await postRoomMessage(
     access,
-    agree ? (next.doctor && next.patient ? "Recording started — both sides agreed." : `${access.displayName} asked to record this consult.`) : "Recording is off.",
+    agree ? (next.doctor && next.patient ? "Recording started. Both sides agreed." : `${access.displayName} asked to record this consult.`) : "Recording is off.",
     null,
     "system",
   );

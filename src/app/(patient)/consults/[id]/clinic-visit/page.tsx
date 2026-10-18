@@ -14,7 +14,7 @@ import { dayInZone } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Book clinic visit" };
 
-/** Online consult → clinic visit in one tap: same doctor (or their hospital), notes and payment carry over. */
+/** Online consultation to clinic visit in one tap: same doctor (or their hospital), notes and payment carry over. */
 export default async function ClinicVisitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const ctx = await getViewContext();
@@ -58,9 +58,9 @@ export default async function ClinicVisitPage({ params }: { params: Promise<{ id
       </div>
       {action ? <Alert tone="info" title={t("Why")}>{(action.details as { reason?: string }).reason}</Alert> : null}
       <ul className="space-y-2 text-[0.9375rem]">
-        <li className="flex gap-2"><FileText className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />{t("Your online consult notes and reports will be shared with the clinic, so you don't have to repeat everything.")}</li>
-        {paid && doc?.creditOnlineFeeToClinic ? <li className="flex gap-2"><Wallet className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />{t("The online consult fee ({fee}) is credited against the clinic visit with the same doctor.", { fee: fmt.money(paid.feeMinor, paid.currency) })}</li> : null}
-        <li className="flex gap-2"><Building2 className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />{t("You'll get a visit pass with a QR code to show at reception. Times shown in India time (IST).")}</li>
+        <li className="flex gap-2"><FileText className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />{t("Your online consultation notes and reports are shared with the clinic, so you do not have to repeat everything.")}</li>
+        {paid && doc?.creditOnlineFeeToClinic ? <li className="flex gap-2"><Wallet className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />{t("The online consultation fee ({fee}) is taken off the clinic visit with the same doctor.", { fee: fmt.money(paid.feeMinor, paid.currency) })}</li> : null}
+        <li className="flex gap-2"><Building2 className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />{t("You will get a visit pass with a QR code to show at reception. Times are shown in India time (IST).")}</li>
       </ul>
       <div className="card p-5">
         <ClinicVisitPicker parentId={id} options={options} />

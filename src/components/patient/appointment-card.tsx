@@ -15,7 +15,7 @@ export function statusBadge(status: string, t: ViewContext["t"]) {
     in_progress: [t("In progress"), "success"],
     completed: [t("Completed"), "neutral"],
     cancelled: [t("Cancelled"), "neutral"],
-    doctor_no_show: [t("Doctor didn't join — refunded"), "warning"],
+    doctor_no_show: [t("Doctor did not join, refunded"), "warning"],
     patient_no_show: [t("Missed"), "warning"],
     expired: [t("Not paid"), "neutral"],
     pending_payment: [t("Waiting for payment"), "warning"],
@@ -30,7 +30,7 @@ export function AppointmentCard({ r, ctx, showJoin = true }: { r: ApptRow; ctx: 
   const Icon = ICON[a.mode];
   const minutesToStart = (a.startAt.getTime() - Date.now()) / 60_000;
   const joinable = a.mode !== "in_clinic" && ["confirmed", "in_progress"].includes(a.status) && minutesToStart < 15 && minutesToStart > -60;
-  const modeLabel = { video: t("Video consult"), audio: t("Audio call"), chat: t("Chat consult"), in_clinic: t("Clinic visit") }[a.mode];
+  const modeLabel = { video: t("Video consultation"), audio: t("Audio call"), chat: t("Chat consultation"), in_clinic: t("Clinic visit") }[a.mode];
   return (
     <article className="card flex flex-col gap-3 p-4" aria-labelledby={`appt-${a.id}`}>
       <div className="flex items-start gap-3">
@@ -69,7 +69,7 @@ export function AppointmentCard({ r, ctx, showJoin = true }: { r: ApptRow; ctx: 
           ) : null}
           {a.status === "confirmed" && !a.preConsult && a.mode !== "in_clinic" ? (
             <ButtonLink href={`/consults/${a.id}/prepare`} size="sm" variant="outline">
-              {t("Tell the doctor about the problem")}
+              {t("Fill in the health form")}
             </ButtonLink>
           ) : null}
           <ButtonLink href={`/consults/${a.id}`} size="sm" variant="ghost">

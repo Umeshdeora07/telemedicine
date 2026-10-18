@@ -25,14 +25,13 @@ export function PartnerOrder({ apptId, kind, prescriptionId, defaultAddress }: {
           <p role="status">{msg}</p>
         ) : (
           <div className="space-y-4">
-            <p className="text-fg-muted">{kind === "pharmacy" ? t("A partner pharmacy delivers the medicines on your e-prescription. You pay them on delivery.") : t("A partner lab collects samples at home. You pay the lab directly.")}</p>
+            <p className="text-fg-muted">{kind === "pharmacy" ? t("A partner pharmacy in India delivers the medicines on your digital prescription. You pay them on delivery.") : t("A partner lab collects samples at home. You pay the lab directly.")}</p>
             <Field label={kind === "pharmacy" ? t("Delivery address") : t("Address for sample collection")} htmlFor="po-addr" required>
               <Textarea id="po-addr" rows={3} value={address} onChange={(e) => setAddress(e.target.value)} />
             </Field>
             <Button className="w-full" disabled={pending || address.trim().length < 8} onClick={() => start(async () => { const r = await partnerOrderAction(apptId, kind, prescriptionId, address); setMsg(r.ok ? t("Order placed with the partner. Reference: {ref}. They'll call to confirm.", { ref: r.ref ?? "" }) : r.error); })}>
               {t("Place order")}
             </Button>
-            <p className="text-xs text-fg-muted">{t("Demo: partner integrations are simulated.")}</p>
           </div>
         )}
       </Dialog>

@@ -40,7 +40,7 @@ export function ScheduleEditor({ initial, timeZone, clinics, defaultSlot }: { in
                   {clinics.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
                 <Input type="time" value={r.startTime} onChange={(e) => update(r.key, { startTime: e.target.value })} aria-label={t("From")} className="w-36" />
-                <span aria-hidden>–</span>
+                <span aria-hidden>{t("to")}</span>
                 <Input type="time" value={r.endTime} onChange={(e) => update(r.key, { endTime: e.target.value })} aria-label={t("To")} className="w-36" />
                 <Select value={String(r.slotMinutes)} onChange={(e) => update(r.key, { slotMinutes: Number(e.target.value) })} aria-label={t("Slot length")} className="w-40">
                   {[10, 15, 20, 30, 45, 60].map((m) => <option key={m} value={m}>{t("{n} min slots", { n: m })}</option>)}

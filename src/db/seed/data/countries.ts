@@ -57,6 +57,9 @@ export type CountrySeed = {
 };
 
 // Emergency numbers must be re-checked by an admin before each country goes live.
+// Consultations are always given by doctors registered in India, under India's
+// telemedicine rules, wherever the patient lives; localConsultsEnabled stays off
+// for every other country.
 export const COUNTRIES: CountrySeed[] = [
   {
     code: "IN", name: "India", enabled: true, localConsultsEnabled: true, licenceScope: "country",
@@ -64,22 +67,22 @@ export const COUNTRIES: CountrySeed[] = [
     phonePrefix: "+91",
     emergency: { general: "112", ambulance: "108", police: "112", crisisLine: "14416", crisisLineName: "Tele-MANAS (free, 24×7)" },
     allowPreTravelVideo: true, allowPostReturnFollowUp: "full",
-    legalNotes: "Telemedicine Practice Guidelines 2020 apply. Any doctor registered with a State Medical Council or the NMC may consult patients anywhere in India.",
+    legalNotes: "Telemedicine Practice Guidelines 2020 apply to every consultation on this platform. Doctors are registered with a State Medical Council or the NMC; clinical psychologists with the Rehabilitation Council of India.",
   },
   {
-    code: "GB", name: "United Kingdom", enabled: true, localConsultsEnabled: true, licenceScope: "country",
+    code: "GB", name: "United Kingdom", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "GBP", languages: ["en"], timeZones: ["Europe/London"], phonePrefix: "+44",
     emergency: { general: "999", ambulance: "999", police: "999", crisisLine: "116 123", crisisLineName: "Samaritans (free, 24×7)" },
     allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only",
-    legalNotes: "DEMO SETTING — confirm with UK counsel: doctors need GMC registration with a licence to practise; CQC registration may apply to the provider. UK GDPR applies.",
+    legalNotes: "Patients here consult doctors registered in India. Confirm with UK counsel before marketing in the UK. UK GDPR applies.",
   },
   {
-    code: "US", name: "United States", enabled: true, localConsultsEnabled: true, licenceScope: "region",
+    code: "US", name: "United States", enabled: true, localConsultsEnabled: false, licenceScope: "region",
     regions: regions("US", US_STATES), currency: "USD", languages: ["en"],
     timeZones: ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"], phonePrefix: "+1",
     emergency: { general: "911", ambulance: "911", police: "911", crisisLine: "988", crisisLineName: "988 Suicide & Crisis Lifeline" },
     allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only",
-    legalNotes: "DEMO SETTING — confirm with US counsel: the doctor must be licensed in the state where the patient is located at the time of the consult. HIPAA may apply.",
+    legalNotes: "Patients here consult doctors registered in India. Confirm with US counsel before marketing in the USA. HIPAA may apply.",
   },
   {
     code: "CA", name: "Canada", enabled: true, localConsultsEnabled: false, licenceScope: "region",
@@ -87,83 +90,83 @@ export const COUNTRIES: CountrySeed[] = [
     timeZones: ["America/Toronto", "America/Vancouver"], phonePrefix: "+1",
     emergency: { general: "911", ambulance: "911", police: "911", crisisLine: "988", crisisLineName: "9-8-8 Suicide Crisis Helpline" },
     allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only",
-    legalNotes: "Not switched on for local consults. Licensing is provincial.",
+    legalNotes: "Patients here consult doctors registered in India.",
   },
   {
-    code: "AE", name: "United Arab Emirates", enabled: true, localConsultsEnabled: true, licenceScope: "region",
+    code: "AE", name: "United Arab Emirates", enabled: true, localConsultsEnabled: false, licenceScope: "region",
     regions: regions("AE", AE_EMIRATES), currency: "AED", languages: ["en", "ar", "hi"], timeZones: ["Asia/Dubai"],
     phonePrefix: "+971",
     emergency: { general: "999", ambulance: "998", police: "999" },
     allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only",
-    legalNotes: "DEMO SETTING — confirm with UAE counsel: DHA (Dubai), DOH (Abu Dhabi) and MOHAP (other emirates) license separately.",
+    legalNotes: "Patients here consult doctors registered in India. Confirm with UAE counsel before marketing in the UAE.",
   },
   {
     code: "SA", name: "Saudi Arabia", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "AED", languages: ["ar", "en"], timeZones: ["Asia/Riyadh"], phonePrefix: "+966",
     emergency: { general: "911", ambulance: "997", police: "999" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Not switched on for local consults.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India.",
   },
   {
     code: "BD", name: "Bangladesh", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "BDT", languages: ["bn", "en"], timeZones: ["Asia/Dhaka"], phonePrefix: "+880",
     emergency: { general: "999", ambulance: "999", police: "999" },
     allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only",
-    legalNotes: "Treatment-in-India journey only. Pre-travel case discussion allowed; no diagnosis or prescribing while the patient is in Bangladesh.",
+    legalNotes: "Patients here consult doctors registered in India and can plan treatment in India.",
   },
   {
     code: "NP", name: "Nepal", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "USD", languages: ["en", "hi"], timeZones: ["Asia/Kathmandu"], phonePrefix: "+977",
     emergency: { general: "102", ambulance: "102", police: "100" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Treatment-in-India journey only.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India and can plan treatment in India.",
   },
   {
     code: "LK", name: "Sri Lanka", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "USD", languages: ["en"], timeZones: ["Asia/Colombo"], phonePrefix: "+94",
     emergency: { general: "1990", ambulance: "1990", police: "119" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Treatment-in-India journey only.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India and can plan treatment in India.",
   },
   {
     code: "AU", name: "Australia", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: regions("AU", AU_STATES), currency: "USD", languages: ["en"], timeZones: ["Australia/Sydney", "Australia/Perth"],
     phonePrefix: "+61",
     emergency: { general: "000", ambulance: "000", police: "000", crisisLine: "13 11 14", crisisLineName: "Lifeline" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Not switched on for local consults (AHPRA registration required).",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India.",
   },
   {
     code: "SG", name: "Singapore", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "USD", languages: ["en"], timeZones: ["Asia/Singapore"], phonePrefix: "+65",
     emergency: { general: "995", ambulance: "995", police: "999" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Not switched on for local consults.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India.",
   },
   {
     code: "DE", name: "Germany", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "EUR", languages: ["en"], timeZones: ["Europe/Berlin"], phonePrefix: "+49",
     emergency: { general: "112", ambulance: "112", police: "110", crisisLine: "0800 111 0 111", crisisLineName: "TelefonSeelsorge" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Not switched on for local consults. GDPR applies.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India. GDPR applies.",
   },
   {
     code: "FR", name: "France", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "EUR", languages: ["fr", "en"], timeZones: ["Europe/Paris"], phonePrefix: "+33",
     emergency: { general: "112", ambulance: "15", police: "17", crisisLine: "3114", crisisLineName: "3114 (prévention du suicide)" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Not switched on for local consults. GDPR applies.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India. GDPR applies.",
   },
   {
     code: "KE", name: "Kenya", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "USD", languages: ["sw", "en"], timeZones: ["Africa/Nairobi"], phonePrefix: "+254",
     emergency: { general: "999", ambulance: "999", police: "999" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Treatment-in-India journey only.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India and can plan treatment in India.",
   },
   {
     code: "NG", name: "Nigeria", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "USD", languages: ["en"], timeZones: ["Africa/Lagos"], phonePrefix: "+234",
     emergency: { general: "112", ambulance: "112", police: "112" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Treatment-in-India journey only.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India and can plan treatment in India.",
   },
   {
     code: "OM", name: "Oman", enabled: true, localConsultsEnabled: false, licenceScope: "country",
     regions: [], currency: "AED", languages: ["ar", "en"], timeZones: ["Asia/Muscat"], phonePrefix: "+968",
     emergency: { general: "9999", ambulance: "9999", police: "9999" },
-    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Treatment-in-India journey only.",
+    allowPreTravelVideo: true, allowPostReturnFollowUp: "information_only", legalNotes: "Patients here consult doctors registered in India and can plan treatment in India.",
   },
   {
     code: "RU", name: "Russia", enabled: false, localConsultsEnabled: false, licenceScope: "country",

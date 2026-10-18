@@ -5,7 +5,8 @@ import { getDb } from "@/db";
 import { getViewContext } from "@/server/context";
 import { findPatients, patientWithOwner } from "@/server/coordinator";
 import { getOpenSlots, listDoctors } from "@/server/doctors";
-import { getCountries, getSpecialties } from "@/server/queries/reference";
+import { getSpecialties } from "@/server/queries/reference";
+import { resolveLocation } from "@/server/location";
 import { SPOKEN_LANGUAGES } from "@/config/languages";
 import { PageHeader } from "@/components/ui/page-header";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -18,7 +19,7 @@ import { dayInZone } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Book for a patient" };
 
-type SP = { q?: string; p?: string; c?: string; r?: string; m?: string; s?: string; d?: string };
+type SP = { q?: string; p?: string; m?: string; s?: string; d?: string };
 
 export default async function AssistedBooking({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -28,13 +29,9 @@ export default async function AssistedBooking({ searchParams }: { searchParams: 
 
   const found = sp.q ? await findPatients(sp.q) : [];
   const patient = sp.p ? await patientWithOwner(sp.p) : null;
-  const countries = (await getCountries()).filter((c) => c.enabled);
   const specs = await getSpecialties();
-  const country = sp.c ?? patient?.country ?? "IN";
-  const cRow = countries.find((c) => c.code === country);
-  const region = cRow?.licenceScope === "region" ? (sp.r ?? cRow.regions[0]?.code ?? null) : null;
   const mode = (sp.m ?? "video") as "video" | "audio" | "chat" | "in_clinic";
-  const doctorsList = patient ? await listDoctors({ country: mode === "in_clinic" ? "IN" : country, region: mode === "in_clinic" ? null : region }, { specialty: sp.s || undefined, mode: mode === "in_clinic" ? "in_clinic" : "online", sort: "soonest", limit: 30 }) : [];
+  const doctorsList = patient ? await listDoctors(resolveLocation(), { specialty: sp.s || undefined, mode: mode === "in_clinic" ? "in_clinic" : "online", sort: "soonest", limit: 30 }) : [];
   const doctor = sp.d ? doctorsList.find((d) => d.id === sp.d) ?? null : null;
   const slots = doctor ? await getOpenSlots(await getDb(), doctor.id, mode === "in_clinic" ? "in_clinic" : "online", { days: 7 }) : [];
   const tz = patient?.timeZone ?? "Asia/Kolkata";
@@ -66,7 +63,7 @@ export default async function AssistedBooking({ searchParams }: { searchParams: 
                 <ul className="divide-y divide-line rounded-xl border border-line">
                   {found.map((f) => (
                     <li key={f.p.id}>
-                      <Link href={qs({ p: f.p.id, q: undefined, c: f.country })} className="flex flex-wrap items-center gap-2 p-3 hover:bg-surface-2">
+                      <Link href={qs({ p: f.p.id, q: undefined })} className="flex flex-wrap items-center gap-2 p-3 hover:bg-surface-2">
                         <strong>{f.p.fullName}</strong>
                         <span className="text-sm text-fg-muted">{f.p.userId === f.ownerId ? t("own account") : t("in {name}'s account", { name: f.ownerName })} · {maskPhone(f.ownerPhone)}</span>
                         <Badge className="ms-auto">{f.country}</Badge>
@@ -82,17 +79,9 @@ export default async function AssistedBooking({ searchParams }: { searchParams: 
 
       {patient ? (
         <section className="card space-y-4 p-5" aria-labelledby="doc">
-          <h2 id="doc" className="text-lg font-bold">{t("2. Where the patient is now, and the doctor")}</h2>
-          <form className="grid gap-3 sm:grid-cols-4">
+          <h2 id="doc" className="text-lg font-bold">{t("2. Choose the doctor")}</h2>
+          <form className="grid gap-3 sm:grid-cols-3">
             <input type="hidden" name="p" value={patient.p.id} />
-            <Field label={t("Patient is in")} htmlFor="c">
-              <Select id="c" name="c" defaultValue={country}>{countries.map((c) => <option key={c.code} value={c.code}>{t(c.name)}</option>)}</Select>
-            </Field>
-            {cRow?.licenceScope === "region" ? (
-              <Field label={t("State")} htmlFor="r">
-                <Select id="r" name="r" defaultValue={region ?? ""}>{cRow.regions.map((r) => <option key={r.code} value={r.code}>{r.name}</option>)}</Select>
-              </Field>
-            ) : null}
             <Field label={t("Consult type")} htmlFor="m">
               <Select id="m" name="m" defaultValue={mode}>
                 <option value="video">{t("Video")}</option>
@@ -107,20 +96,20 @@ export default async function AssistedBooking({ searchParams }: { searchParams: 
                 {specs.map((s) => <option key={s.slug} value={s.slug}>{t(s.name)}</option>)}
               </Select>
             </Field>
-            <div className="sm:col-span-4"><Button type="submit" variant="secondary">{t("Show doctors")}</Button></div>
+            <div className="sm:col-span-3"><Button type="submit" variant="secondary">{t("Show doctors")}</Button></div>
           </form>
-          <p className="text-sm text-fg-muted">{t("Only doctors licensed where the patient is right now are shown.")}</p>
+          <p className="text-sm text-fg-muted">{t("Every doctor shown is verified and registered in India.")}</p>
           <ul className="divide-y divide-line rounded-xl border border-line">
             {doctorsList.map((d) => (
               <li key={d.id}>
-                <Link href={qs({ d: d.id, c: country, r: region ?? undefined, m: mode })} aria-current={d.id === doctor?.id ? "true" : undefined} className="flex flex-wrap items-center gap-2 p-3 hover:bg-surface-2 aria-[current=true]:bg-primary-soft">
+                <Link href={qs({ d: d.id, m: mode })} aria-current={d.id === doctor?.id ? "true" : undefined} className="flex flex-wrap items-center gap-2 p-3 hover:bg-surface-2 aria-[current=true]:bg-primary-soft">
                   <strong>{d.fullName}</strong>
                   <span className="text-sm text-fg-muted">{t(d.specialtyName)} · {d.languages.map((l) => t(SPOKEN_LANGUAGES[l as keyof typeof SPOKEN_LANGUAGES] ?? l)).join(", ")}</span>
                   <span className="ms-auto text-sm">{(mode === "in_clinic" ? d.nextClinic : d.nextOnline) ? t("Next: {time}", { time: fmt.dateTime((mode === "in_clinic" ? d.nextClinic : d.nextOnline)!, tz) }) : t("No slots")}</span>
                 </Link>
               </li>
             ))}
-            {!doctorsList.length ? <li className="p-3 text-fg-muted">{t("No doctors available for this location and filter.")}</li> : null}
+            {!doctorsList.length ? <li className="p-3 text-fg-muted">{t("No doctors match this choice. Try another specialty or consult type.")}</li> : null}
           </ul>
         </section>
       ) : null}
@@ -130,7 +119,7 @@ export default async function AssistedBooking({ searchParams }: { searchParams: 
           <h2 id="time" className="text-lg font-bold">{t("3. Time with {doctor}", { doctor: doctor.fullName })}</h2>
           <p className="text-sm text-fg-muted">{t("Times shown in the patient's time zone ({zone}).", { zone: fmt.zone(tz) })}</p>
           <AssistedBookingForm
-            hidden={{ patientId: patient.p.id, doctorId: doctor.id, mode, country: mode === "in_clinic" ? "IN" : country, region: region ?? "" }}
+            hidden={{ patientId: patient.p.id, doctorId: doctor.id, mode }}
             slots={slots.slice(0, 60).map((s) => ({ id: s.id, label: fmt.time(s.startAt, tz), day: fmt.date(`${dayInZone(s.startAt, tz)}T12:00:00Z`, "UTC", { weekday: "long", day: "numeric", month: "short" }) }))}
             languages={Object.entries(SPOKEN_LANGUAGES).map(([code, name]) => ({ code, name }))}
           />

@@ -1,10 +1,13 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Sign in with one of the demo accounts listed on the login page. */
+/** Sign in with one of the test accounts listed in the "Test accounts" panel on the login page (demo mode only). */
 export async function demoLogin(page: Page, name: string) {
   await page.context().addCookies([{ name: "cookie_choice", value: "essential", url: process.env.BASE_URL ?? "http://localhost:3000" }]);
   await page.goto("/login");
-  await page.getByRole("button", { name: new RegExp(name) }).first().click();
+  // The accounts sit in a collapsed <details>; open it first.
+  const panel = page.locator("details#test-accounts");
+  if (!(await panel.evaluate((el) => (el as HTMLDetailsElement).open))) await panel.locator("summary").click();
+  await panel.getByRole("button", { name: new RegExp(name) }).first().click();
   await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 60_000 });
 }
 

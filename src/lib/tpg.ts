@@ -38,7 +38,7 @@ export function blockReason(list: TpgList, mode: Mode, consultType: ConsultType)
     return "This medicine is on the prohibited list (Schedule X / NDPS) and cannot be prescribed through this platform.";
   if (allowedLists(mode, consultType).includes(list)) return null;
   if (list === "B")
-    return "List B medicines can only be added in a follow-up consult for a condition already diagnosed in person.";
+    return "List B medicines can only be added in a follow up consultation for a condition already diagnosed in person.";
   if (list === "A") return "List A medicines need a video consult for a first consult. Switch to video or book a clinic visit.";
   return "Not allowed for this consult type.";
 }

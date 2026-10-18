@@ -76,7 +76,7 @@ export async function countryAction(code: string, patch: { enabled?: boolean; lo
 export async function emergencyAction(_p: AdminState, f: FormData): Promise<AdminState> {
   const code = str(f, "code");
   const num = (k: string) => str(f, k).replace(/[^\d+]/g, "").slice(0, 15);
-  return run((u) => admin.setCountry(u, code, { emergency: { general: num("general"), ambulance: num("ambulance") || undefined, police: num("police") || undefined, crisisLine: num("crisisLine") || undefined, crisisLineName: str(f, "crisisLineName").slice(0, 80) || undefined } }), ["/admin/settings", "/emergency"]);
+  return run((u) => admin.setCountry(u, code, { emergency: { general: num("general"), ambulance: num("ambulance") || undefined, police: num("police") || undefined, crisisLine: num("crisisLine") || undefined, crisisLineName: str(f, "crisisLineName").slice(0, 80) || undefined } }), ["/admin/settings"]);
 }
 
 export async function rateAction(_p: AdminState, f: FormData): Promise<AdminState> {
@@ -138,10 +138,10 @@ export async function saveArticleAction(_p: AdminState, f: FormData): Promise<Ad
         readMinutes: Math.max(1, Math.round(str(f, "body").split(/\s+/).length / 200)),
         publish: f.get("publish") === "on",
       }),
-    ["/admin/content", "/health-library"],
+    ["/admin/content"],
   );
 }
 
 export async function publishArticleAction(id: string, publish: boolean) {
-  return run((u) => admin.setArticlePublished(u, id, publish), ["/admin/content", "/health-library"]);
+  return run((u) => admin.setArticlePublished(u, id, publish), ["/admin/content"]);
 }

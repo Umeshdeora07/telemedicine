@@ -118,12 +118,9 @@ export const documentCategoryEnum = pgEnum("document_category", [
 
 /* ------------------------------------------------------------ identity */
 
+/** Saved display choice. Older rows may still hold keys from removed settings; they are ignored. */
 export type UserPreferences = {
-  theme?: "system" | "light" | "dark";
-  text?: "normal" | "large" | "xlarge";
-  contrast?: "normal" | "high";
-  motion?: "system" | "reduce";
-  dataSaver?: boolean;
+  theme?: "light" | "dark";
 };
 
 export const users = pgTable(

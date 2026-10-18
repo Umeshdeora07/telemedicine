@@ -4,14 +4,13 @@ import { revalidatePath } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { availabilityRules, availabilitySlots, documents, doctorFees, doctorLicences, doctorQualifications, doctors, secondOpinions, specialties } from "@/db/schema";
+import { availabilityRules, availabilitySlots, documents, doctorFees, doctorLicences, doctorQualifications, doctors, specialties } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import { requireUser } from "@/server/auth/session";
 import { doctorForUser } from "@/server/consult";
 import { clearOpenSlotsForRules, materializeSlots } from "@/lib/slots";
 import { isValidTimeZone } from "@/lib/time";
 import { audit } from "@/server/audit";
-import { notifyUser } from "@/server/notify";
 import { CURRENCY_CODES } from "@/config/currencies";
 
 async function me() {
@@ -19,13 +18,6 @@ async function me() {
   const d = await doctorForUser(user);
   if (!d) throw new Error("No doctor profile");
   return { user, d };
-}
-
-export async function setAvailableNowAction(on: boolean) {
-  const { d } = await me();
-  const db = await getDb();
-  await db.update(doctors).set({ availableNowUntil: on ? new Date(Date.now() + 2 * 3600_000) : null }).where(eq(doctors.id, d.id));
-  revalidatePath("/doctor");
 }
 
 const csv = (s: unknown) =>
@@ -50,8 +42,6 @@ export async function saveProfileAction(_prev: FormState, form: FormData): Promi
       chatResponseMinutes: z.coerce.number().int().min(5).max(2880),
       followUpChatDays: z.coerce.number().int().min(0).max(14),
       timeZone: z.string().refine(isValidTimeZone),
-      acceptsInstant: z.boolean(),
-      offersSecondOpinion: z.boolean(),
       creditOnlineFeeToClinic: z.boolean(),
       videoIntroUrl: z.string().url().or(z.literal("")),
     })
@@ -64,8 +54,6 @@ export async function saveProfileAction(_prev: FormState, form: FormData): Promi
       chatResponseMinutes: form.get("chatResponseMinutes"),
       followUpChatDays: form.get("followUpChatDays"),
       timeZone: form.get("timeZone"),
-      acceptsInstant: form.get("acceptsInstant") === "on",
-      offersSecondOpinion: form.get("offersSecondOpinion") === "on",
       creditOnlineFeeToClinic: form.get("creditOnlineFeeToClinic") === "on",
       videoIntroUrl: form.get("videoIntroUrl") ?? "",
     });
@@ -242,27 +230,5 @@ export async function submitForVerificationAction(): Promise<FormState> {
   await db.update(doctors).set({ verificationStatus: "submitted", submittedAt: new Date() }).where(eq(doctors.id, d.id));
   await audit({ actor: { id: user.id, role: user.role }, action: "doctor.submitted", entityType: "doctor", entityId: d.id });
   revalidatePath("/doctor/onboarding");
-  return { ok: true };
-}
-
-/* ---------------------------------------------------------- second opinion */
-
-export async function answerSecondOpinionAction(_prev: FormState, form: FormData): Promise<FormState> {
-  const t = await getT();
-  const { user, d } = await me();
-  const id = String(form.get("id"));
-  const opinion = String(form.get("opinion") ?? "").trim();
-  const recommendations = String(form.get("recommendations") ?? "").trim();
-  if (opinion.length < 30) return { error: t("Please write a fuller opinion (at least a few sentences).") };
-  const db = await getDb();
-  const [so] = await db
-    .update(secondOpinions)
-    .set({ opinion, recommendations, status: "answered", answeredAt: new Date() })
-    .where(and(eq(secondOpinions.id, id), eq(secondOpinions.doctorId, d.id)))
-    .returning();
-  if (!so) return { error: t("Not found.") };
-  await audit({ actor: { id: user.id, role: user.role }, action: "second_opinion.answer", entityType: "second_opinion", entityId: so.id, patientId: so.patientId });
-  await notifyUser(db, so.requestedByUserId, { template: "second_opinion_answered", title: t("Your second opinion is ready"), body: t("{doctor} has written their opinion.", { doctor: d.fullName }), link: `/second-opinion/${so.id}` });
-  revalidatePath("/doctor/second-opinions");
   return { ok: true };
 }

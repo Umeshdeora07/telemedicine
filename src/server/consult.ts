@@ -11,7 +11,6 @@ import {
   doctorLicences,
   doctorQualifications,
   doctors,
-  medicineReminders,
   medicines,
   patients,
   payments,
@@ -141,10 +140,17 @@ export async function issuePrescription(
 
   const [quals, lics, spec] = await Promise.all([
     db.select().from(doctorQualifications).where(eq(doctorQualifications.doctorId, doctor.id)),
-    db.select().from(doctorLicences).where(and(eq(doctorLicences.doctorId, doctor.id), eq(doctorLicences.status, "verified"), eq(doctorLicences.country, appt.patientLocationCountry))),
+    // Every consult is given under India's telemedicine rules, so the
+    // prescription carries the doctor's Indian registration.
+    db.select().from(doctorLicences).where(and(eq(doctorLicences.doctorId, doctor.id), eq(doctorLicences.status, "verified"), eq(doctorLicences.country, "IN"))),
     db.select().from(specialties).where(eq(specialties.id, doctor.specialtyId)),
   ]);
-  const regLicences = lics.filter((l) => !appt.patientLocationRegion || !l.region || l.region === appt.patientLocationRegion);
+  const today = new Date().toISOString().slice(0, 10);
+  const regLicences = lics.filter((l) => !l.expiresAt || l.expiresAt >= today);
+  if (!regLicences.length) throw new ConsultError("Your Indian registration is missing or has expired. Please update it before issuing a prescription.");
+  // Clinical psychologists (registered with the Rehabilitation Council of India) never prescribe medicine.
+  const medicalRegistration = regLicences.some((l) => l.issuingBody !== "Rehabilitation Council of India");
+  if (rx.items.length && !medicalRegistration) throw new ConsultError("Clinical psychologists cannot prescribe medicines. Write your advice instead, or refer the patient to a psychiatrist.");
   const [clinic] = doctor.primaryClinicId ? await db.select().from(clinics).where(eq(clinics.id, doctor.primaryClinicId)) : [];
   const number = refs.prescription();
   const issuedAt = new Date();
@@ -161,7 +167,8 @@ export async function issuePrescription(
       contact: brand.supportPhone,
       signatureDocumentId: doctor.signatureDocumentId,
     },
-    patient: { name: patient.fullName, age: ageFrom(patient.dob), sex: patient.sex, location: [appt.patientLocationRegion, appt.patientLocationCountry].filter(Boolean).join(", ") },
+    // Consult jurisdiction, always India.
+    patient: { name: patient.fullName, age: ageFrom(patient.dob), sex: patient.sex, location: "IN" },
     consult: { ref: appt.ref, mode: appt.mode, type: appt.consultType, date: appt.startAt.toISOString() },
     diagnosis: rx.diagnosis,
     provisional: rx.provisional,
@@ -223,31 +230,11 @@ export async function issuePrescription(
       );
     return row!;
   });
-  // Dose reminders built from the e-prescription.
-  const items = await withRls({ userId: user.id, role: user.role }, (tx) => tx.select().from(prescriptionItems).where(eq(prescriptionItems.prescriptionId, rxRow.id)));
-  const tz = appt.patientTimeZone;
-  const start = dayInZone(new Date(), tz);
-  for (const it of items) {
-    const times = FREQUENCIES[it.frequency]?.times ?? [];
-    if (!times.length) continue;
-    await db.insert(medicineReminders).values({
-      patientId: appt.patientId,
-      prescriptionItemId: it.id,
-      name: `${it.name}${it.strength ? ` ${it.strength}` : ""}`,
-      dose: `${it.dose}${it.timing && it.timing !== "any" ? `, ${it.timing.replace(/_/g, " ")}` : ""}`,
-      times,
-      timeZone: tz,
-      startDate: start,
-      endDate: addDays(start, Math.max(0, it.durationDays - 1)),
-      refillAlertDate: it.durationDays >= 14 ? addDays(start, it.durationDays - 4) : null,
-      instructions: it.instructions || null,
-    });
-  }
   await audit({ actor: { id: user.id, role: user.role }, action: "prescription.issue", entityType: "prescription", entityId: rxRow.id, patientId: appt.patientId, metadata: { items: resolved.length } }, db);
   await notifyAppointment(db, appt.id, ({ t }) => ({
     template: "prescription_issued",
-    title: t("Your e-prescription is ready"),
-    body: t("{doctor} sent a prescription. Medicine reminders are set up.", { doctor: doctor.fullName }),
+    title: t("Your digital prescription is ready"),
+    body: t("{doctor} sent you a prescription. You can open it in your account.", { doctor: doctor.fullName }),
     link: `/prescriptions/${rxRow.id}`,
   }));
   return rxRow;
@@ -282,17 +269,17 @@ export async function addConsultAction(user: SessionUser, apptId: string, type: 
   }
   await audit({ actor: { id: user.id, role: user.role }, action: `consult.action.${type}`, entityType: "appointment", entityId: appt.id, patientId: appt.patientId, metadata: details }, db);
   const titles: Record<ActionType, [string, string]> = {
-    in_person_visit: ["Clinic visit recommended", "Your doctor recommends an in-person visit. Book a clinic slot in one tap."],
+    in_person_visit: ["Clinic visit recommended", "Your doctor recommends a visit in person. Book a clinic slot in one tap."],
     specialist_referral: ["Referral to a specialist", "Your doctor recommends seeing a specialist."],
     tests: ["Tests ordered", "Your doctor ordered tests. You can book them with a partner lab."],
     emergency: ["Please go to hospital now", "Your doctor advised emergency care. Call the emergency number or go to the nearest hospital."],
-    follow_up: ["Follow-up recommended", "Your doctor would like to see you again."],
+    follow_up: ["Follow up recommended", "Your doctor would like to see you again."],
   };
   await notifyAppointment(db, appt.id, ({ t }) => ({
     template: `action_${type}`,
     title: t(titles[type][0]),
     body: t(titles[type][1]),
-    link: type === "emergency" ? `/emergency?for=${appt.patientLocationCountry}` : type === "in_person_visit" ? `/consults/${appt.id}/clinic-visit` : `/consults/${appt.id}#next-steps`,
+    link: type === "in_person_visit" ? `/consults/${appt.id}/clinic-visit` : `/consults/${appt.id}#next-steps`,
   }));
   return action!;
 }

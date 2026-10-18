@@ -49,11 +49,11 @@ export default async function DoctorOnboarding() {
       <PageHeader
         eyebrow={t("Doctor verification")}
         title={t("Get verified to start consulting")}
-        description={t("We check every doctor's registration with the medical council before patients can see them. This usually takes 1–2 working days.")}
+        description={t("We check every doctor's registration with the medical council before patients can see them. This usually takes 1 or 2 working days.")}
       />
 
       {status === "submitted" ? (
-        <Alert tone="info" title={t("Submitted on {date}", { date: d.submittedAt ? fmt.date(d.submittedAt) : "—" })}>
+        <Alert tone="info" title={d.submittedAt ? t("Submitted on {date}", { date: fmt.date(d.submittedAt) }) : t("Submitted")}>
           {t("Our verification team is checking your documents with the council. We'll message you when it's done. You can still edit your profile and fees.")}
         </Alert>
       ) : status === "rejected" ? (
@@ -95,8 +95,8 @@ export default async function DoctorOnboarding() {
       </section>
 
       <section className="card space-y-4 p-5" aria-labelledby="lic">
-        <h2 id="lic" className="text-xl font-bold">{t("3. Medical licences")}</h2>
-        <p className="text-fg-muted">{t("Add every country (and US state) where you are licensed. Patients located there will see you only after we verify that licence.")}</p>
+        <h2 id="lic" className="text-xl font-bold">{t("3. Medical registration")}</h2>
+        <p className="text-fg-muted">{t("Add your Indian registration with the National Medical Commission or your State Medical Council. Psychologists add their Rehabilitation Council of India registration. Patients see you only after we verify it.")}</p>
         {lic.length ? (
           <ul className="space-y-2">
             {lic.map((l) => (
@@ -119,15 +119,15 @@ export default async function DoctorOnboarding() {
 
       <section className="card space-y-3 p-5" aria-labelledby="profile">
         <h2 id="profile" className="text-xl font-bold">{t("5. Profile, fees and signature")}</h2>
-        <p className="text-fg-muted">{t("Write a short, plain-language profile, set your fees and upload your signature. Your prescriptions carry this signature and your registration number.")}</p>
+        <p className="text-fg-muted">{t("Write a short profile in plain words, set your fees and upload your signature. Your prescriptions carry this signature and your registration number.")}</p>
         <ButtonLink href="/doctor/profile" variant="secondary">{t("Open profile and fees")}</ButtonLink>
       </section>
 
       {status === "draft" || status === "rejected" ? (
         <section className="card space-y-3 border-primary p-5" aria-labelledby="submit">
           <h2 id="submit" className="text-xl font-bold">{t("Ready?")}</h2>
-          <p className="text-fg-muted">{t("By submitting, you confirm the documents are genuine and you will follow the Telemedicine Practice Guidelines, 2020 and the rules of every country where you consult.")}</p>
-          {!ready ? <p className="flex items-center gap-2 text-sm text-warning"><Clock className="size-4" aria-hidden />{t("Finish steps 1–4 to submit.")}</p> : null}
+          <p className="text-fg-muted">{t("By submitting, you confirm the documents are genuine and you will follow the Telemedicine Practice Guidelines, 2020.")}</p>
+          {!ready ? <p className="flex items-center gap-2 text-sm text-warning"><Clock className="size-4" aria-hidden />{t("Finish steps 1 to 4 to submit.")}</p> : null}
           <SubmitForVerification disabled={!ready} />
         </section>
       ) : status === "approved" ? (

@@ -16,11 +16,11 @@ export default async function SettingsPage() {
   const latest = CURRENCY_CODES.filter((c) => c !== "INR").map((c) => b.rates.find((r) => r.quote === c)).filter(Boolean);
   return (
     <div className="max-w-5xl space-y-8">
-      <PageHeader title={t("Countries, rates and offers")} description={t("Turn countries on as the legal and licensing review for each is done. Changes are logged.")} />
+      <PageHeader title={t("Countries, rates and offers")} description={t("Turn a country on once its legal review is done. Changes are logged.")} />
 
       <section className="space-y-3" aria-labelledby="countries">
         <h2 id="countries" className="text-lg font-bold">{t("Countries")}</h2>
-        <p className="text-sm text-fg-muted">{t("“Sign-ups open” lets people from that country create accounts (for consults with Indian doctors where allowed, and treatment in India). “Local-licence consults” shows doctors licensed in that country to patients located there.")}</p>
+        <p className="text-sm text-fg-muted">{t("“Sign-ups open” lets people from that country create accounts for online consultations with doctors in India and for treatment in India.")}</p>
         <ul className="space-y-3">
           {b.countries.map((c) => (
             <li key={c.code} className="card space-y-2 p-4">
@@ -28,8 +28,7 @@ export default async function SettingsPage() {
                 <strong>{t(c.name)}</strong>
                 <Badge>{c.code}</Badge>
                 <Badge>{c.currency}</Badge>
-                {c.licenceScope === "region" ? <Badge tone="primary">{t("Licensed by state")}</Badge> : null}
-                <span className="ms-auto"><CountryToggles code={c.code} enabled={c.enabled} local={c.localConsultsEnabled} /></span>
+                <span className="ms-auto"><CountryToggles code={c.code} enabled={c.enabled} /></span>
               </div>
               {c.legalNotes ? <p className="text-sm text-fg-muted">{c.legalNotes}</p> : null}
               <EmergencyForm code={c.code} e={c.emergency} />
@@ -64,19 +63,6 @@ export default async function SettingsPage() {
           ))}
         </ul>
         <CouponForm />
-      </section>
-
-      <section className="card space-y-3 p-5" aria-labelledby="plans">
-        <h2 id="plans" className="text-lg font-bold">{t("Plans")}</h2>
-        <ul className="divide-y divide-line">
-          {b.plans.map((p) => (
-            <li key={p.id} className="flex flex-wrap items-center gap-2 py-2">
-              <strong>{t(p.name)}</strong>
-              <span className="text-sm text-fg-muted">{fmt.money(p.priceMinor, p.currency)} / {t(p.interval)} · {t("{n} consults", { n: p.consultsPerMonth })} · {t("{n} members", { n: p.membersAllowed })}</span>
-              <Badge tone={p.active ? "success" : "neutral"} className="ms-auto">{p.active ? t("Active") : t("Off")}</Badge>
-            </li>
-          ))}
-        </ul>
       </section>
     </div>
   );

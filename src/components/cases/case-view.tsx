@@ -20,7 +20,7 @@ export function CaseTimeline({ data, ctx }: { data: Data; ctx: Ctx }) {
   const { t, fmt } = ctx;
   const idx = CASE_STEPS.findIndex((s) => s.status === data.c.status);
   return (
-    <ol className="space-y-0" aria-label={t("Case progress")}>
+    <ol className="space-y-0" aria-label={t("Progress")}>
       {CASE_STEPS.map((s, i) => {
         const ev = [...data.events].reverse().find((e) => e.status === s.status);
         const done = i <= idx;
@@ -54,13 +54,13 @@ function EstimateCard({ e, ctx, data }: { e: Data["estimates"][number]; ctx: Ctx
       <dl className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-surface-2 p-3">
           <dt className="text-sm text-fg-muted">{t("Estimated cost")}</dt>
-          <dd className="text-xl font-extrabold text-heading">{fmt.money(e.costMinMinor, e.currency)} – {fmt.money(e.costMaxMinor, e.currency)}</dd>
-          {intl ? <dd className="text-sm text-fg-muted">{fmt.money(e.costMinInrMinor, "INR")} – {fmt.money(e.costMaxInrMinor, "INR")}</dd> : null}
+          <dd className="text-xl font-extrabold text-heading">{t("{min} to {max}", { min: fmt.money(e.costMinMinor, e.currency), max: fmt.money(e.costMaxMinor, e.currency) })}</dd>
+          {intl ? <dd className="text-sm text-fg-muted">{t("{min} to {max}", { min: fmt.money(e.costMinInrMinor, "INR"), max: fmt.money(e.costMaxInrMinor, "INR") })}</dd> : null}
         </div>
         <div className="rounded-xl bg-surface-2 p-3"><dt className="text-sm text-fg-muted">{t("In hospital")}</dt><dd className="text-xl font-extrabold text-heading">{t("{n} days", { n: e.hospitalDays })}</dd></div>
         <div className="rounded-xl bg-surface-2 p-3"><dt className="text-sm text-fg-muted">{t("Total time in India")}</dt><dd className="text-xl font-extrabold text-heading">{t("{n} days", { n: e.indiaDays })}</dd></div>
       </dl>
-      {intl ? <p className="text-sm text-fg-muted">{t("Converted at 1 INR = {rate} {cur} on {date}. The hospital bills in rupees; your card or bank sets the final exchange rate.", { rate: e.fxRate.toFixed(4), cur: e.currency, date: fmt.date(e.fxAsOf) })}</p> : null}
+      {intl ? <p className="text-sm text-fg-muted">{t("Converted at 1 INR = {rate} {cur} on {date}. The hospital bills in rupees, and your card or bank sets the final exchange rate.", { rate: e.fxRate.toFixed(4), cur: e.currency, date: fmt.date(e.fxAsOf) })}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         {e.inclusions.length ? <div><h4 className="font-semibold">{t("Included")}</h4><ul className="list-disc ps-5">{e.inclusions.map((x) => <li key={x}>{x}</li>)}</ul></div> : null}
         {e.exclusions.length ? <div><h4 className="font-semibold">{t("Not included")}</h4><ul className="list-disc ps-5">{e.exclusions.map((x) => <li key={x}>{x}</li>)}</ul></div> : null}
@@ -127,12 +127,12 @@ export async function CaseView({ data, ctx }: { data: Data; ctx: Ctx }) {
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="min-w-0 space-y-6">
         <section className="card space-y-3 p-5" aria-labelledby="summary">
-          <h2 id="summary" className="text-lg font-bold">{t("About the case")}</h2>
+          <h2 id="summary" className="text-lg font-bold">{t("About the request")}</h2>
           <dl className="grid gap-3 sm:grid-cols-2">
             <div><dt className="text-sm text-fg-muted">{t("Patient")}</dt><dd className="font-semibold">{data.patient.fullName}</dd></div>
             <div><dt className="text-sm text-fg-muted">{t("From")}</dt><dd className="font-semibold">{t(countryName)} · {c.currency}</dd></div>
             <div><dt className="text-sm text-fg-muted">{t("Treatment")}</dt><dd className="font-semibold">{c.treatmentInterest}</dd></div>
-            <div><dt className="text-sm text-fg-muted">{t("Specialty")}</dt><dd className="font-semibold">{data.specialty ? t(data.specialty.name) : "—"}</dd></div>
+            <div><dt className="text-sm text-fg-muted">{t("Specialty")}</dt><dd className="font-semibold">{data.specialty ? t(data.specialty.name) : t("Not chosen yet")}</dd></div>
             <div><dt className="text-sm text-fg-muted">{t("Hospital")}</dt><dd className="font-semibold">{data.clinic?.name ?? t("Not chosen yet")}</dd></div>
             <div><dt className="text-sm text-fg-muted">{t("Specialist")}</dt><dd className="font-semibold">{data.doctor?.fullName ?? t("Not assigned yet")}</dd></div>
           </dl>
@@ -149,7 +149,7 @@ export async function CaseView({ data, ctx }: { data: Data; ctx: Ctx }) {
             {depositPaid ? <Alert tone="success">{t("Deposit received. Your hospital bed and doctor are reserved.")}</Alert> : null}
           </section>
         ) : data.access === "patient" ? (
-          <Alert tone="info" title={t("What happens next")}>{t("A coordinator checks your reports within 24 hours, then a specialist writes your plan and cost estimate, usually within 3 working days.")}</Alert>
+          <Alert tone="info" title={t("What happens next")}>{t("A coordinator checks your reports within 24 hours. Then a specialist reviews them and writes your treatment plan and cost estimate, usually within 2 working days.")}</Alert>
         ) : null}
 
         {staffBits}

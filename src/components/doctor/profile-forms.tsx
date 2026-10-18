@@ -24,8 +24,6 @@ type P = {
   chatResponseMinutes: number;
   followUpChatDays: number;
   timeZone: string;
-  acceptsInstant: boolean;
-  offersSecondOpinion: boolean;
   creditOnlineFeeToClinic: boolean;
   videoIntroUrl: string | null;
   hasSignature: boolean;
@@ -41,7 +39,7 @@ export function ProfileForm({ p }: { p: P }) {
       <Field label={t("Headline")} htmlFor="headline" required hint={t("One line patients see first, in plain words.")}>
         <Input id="headline" name="headline" defaultValue={p.headline} maxLength={140} />
       </Field>
-      <Field label={t("About you (plain, patient-friendly words)")} htmlFor="about" required>
+      <Field label={t("About you (in plain words that patients understand)")} htmlFor="about" required>
         <Textarea id="about" name="about" rows={5} defaultValue={p.about} />
       </Field>
       <fieldset>
@@ -70,7 +68,7 @@ export function ProfileForm({ p }: { p: P }) {
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label={t("Consult length (minutes)")} htmlFor="consultMinutes" required><Input id="consultMinutes" name="consultMinutes" type="number" min={5} max={90} defaultValue={p.consultMinutes} /></Field>
         <Field label={t("Typical chat reply time (minutes)")} htmlFor="chatResponseMinutes" required><Input id="chatResponseMinutes" name="chatResponseMinutes" type="number" min={5} defaultValue={p.chatResponseMinutes} /></Field>
-        <Field label={t("Free follow-up chat (days)")} htmlFor="followUpChatDays" required><Input id="followUpChatDays" name="followUpChatDays" type="number" min={0} max={14} defaultValue={p.followUpChatDays} /></Field>
+        <Field label={t("Free follow up chat (days)")} htmlFor="followUpChatDays" required><Input id="followUpChatDays" name="followUpChatDays" type="number" min={0} max={14} defaultValue={p.followUpChatDays} /></Field>
       </div>
       <Field label={t("Time zone")} htmlFor="timeZone" required>
         <Select id="timeZone" name="timeZone" defaultValue={p.timeZone}>{Array.from(new Set([p.timeZone, ...COMMON_TIME_ZONES])).map((z) => <option key={z} value={z}>{z}</option>)}</Select>
@@ -79,12 +77,10 @@ export function ProfileForm({ p }: { p: P }) {
         <Input id="videoIntroUrl" name="videoIntroUrl" type="url" defaultValue={p.videoIntroUrl ?? ""} />
       </Field>
       <div className="space-y-2 rounded-xl bg-surface-2 p-4">
-        <Checkbox id="acceptsInstant" name="acceptsInstant" defaultChecked={p.acceptsInstant} label={t("Take Consult now (instant) patients when I go online")} />
-        <Checkbox id="offersSecondOpinion" name="offersSecondOpinion" defaultChecked={p.offersSecondOpinion} label={t("Give written second opinions (reply within 48 hours)")} />
         <Checkbox id="creditOnlineFeeToClinic" name="creditOnlineFeeToClinic" defaultChecked={p.creditOnlineFeeToClinic} label={t("Credit the online fee when I ask a patient to visit my clinic")} />
       </div>
       <div className="space-y-2">
-        <p className="font-medium text-heading">{t("Signature for e-prescriptions")}</p>
+        <p className="font-medium text-heading">{t("Signature for digital prescriptions")}</p>
         <p className="text-sm text-fg-muted">{p.hasSignature ? t("A signature image is on file. Upload a new one to replace it.") : t("Upload a clear photo of your signature on white paper (PNG or JPG).")}</p>
         <FileUploader fields={{ forDoctor: "1" }} category="signature" name="signatureDocumentId" allowCamera />
       </div>
@@ -105,7 +101,7 @@ export function FeesForm({ fees, currencies }: { fees: { mode: string; currency:
     <form action={action} className="space-y-4">
       {state.ok ? <Alert tone="success">{t("Fees saved.")}</Alert> : null}
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
-      <p className="text-sm text-fg-muted">{t("Set fees in INR. Add a fee in another currency only for countries where you're licensed; otherwise patients see your INR fee converted.")}</p>
+      <p className="text-sm text-fg-muted">{t("Set your fees in INR. You can also set a fixed fee in another currency. Where you don't, patients see your INR fee converted to their currency.")}</p>
       <div className="overflow-x-auto">
         <table className="w-full text-start text-[0.9375rem]">
           <thead>

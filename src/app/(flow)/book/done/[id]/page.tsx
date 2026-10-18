@@ -15,7 +15,7 @@ import { Alert } from "@/components/ui/alert";
 import { PreConsultForm } from "@/components/booking/pre-consult-form";
 import { ageFrom } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Booked" };
+export const metadata: Metadata = { title: "Consultation booked" };
 
 export default async function DonePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,7 +34,10 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
   if (a.status === "pending_payment") {
     return (
       <Alert tone="info" title={t("Waiting for payment confirmation")}>
-        {t("This can take a minute.")} <Link href={`/book/review/${a.id}`} className="font-semibold text-primary underline">{t("Back to payment")}</Link>
+        {t("This can take a minute.")}{" "}
+        <Link href={`/book/review/${a.id}`} className="font-semibold text-primary underline">
+          {t("Back to payment")}
+        </Link>
       </Alert>
     );
   }
@@ -51,13 +54,16 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
           <circle cx="26" cy="26" r="25" fill="var(--success)" />
           <path d="M14 27l8 8 16-17" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" className="animate-tick" />
         </svg>
-        <h1 className="text-2xl font-extrabold">{isClinic ? t("Clinic visit booked!") : t("You're booked!")}</h1>
+        <h1 className="text-2xl font-extrabold sm:text-3xl">{isClinic ? t("Your clinic visit is booked") : t("Your consultation is booked")}</h1>
         <p className="text-lg">
-          {d.fullName} · {fmt.dateTime(a.startAt)} <span className="text-fg-muted">({fmt.zone()})</span>
+          {t("With {doctor} on {date}", { doctor: d.fullName, date: fmt.dateTime(a.startAt) })}{" "}
+          <span className="text-fg-muted">({t("your local time, {zone}", { zone: fmt.zone(ctx.tz, a.startAt) })})</span>
         </p>
-        {!sameClock(a.patientTimeZone, ctx.tz, a.startAt) ? <p className="text-fg-muted">{t("{name}'s time: {time}", { name: p.fullName, time: fmt.dateTime(a.startAt, a.patientTimeZone) })}</p> : null}
-        {clinic ? <p className="text-fg-muted">{clinic.name}, {clinic.addressLine}, {clinic.city}</p> : null}
-        <p className="text-sm text-fg-muted">{t("Booking ref {ref}. We've sent the details by SMS/WhatsApp and email.", { ref: a.ref })}</p>
+        {!sameClock(a.patientTimeZone, ctx.tz, a.startAt) ? (
+          <p className="text-fg-muted">{t("For {name}, this is {time}.", { name: p.fullName, time: fmt.dateTime(a.startAt, a.patientTimeZone) })}</p>
+        ) : null}
+        {clinic ? <p className="text-fg-muted">{`${clinic.name}, ${clinic.addressLine}, ${clinic.city}`}</p> : null}
+        <p className="text-sm text-fg-muted">{t("Your booking reference is {ref}. We have sent you the details.", { ref: a.ref })}</p>
         <div className="flex flex-wrap justify-center gap-2 pt-2">
           <a href={`/api/appointments/${a.id}/ics`} className="tap inline-flex items-center gap-2 rounded-xl border border-field px-4 font-semibold hover:bg-surface-2">
             <CalendarPlus className="size-5" aria-hidden />
@@ -71,7 +77,7 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
           ) : (
             <ButtonLink href={`/consult/${a.id}/check`} variant="secondary">
               <MonitorCheck className="size-5" aria-hidden />
-              {t("Test camera and mic")}
+              {t("Test your camera and microphone")}
             </ButtonLink>
           )}
         </div>
@@ -79,13 +85,19 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
 
       {a.preConsult ? (
         <Alert tone="success" title={t("Your details are with the doctor")}>
-          <Link href={nextHref} className="font-semibold text-primary underline">{t("View booking")}</Link>
+          <Link href={nextHref} className="font-semibold text-primary underline">
+            {t("View booking")}
+          </Link>
         </Alert>
       ) : (
         <section className="card space-y-4 p-5 sm:p-6" aria-labelledby="prep">
           <div>
-            <h2 id="prep" className="text-xl font-bold">{t("Tell {doctor} what's going on", { doctor: d.fullName })}</h2>
-            <p className="text-fg-muted">{t("Takes 2 minutes and makes the consult more useful. You can also do it later from My consults.")}</p>
+            <h2 id="prep" className="text-xl font-bold">
+              {t("Health form before your consultation")}
+            </h2>
+            <p className="text-fg-muted">
+              {t("Tell {doctor} about the problem so the consultation can start straight away. It takes about 2 minutes. You can also fill it in later from My consultations.", { doctor: d.fullName })}
+            </p>
           </div>
           <PreConsultForm
             apptId={a.id}
@@ -105,7 +117,9 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
             }}
           />
           <p className="text-center">
-            <Link href={nextHref} className="tap inline-flex items-center font-semibold text-primary">{t("Skip for now")}</Link>
+            <Link href={nextHref} className="tap inline-flex items-center font-semibold text-primary">
+              {t("Fill it in later")}
+            </Link>
           </p>
         </section>
       )}

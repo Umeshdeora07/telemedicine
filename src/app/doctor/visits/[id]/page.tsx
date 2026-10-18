@@ -32,7 +32,7 @@ export default async function VisitPage({ params }: { params: Promise<{ id: stri
       <PageHeader title={t("Clinic visit: {name}", { name: access.patient.fullName })} description={`${fmt.dateTime(a.startAt, access.doctor.timeZone)} · ${a.status === "checked_in" ? t("Checked in") : t(humanize(a.status))}`} />
       {parent && parentNote ? (
         <Alert tone="info" title={t("From the online consult on {date}", { date: fmt.date(parent.startAt) })}>
-          <strong>{parentNote.diagnosis}</strong> — {parentNote.findings} {parentNote.advice}
+          <strong>{parentNote.diagnosis}:</strong> {parentNote.findings} {parentNote.advice}
         </Alert>
       ) : null}
       <div className="card overflow-hidden">

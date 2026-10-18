@@ -8,7 +8,7 @@ import { requireSession } from "@/server/auth/session";
 import { homeFor, isStaff } from "@/server/auth/roles";
 import { MfaForm } from "./mfa-form";
 
-export const metadata: Metadata = { title: "Two-step verification" };
+export const metadata: Metadata = { title: "Two step verification" };
 
 export default async function MfaPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
@@ -18,7 +18,7 @@ export default async function MfaPage({ searchParams }: { searchParams: Promise<
   return (
     <Card className="mx-auto max-w-md space-y-6 p-6 sm:p-8">
       <div className="space-y-2">
-        <h1 className="text-2xl font-extrabold">{t("Two-step verification")}</h1>
+        <h1 className="text-2xl font-extrabold">{t("Two step verification")}</h1>
         <p className="text-fg-muted">{t("This keeps patient records safe even if someone learns your login code.")}</p>
       </div>
       <MfaForm enrolled={Boolean(session.user.mfaEnabledAt)} account={session.user.email ?? session.user.phone ?? session.user.name} issuer={brand.name} next={next} demo={env.demoMode} />

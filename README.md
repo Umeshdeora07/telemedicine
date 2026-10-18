@@ -1,9 +1,20 @@
-# CareMitra — telemedicine for India and families abroad
+# CareMitra: online consultations with Indian doctors, and treatment in India
 
-A mobile-first telemedicine web app: video, audio and chat consultations with
-licensed doctors, booking for parents from abroad, hybrid online-to-clinic
-visits, a treatment-in-India journey for international patients, and portals
-for doctors, clinics, care coordinators and admins.
+A mobile first telemedicine website with two services:
+
+- **Online consultation.** Patients anywhere in the world book a video, audio
+  or chat consultation with a doctor registered in India, in four
+  specialties: Orthopaedics, Dermatology, General Physician and Psychology.
+  They get a digital prescription or a written treatment plan, and a free
+  follow up chat.
+- **Treatment in India.** Patients abroad send their reports for a free
+  review, get a written treatment plan and cost estimate in their currency,
+  a medical visa invitation letter, help with travel and stay, and online
+  follow up after they return home.
+
+It also has booking for parents and family, online to clinic visits, and
+portals for doctors, clinics, care coordinators and admins. The site is in
+English and Hindi, with a light theme by default and an optional dark theme.
 
 "CareMitra" is a placeholder brand. Change it with `NEXT_PUBLIC_BRAND_NAME`
 and the other `NEXT_PUBLIC_*` settings in `.env.example`.
@@ -48,19 +59,21 @@ On the login page, pick any demo account:
 |---|---|---|
 | Asha Verma | Patient, 62 | Hindi interface, upcoming video consult |
 | Rahul Mehta | Patient | Family profiles (wife and son) |
-| Sunita Rao | Patient | Diabetes care plan, home readings chart, medicine reminders |
+| Sunita Rao | Patient | Diabetes review with a general physician |
 | Arjun Nair | Caregiver in London | Booking for parents in Kochi, consented family access |
-| Fatima Rahman | International patient, Dhaka | Treatment-in-India case, quotes, visa letter |
-| John Carter | Patient in New York | Licence gating: only NY-licensed doctors |
+| Fatima Rahman | Patient in Dhaka | Treatment in India case, quotes, visa letter |
+| Daniel Otieno | Patient in Nairobi | Online consultation paid in USD |
 | Vikram Singh | Patient | Online consult that recommends a clinic visit |
-| Dr. Kavita Sharma | Doctor | Schedule, consult room, e-prescriptions |
-| Dr. Rajesh Iyer | Doctor (cardiology) | Licensed in India and NY/NJ |
-| Nisha Malhotra | Clinic coordinator | Check-in by QR, visits, international cases |
+| Dr. Kavita Sharma | Doctor (general physician) | Schedule, consult room, digital prescriptions |
+| Dr. Harpreet Gill | Doctor (orthopaedics) | Treatment in India cases |
+| Ira Banerjee | Clinical psychologist | Counselling consults (RCI registration, no medicines) |
+| Nisha Malhotra | Hospital coordinator | Check in by QR, visits, treatment in India cases |
 | Ravi Kumar | Care coordinator | Callbacks, assisted booking, interpreters |
 | Aditi Rao | Super admin | Verification, payments, complaints, audit log |
 
-Staff accounts use two-factor authentication. In demo mode the two-factor
-screen shows the current code.
+The accounts are in the "Test accounts" panel at the bottom of the login
+page, which only appears in demo mode. Staff accounts use two factor
+authentication. In demo mode the two factor screen shows the current code.
 
 To start over with fresh demo data:
 
@@ -95,8 +108,10 @@ reloads in a loop after an upgrade, delete `.next/` and restart.
 
 - **Next.js 16 App Router** with React 19 Server Components and Server
   Actions. Route protection and security headers in `src/proxy.ts`.
-- **Tailwind CSS v4** with design tokens in `src/app/globals.css`
-  (light and dark themes, WCAG 2.2 AA contrast).
+- **Tailwind CSS v4** with design tokens in `src/app/globals.css`. The
+  site is light by default; the sun and moon button in the header switches
+  to dark (saved in the `pref_theme` cookie). Both themes meet WCAG 2.2 AA
+  colour contrast. There are no other display settings.
 - **Drizzle ORM on PostgreSQL.** PGlite (embedded) locally; set
   `DATABASE_URL` for a real server. Schema in `src/db/schema.ts`,
   migrations in `drizzle/`.
@@ -112,15 +127,18 @@ reloads in a loop after an upgrade, delete `.next/` and restart.
   (`src/lib/storage.ts`). Prescriptions are signed with Ed25519 and carry a
   verification QR code.
 - **Scheduler** (`src/server/jobs.ts`) runs every minute: expires unpaid
-  bookings, refunds doctor no-shows, sends 24 h / 1 h / 10 min reminders and
-  medicine reminders, delivers notifications, generates slots, and checks
-  licence expiry. It starts with the Node.js server (`src/instrumentation.ts`)
+  bookings, refunds doctor no-shows, sends 24 h / 1 h / 10 min reminders,
+  delivers notifications, generates slots, and checks registration expiry. It starts with the Node.js server (`src/instrumentation.ts`)
   or can be called at `POST /api/cron/tick`.
 - **PWA**: installable, offline visit pass and prescriptions, Web Push
   (`public/sw.js`).
-- **i18n**: English source strings with dictionaries in `src/i18n/`.
-  Patient-facing screens are translated into Hindi; staff portals are in
-  English.
+- **i18n**: two languages, English and Hindi. English source strings with
+  Hindi dictionaries in `src/i18n/dictionaries/`. The header has a one tap
+  switch to the other language. `npm run i18n:check -- hi` lists missing
+  Hindi strings.
+- **Photos**: site photos are listed in `src/config/images.ts` (free Pexels
+  photos). Replace any `src` with your own file under `public/images/site/`.
+  Doctors show their own uploaded photo, or their initials.
 
 ```
 src/
@@ -130,7 +148,7 @@ src/
   components/     UI kit (ui/) and feature components
   server/         business logic, server actions, auth, payments, notifications
   db/             schema, connection, RLS helper, demo seed
-  lib/            pricing and GST, TPG rules, triage, time zones, crypto, PDFs
+  lib/            pricing and GST, TPG rules, red flag symptoms, time zones, crypto, PDFs
   content/        legal page templates
   i18n/           locale config and dictionaries
 tests/            Vitest unit and integration tests
@@ -225,10 +243,15 @@ does not make a service compliant. What is in place:
 - **Telemedicine Practice Guidelines 2020** — doctor registration shown on
   profiles and prescriptions, patient identity and consent at the start of
   each consult, prescription rules by consult type (List O, A, B and
-  prohibited medicines), e-prescriptions with all required fields.
-- **Licensing** — doctors appear only to patients in places where they hold
-  an active, verified licence. Licences expire automatically and the doctor
-  is reminded before they do.
+  prohibited medicines), digital prescriptions with all required fields.
+- **Registration**: every consultation is given by a doctor registered in
+  India (National Medical Commission or a State Medical Council;
+  psychologists with the Rehabilitation Council of India) under India's
+  telemedicine rules, wherever the patient lives. Doctors are listed only
+  with a verified, unexpired Indian registration, checked again every 12
+  months. Patients outside India are told that a prescription from an
+  Indian doctor may not be accepted by pharmacies in their country, and
+  get a written treatment plan to share with their local doctor.
 - **DPDP Act 2023 / GDPR** — consent records, cookie choices, data export
   (`/api/me/export`), deletion requests, a grievance officer and complaint
   tracking with deadlines.
@@ -237,12 +260,16 @@ does not make a service compliant. What is in place:
   authentication and short idle logout for staff, signed prescriptions,
   hashed tokens, strict security headers, and browser data cleared on
   logout.
-- **Emergencies** — a red-flag symptom check before booking directs
-  patients to emergency services instead of a video call.
+- **Emergencies**: the service is not for emergencies, as the footer and
+  help page say. Red flag symptoms in the booking form tell patients to go
+  to the nearest hospital or call their local emergency number instead.
 
 ## Launch checklist
 
 - [ ] Choose the brand name and replace every `NEXT_PUBLIC_*` placeholder.
+      The footer hides contact and company details until they are real.
+- [ ] Replace the site photos in `src/config/images.ts` with your own if you
+      wish, and upload each doctor's own photo.
 - [ ] Have a lawyer review and complete the legal pages in
       `src/content/legal.ts` (terms, privacy, telemedicine consent, refunds,
       grievance, cookies, medical disclaimer).
@@ -250,12 +277,12 @@ does not make a service compliant. What is in place:
 - [ ] Confirm the GST treatment of consultation fees, the platform fee and
       payments from abroad with a tax adviser.
 - [ ] Have a doctor verify the medicine lists in `src/lib/tpg.ts` and the
-      red-flag symptoms in `src/lib/triage.ts`.
+      red flag symptoms in `src/lib/triage.ts`.
 - [ ] Verify every doctor's registration with the NMC or State Medical
-      Council, and every foreign licence with the issuing board.
+      Council, and every psychologist's with the RCI.
 - [ ] Open live Razorpay and Stripe accounts and set up webhooks.
-- [ ] Finish Razorpay checkout for care plans, case deposits and second
-      opinions (today only consult bookings complete a Razorpay payment).
+- [ ] Finish Razorpay checkout for treatment in India deposits (today only
+      consult bookings complete a Razorpay payment).
 - [ ] Move off free plans: Vercel Hobby is for non-commercial use, and
       patient data should stay in India (see Deploying → Production).
 - [ ] Register SMS sender ID and DLT templates, WhatsApp message templates,

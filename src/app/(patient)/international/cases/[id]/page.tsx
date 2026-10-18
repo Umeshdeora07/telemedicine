@@ -8,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { CaseView } from "@/components/cases/case-view";
 import { CaseStatusBadge } from "@/components/cases/case-list";
 
-export const metadata: Metadata = { title: "Your treatment case" };
+export const metadata: Metadata = { title: "Your treatment plan" };
 
 export default async function PatientCase({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ new?: string; paid?: string }> }) {
   const { id } = await params;
@@ -18,9 +18,9 @@ export default async function PatientCase({ params, searchParams }: { params: Pr
   if (!data) notFound();
   return (
     <div className="space-y-6">
-      <Link href="/international/cases" className="text-primary underline">{ctx.t("All cases")}</Link>
+      <Link href="/international/cases" className="text-primary underline">{ctx.t("My treatment plans")}</Link>
       <PageHeader eyebrow={data.c.ref} title={data.c.treatmentInterest} description={data.patient.fullName} actions={<CaseStatusBadge status={data.c.status} t={ctx.t} />} />
-      {sp.new ? <Alert tone="success" title={ctx.t("Enquiry received")}>{ctx.t("A care coordinator will check your reports and reply within 24 hours. You'll get a message here and by SMS/email.")}</Alert> : null}
+      {sp.new ? <Alert tone="success" title={ctx.t("Reports received")}>{ctx.t("A care coordinator will check your reports and reply within 24 hours. You will get a message here and by text message and email.")}</Alert> : null}
       {sp.paid ? <Alert tone="success">{ctx.t("Payment received. Thank you.")}</Alert> : null}
       <CaseView data={data} ctx={ctx} />
     </div>

@@ -52,9 +52,9 @@ export default async function VisitPassPage({ params }: { params: Promise<{ id: 
         <ul className="list-disc space-y-1 ps-5 text-[0.9375rem]">
           <li>{t("A photo ID")}</li>
           <li>{t("Your current medicines or their strips")}</li>
-          <li>{t("Old reports and scans (the clinic can also see the ones you uploaded)")}</li>
+          <li>{t("Old reports and scans. The clinic can also see the ones you uploaded.")}</li>
         </ul>
-        <p className="text-sm text-fg-muted">{t("The clinic will see your online consult notes when you check in.")}</p>
+        <p className="text-sm text-fg-muted">{t("The clinic will see your online consultation notes when you check in.")}</p>
       </section>
     </div>
   );

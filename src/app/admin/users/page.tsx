@@ -31,11 +31,11 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           <tbody className="divide-y divide-line">
             {rows.map((u) => (
               <tr key={u.id}>
-                <td className="p-3 font-semibold">{u.name || "—"}{u.mfaEnabledAt ? <Badge tone="success" className="ms-2">2FA</Badge> : null}</td>
+                <td className="p-3 font-semibold">{u.name || t("No name")}{u.mfaEnabledAt ? <Badge tone="success" className="ms-2">2FA</Badge> : null}</td>
                 <td className="p-3">{t(ROLE_LABELS[u.role as Role] ?? u.role)}</td>
                 <td className="p-3">{u.email ?? maskPhone(u.phone)}</td>
                 <td className="p-3">{u.countryCode}</td>
-                <td className="p-3">{u.lastLoginAt ? fmt.date(u.lastLoginAt) : "—"}</td>
+                <td className="p-3">{u.lastLoginAt ? fmt.date(u.lastLoginAt) : t("Never")}</td>
                 <td className="p-3 text-end"><span className="inline-flex items-center gap-2">{u.status !== "active" ? <Badge tone="danger">{t(humanize(u.status))}</Badge> : null}<UserStatusButton id={u.id} status={u.status} /></span></td>
               </tr>
             ))}

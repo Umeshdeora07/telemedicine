@@ -17,8 +17,11 @@ export const metadata: Metadata = { title: "Test payment" };
 
 const ICON = { upi: Smartphone, card: CreditCard, netbanking: Landmark, wallet: Wallet, intl_card: CreditCard } as const;
 
-/** Stand-in for the payment gateway's hosted page in demo mode. Collects nothing. */
-export default async function DemoPayPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ failed?: string }> }) {
+/**
+ * Shown only while no payment gateway is connected (demo mode). It stands in
+ * for the gateway's own page, asks for no card details and takes no money.
+ */
+export default async function TestPaymentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ failed?: string }> }) {
   if (!env.demoMode) notFound();
   const { id } = await params;
   const sp = await searchParams;
@@ -31,9 +34,8 @@ export default async function DemoPayPage({ params, searchParams }: { params: Pr
   const label = { upi: t("UPI"), card: t("Card"), netbanking: t("Net banking"), wallet: t("Wallet"), intl_card: t("International card") };
   return (
     <div className="mx-auto max-w-md space-y-5">
-      <Alert tone="warning" title={t("Test payment page")}>
-        {t("This stands in for the real payment gateway (Razorpay or Stripe) in the demo. No card details are asked for and no money moves.")}
-      </Alert>
+      <h1 className="text-center text-2xl font-extrabold">{t("Test payment")}</h1>
+      <Alert tone="info">{t("Online payment is not connected yet. This test payment does not take any money.")}</Alert>
       <div className="card space-y-5 p-6">
         <div className="text-center">
           <p className="text-fg-muted">{t("Pay {merchant}", { merchant: brand.name })}</p>
@@ -41,17 +43,17 @@ export default async function DemoPayPage({ params, searchParams }: { params: Pr
         </div>
         {sp.failed ? (
           <p role="alert" className="flex items-center gap-2 rounded-xl bg-danger-soft p-3 text-danger">
-            <XCircle className="size-5" aria-hidden />
-            {t("The payment was declined. No money was taken. Try again or choose another method.")}
+            <XCircle className="size-5 shrink-0" aria-hidden />
+            {t("The payment was declined and no money was taken. Please try again or choose another way to pay.")}
           </p>
         ) : null}
         {p.status === "captured" ? (
-          <Alert tone="success">{t("Already paid.")}</Alert>
+          <Alert tone="success">{t("This has already been paid.")}</Alert>
         ) : (
           <form action={demoPayAction} className="space-y-4">
             <input type="hidden" name="paymentId" value={p.id} />
             <fieldset>
-              <legend className="mb-2 font-semibold">{t("Method")}</legend>
+              <legend className="mb-2 font-semibold">{t("Pay with")}</legend>
               <div className="grid grid-cols-2 gap-2">
                 {methods.map((m, i) => {
                   const Icon = ICON[m];

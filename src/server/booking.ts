@@ -29,7 +29,8 @@ import { buildQuote, feeFor } from "@/lib/pricing";
 import { financialYear, refs } from "@/lib/ids";
 import { addMinutes } from "@/lib/time";
 import { getRates } from "./queries/reference";
-import { isDoctorVisible, type PatientLocation } from "./doctors";
+import { isDoctorVisible } from "./doctors";
+import { INDIA } from "./location";
 import { cancelAppointmentReminders, notifyAppointment, scheduleAppointmentReminders } from "./notify";
 import { gatewayRefund, pickGateway, razorpayCreateOrder, stripeCreateCheckout } from "./payments/gateways";
 import { audit } from "./audit";
@@ -114,7 +115,6 @@ export type DraftInput = {
   mode: "video" | "audio" | "chat" | "in_clinic";
   slotId: string | null; // null = instant consult starting now
   patientId: string;
-  location: PatientLocation;
   currency: Currency;
   patientTimeZone: string;
   consultType?: "first" | "follow_up";
@@ -138,10 +138,10 @@ export async function createDraftAppointment(input: DraftInput) {
   if (!doctor) throw new BookingError("not_found", "Doctor not found");
   if (!doctor.modes.includes(input.mode)) throw new BookingError("mode_unavailable", "This doctor doesn't offer that consult mode");
 
-  // In-person visits happen in India; online consults follow the patient's location.
-  const ruleLocation: PatientLocation = input.mode === "in_clinic" ? { country: "IN", region: null } : input.location;
-  if (!(await isDoctorVisible(db, doctor.id, ruleLocation))) {
-    throw new BookingError("not_licensed", "This doctor isn't licensed to consult a patient in that location");
+  // Every consult is with a doctor registered in India, under India's
+  // telemedicine rules, wherever the patient lives.
+  if (!(await isDoctorVisible(db, doctor.id))) {
+    throw new BookingError("not_licensed", "This doctor is not taking bookings at the moment");
   }
   const [patient] = await db.select().from(patients).where(eq(patients.id, input.patientId));
   if (!patient) throw new BookingError("not_found", "Patient not found");
@@ -270,10 +270,11 @@ export async function createDraftAppointment(input: DraftInput) {
       endAt,
       doctorTimeZone: doctor.timeZone,
       patientTimeZone: input.patientTimeZone,
-      patientLocationCountry: ruleLocation.country,
-      patientLocationRegion: ruleLocation.region,
+      // Consult jurisdiction (always India), not where the patient lives.
+      patientLocationCountry: INDIA.country,
+      patientLocationRegion: null,
       locationConfirmedAt: new Date(),
-      locationSource: "self_declared",
+      locationSource: null,
       interpreterLanguage: input.interpreterLanguage || null,
       currency: input.currency,
       feeMinor: quote.feeMinor,
@@ -549,7 +550,7 @@ export async function cancelAppointment(apptId: string, by: { userId: string | n
     await notifyAppointment(db, appt.id, ({ t, intl }) => ({
       template: "appointment_cancelled",
       title: t("Booking cancelled"),
-      body: refunded ? t("Booking {ref} was cancelled. A refund of {amount} is on its way (5–7 working days).", { ref: appt.ref, amount: formatMoney(refunded, appt.currency, intl) }) : t("Booking {ref} was cancelled.", { ref: appt.ref }),
+      body: refunded ? t("Booking {ref} was cancelled. A refund of {amount} is on its way and reaches you in 5 to 7 working days.", { ref: appt.ref, amount: formatMoney(refunded, appt.currency, intl) }) : t("Booking {ref} was cancelled.", { ref: appt.ref }),
       link: `/consults/${appt.id}`,
     }));
   }
@@ -611,9 +612,9 @@ export async function handleDoctorNoShows(now = new Date()) {
     await cancelAppointmentReminders(db, appt.id);
     await notifyAppointment(db, appt.id, ({ t }) => ({
       template: "doctor_no_show",
-      title: t("Sorry — the doctor couldn't join"),
+      title: t("Sorry, the doctor couldn't join"),
       body: t("We've refunded your payment in full. You can see another doctor now.", {}),
-      link: `/consult-now?rebook=${appt.id}`,
+      link: "/doctors",
     }));
   }
   return due.length;

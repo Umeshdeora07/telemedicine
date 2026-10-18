@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { appointments, doctorLicences, doctors, messages, patients, payments, payouts, reviews, roomParticipants, secondOpinions } from "@/db/schema";
+import { appointments, doctorLicences, doctors, messages, patients, payments, payouts, reviews, roomParticipants } from "@/db/schema";
 import { env } from "@/config/env";
 import { dayBoundsUtc, dayInZone } from "@/lib/time";
 
@@ -76,16 +76,6 @@ export async function doctorLicenceAlerts(d: DoctorRow) {
 export async function doctorReviews(d: DoctorRow) {
   const db = await getDb();
   return db.select().from(reviews).where(eq(reviews.doctorId, d.id)).orderBy(desc(reviews.createdAt)).limit(100);
-}
-
-export async function doctorSecondOpinions(d: DoctorRow) {
-  const db = await getDb();
-  return db
-    .select({ s: secondOpinions, patientName: patients.fullName })
-    .from(secondOpinions)
-    .innerJoin(patients, eq(patients.id, secondOpinions.patientId))
-    .where(eq(secondOpinions.doctorId, d.id))
-    .orderBy(asc(secondOpinions.dueAt));
 }
 
 /** Follow-up chats still open where the patient side wrote last. */

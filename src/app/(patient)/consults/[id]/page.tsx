@@ -7,7 +7,6 @@ import { getViewContext } from "@/server/context";
 import { consultRecords, getAppointmentForUser, reviewFor } from "@/server/patient";
 import { getPolicy, cancellationRefund, paymentForAppointment } from "@/server/booking";
 import { getOpenSlots } from "@/server/doctors";
-import { describeLocation } from "@/server/location";
 import { getDb, withRls } from "@/db";
 import { appointments, consultActions, documents, doctors, messages, partnerOrders, refunds } from "@/db/schema";
 import { PageHeader } from "@/components/ui/page-header";
@@ -23,7 +22,7 @@ import { FollowUpChat } from "@/components/patient/follow-up-chat";
 import { FREQUENCIES, TIMINGS } from "@/lib/tpg";
 import { sameClock } from "@/lib/time";
 
-export const metadata: Metadata = { title: "Consult details" };
+export const metadata: Metadata = { title: "Consultation details" };
 
 export default async function ConsultDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -55,17 +54,16 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
   const canReschedule = a.status === "confirmed" && minutesToStart > policy.rescheduleFreeHours * 60;
   const slots = canReschedule ? (await getOpenSlots(db, a.doctorId, a.mode === "in_clinic" ? "in_clinic" : "online", { days: 14 })).slice(0, 60) : [];
   const refundIfCancelled = payment ? cancellationRefund({ startAt: a.startAt, totalMinor: payment.amountMinor }, policy, "patient") : 0;
-  const where = await describeLocation({ country: a.patientLocationCountry, region: a.patientLocationRegion });
   const chat = completed
     ? await withRls({ userId: user!.id, role: user!.role }, (tx) => tx.select().from(messages).where(eq(messages.appointmentId, a.id)).orderBy(asc(messages.id)).limit(200))
     : [];
   const chatOpen = Boolean(completed && a.followUpChatUntil && a.followUpChatUntil > new Date());
-  const modeLabel = { video: t("Video consult"), audio: t("Audio call"), chat: t("Chat consult"), in_clinic: t("Clinic visit") }[a.mode];
+  const modeLabel = { video: t("Video consultation"), audio: t("Audio call"), chat: t("Chat consultation"), in_clinic: t("Clinic visit") }[a.mode];
   const inPerson = actions.find((x) => x.type === "in_person_visit");
 
   return (
     <div className="space-y-6">
-      <nav className="text-sm text-fg-muted"><Link href="/consults" className="hover:underline">{t("My consults")}</Link> › {a.ref}</nav>
+      <nav className="text-sm text-fg-muted"><Link href="/consults" className="hover:underline">{t("My consultations")}</Link> › {a.ref}</nav>
       <PageHeader title={modeLabel} description={t("For {name} · booking {ref}", { name: row.patientName, ref: a.ref })} actions={statusBadge(a.status, t)} />
 
       <section className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
@@ -75,7 +73,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
           <p className="text-fg-muted">{t(row.specialty)}</p>
           <p className="mt-1"><strong>{fmt.dateTime(a.startAt)}</strong> <span className="text-fg-muted">({fmt.zone()})</span></p>
           {!sameClock(a.patientTimeZone, ctx.tz, a.startAt) ? <p className="text-sm text-fg-muted">{t("{name}'s time: {time}", { name: row.patientName, time: fmt.dateTime(a.startAt, a.patientTimeZone) })}</p> : null}
-          {row.clinicName ? <p className="flex items-center gap-1 text-sm text-fg-muted"><MapPin className="size-4" aria-hidden />{row.clinicName}, {row.clinicAddress}, {row.clinicCity}</p> : <p className="text-sm text-fg-muted">{t("Patient's location: {place}", { place: where.label })}</p>}
+          {row.clinicName ? <p className="flex items-center gap-1 text-sm text-fg-muted"><MapPin className="size-4" aria-hidden />{row.clinicName}, {row.clinicAddress}, {row.clinicCity}</p> : null}
         </div>
         <div className="flex flex-col gap-2">
           {joinable ? <ButtonLink href={`/consult/${a.id}`} size="lg"><Video className="size-5" aria-hidden />{t("Join now")}</ButtonLink> : null}
@@ -85,7 +83,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      {a.status === "doctor_no_show" ? <Alert tone="warning" title={t("The doctor couldn't join")}>{t("We refunded you in full automatically. Sorry for the trouble.")} <Link href="/consult-now" className="font-semibold text-primary underline">{t("See another doctor now")}</Link></Alert> : null}
+      {a.status === "doctor_no_show" ? <Alert tone="warning" title={t("The doctor couldn't join")}>{t("We refunded you in full automatically. We are sorry for the trouble.")} <Link href="/doctors" className="font-semibold text-primary underline">{t("Book another doctor")}</Link></Alert> : null}
 
       {journey.length > 1 ? (
         <section className="card space-y-3 p-5" aria-labelledby="journey">
@@ -95,29 +93,29 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
               <li key={j.a.id} className="flex items-center gap-2">
                 <Link href={`/consults/${j.a.id}`} aria-current={j.a.id === a.id ? "step" : undefined} className={`rounded-xl border px-3 py-2 text-sm ${j.a.id === a.id ? "border-primary bg-primary-soft font-semibold" : "border-line"}`}>
                   {j.a.mode === "in_clinic" ? <Building2 className="me-1 inline size-4" aria-hidden /> : <Video className="me-1 inline size-4" aria-hidden />}
-                  {j.a.mode === "in_clinic" ? t("Clinic visit") : t("Online consult")} · {fmt.date(j.a.startAt, ctx.tz, { day: "numeric", month: "short", year: undefined })}
+                  {j.a.mode === "in_clinic" ? t("Clinic visit") : t("Online consultation")} · {fmt.date(j.a.startAt, ctx.tz, { day: "numeric", month: "short", year: undefined })}
                 </Link>
                 {i < journey.length - 1 ? <ArrowRight className="size-4 text-fg-muted rtl:rotate-180" aria-hidden /> : null}
               </li>
             ))}
           </ol>
-          <p className="text-sm text-fg-muted">{t("Notes, reports and payments carry over between the online consult and the clinic visit.")}</p>
+          <p className="text-sm text-fg-muted">{t("Notes, reports and payments carry over between the online consultation and the clinic visit.")}</p>
         </section>
       ) : null}
 
       {upcoming ? (
         <section className="card space-y-3 p-5">
-          <h2 className="text-lg font-bold">{t("Before your consult")}</h2>
+          <h2 className="text-lg font-bold">{t("Before your consultation")}</h2>
           {a.preConsult ? (
             <p className="flex items-center gap-2"><ClipboardList className="size-5 text-success" aria-hidden />{t("You told the doctor: {problem}", { problem: a.preConsult.mainProblem })} <Link className="font-semibold text-primary underline" href={`/consults/${a.id}/prepare`}>{t("Edit")}</Link></p>
           ) : (
-            <Alert tone="warning">{t("Tell the doctor about the problem before the consult.")} <Link className="font-semibold text-primary underline" href={`/consults/${a.id}/prepare`}>{t("Fill the form (2 min)")}</Link></Alert>
+            <Alert tone="warning">{t("Please fill in the health form before your consultation, so your doctor knows about the problem.")} <Link className="font-semibold text-primary underline" href={`/consults/${a.id}/prepare`}>{t("Fill in the form (2 minutes)")}</Link></Alert>
           )}
-          <p className="text-[0.9375rem] text-fg-muted">{t("Family members can join from anywhere: open the consult and use “Invite family or interpreter”.")}</p>
+          <p className="text-[0.9375rem] text-fg-muted">{t("Family members can join from anywhere. Open the consultation and use “Invite family or interpreter”.")}</p>
           <ManageBooking
             apptId={a.id}
             canReschedule={canReschedule}
-            refundLabel={payment ? (refundIfCancelled >= payment.amountMinor ? t("You'll get a full refund of {amount}.", { amount: fmt.money(refundIfCancelled, a.currency) }) : refundIfCancelled > 0 ? t("You'll get {amount} back ({pct}% refund, as it's less than {h} hours before).", { amount: fmt.money(refundIfCancelled, a.currency), pct: policy.patientCancelPartialRefundPercent, h: policy.patientCancelFullRefundHours }) : t("It's too late for a refund.")) : t("No payment was taken.")}
+            refundLabel={payment ? (refundIfCancelled >= payment.amountMinor ? t("You will get a full refund of {amount}.", { amount: fmt.money(refundIfCancelled, a.currency) }) : refundIfCancelled > 0 ? t("You will get {amount} back. This is a {pct}% refund, because it is less than {h} hours before the start.", { amount: fmt.money(refundIfCancelled, a.currency), pct: policy.patientCancelPartialRefundPercent, h: policy.patientCancelFullRefundHours }) : t("It is too late for a refund.")) : t("No payment was taken.")}
             slots={slots.map((s) => ({ id: s.id, label: fmt.dateTime(s.startAt) }))}
           />
         </section>
@@ -136,7 +134,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
             </dl>
           ) : null}
           {note?.warningSigns ? (
-            <Alert tone="danger" title={t("Get help urgently if")}>{note.warningSigns} <Link href="/emergency" className="font-semibold underline">{t("Emergency help")}</Link></Alert>
+            <Alert tone="danger" title={t("Get help urgently if")}>{note.warningSigns} {t("In an emergency, go to the nearest hospital or call your local emergency number.")}</Alert>
           ) : null}
           {ctx.locale !== "en" ? <p className="text-sm text-fg-muted">{t("The doctor wrote this in English. Medicine timings below are shown in your language.")}</p> : null}
         </section>
@@ -145,7 +143,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
       {records.prescriptions.length ? (
         <section className="card space-y-4 p-5" aria-labelledby="rx">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="rx" className="flex items-center gap-2 text-xl font-bold"><Pill className="size-5 text-primary" aria-hidden />{t("e-Prescription")}</h2>
+            <h2 id="rx" className="flex items-center gap-2 text-xl font-bold"><Pill className="size-5 text-primary" aria-hidden />{t("Digital prescription")}</h2>
             <div className="flex gap-2">
               {records.prescriptions.map((p) => (
                 <a key={p.id} href={`/api/prescriptions/${p.id}/pdf`} target="_blank" rel="noopener" className="tap inline-flex items-center gap-2 rounded-xl border border-field px-3 font-semibold"><Download className="size-4" aria-hidden />{t("PDF")} {p.number}</a>
@@ -161,7 +159,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
               </li>
             ))}
           </ul>
-          <p className="text-sm text-fg-muted">{t("Dose reminders are set up from this prescription.")} <Link href="/reminders" className="text-primary underline">{t("Reminders")}</Link></p>
+          {user!.countryCode !== "IN" ? <p className="text-sm text-fg-muted">{t("Your doctor is registered in India. If you live outside India, a prescription from an Indian doctor may not be accepted by pharmacies in your country. Your doctor will give you a written treatment plan that you can share with your local doctor.")}</p> : null}
         </section>
       ) : null}
 
@@ -182,17 +180,17 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
           {actions.filter((x) => x.type !== "in_person_visit").map((x) => (
             <p key={x.id} className="flex items-start gap-2">
               <AlertTriangle className="mt-1 size-4 text-warning" aria-hidden />
-              {x.type === "tests" ? t("Tests ordered: {tests}", { tests: ((x.details as { tests?: string[] }).tests ?? []).join(", ") }) : x.type === "specialist_referral" ? t("Referral to a specialist: {reason}", { reason: (x.details as { reason?: string }).reason ?? "" }) : x.type === "follow_up" ? t("Follow-up recommended{date}", { date: x.dueBy ? ` ${t("by {date}", { date: fmt.date(x.dueBy) })}` : "" }) : t("Emergency care advised")}
+              {x.type === "tests" ? t("Tests ordered: {tests}", { tests: ((x.details as { tests?: string[] }).tests ?? []).join(", ") }) : x.type === "specialist_referral" ? t("Referral to a specialist: {reason}", { reason: (x.details as { reason?: string }).reason ?? "" }) : x.type === "follow_up" ? (x.dueBy ? t("Follow up recommended by {date}", { date: fmt.date(x.dueBy) }) : t("Follow up recommended")) : t("Emergency care advised")}
             </p>
           ))}
           <div className="flex flex-wrap gap-2">
             {rx ? <PartnerOrder apptId={a.id} kind="pharmacy" prescriptionId={rx.id} defaultAddress={""} /> : null}
             {note?.investigations.length ? <PartnerOrder apptId={a.id} kind="lab" prescriptionId={null} defaultAddress={""} /> : null}
-            <ButtonLink href={`/book/${row.doctorSlug}?type=follow_up`} variant="outline"><CalendarPlus className="size-5" aria-hidden />{t("Book a follow-up")}</ButtonLink>
+            <ButtonLink href={`/book/${row.doctorSlug}?type=follow_up`} variant="outline"><CalendarPlus className="size-5" aria-hidden />{t("Book a follow up")}</ButtonLink>
           </div>
           {orders.length ? (
             <ul className="text-sm text-fg-muted">
-              {orders.map((o) => <li key={o.id}>{o.kind === "pharmacy" ? t("Medicine order") : t("Lab booking")} {o.externalRef} — <Badge>{t(o.status)}</Badge></li>)}
+              {orders.map((o) => <li key={o.id}>{o.kind === "pharmacy" ? t("Medicine order") : t("Lab booking")} {o.externalRef} <Badge>{t(o.status)}</Badge></li>)}
             </ul>
           ) : null}
         </section>
@@ -204,7 +202,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
           <FollowUpChat
             apptId={a.id}
             open={chatOpen}
-            closedText={a.followUpChatUntil ? t("The free follow-up chat closed on {date}. Book a follow-up to ask more.", { date: fmt.date(a.followUpChatUntil) }) : t("Chat is closed.")}
+            closedText={a.followUpChatUntil ? t("The free follow up chat closed on {date}. Book a follow up consultation to ask more.", { date: fmt.date(a.followUpChatUntil) }) : t("Chat is closed.")}
             initial={chat.map((m) => ({ id: m.id, senderRole: m.senderRole, senderName: m.senderName, body: m.body, documentId: m.documentId, kind: m.kind, createdAt: m.createdAt.toISOString(), mine: m.senderUserId === user!.id }))}
           />
           {chatOpen ? <p className="text-sm text-fg-muted">{t("Free until {date}.", { date: fmt.dateTime(a.followUpChatUntil!) })}</p> : null}
@@ -237,11 +235,11 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
           <p>{fmt.money(payment.amountMinor, payment.currency)} · {t(payment.status)}{payment.method ? ` · ${payment.method.toUpperCase()}` : ""}</p>
           {refundRows.map((r) => <p key={r.id} className="text-success">{t("Refunded {amount} on {date} ({status})", { amount: fmt.money(r.amountMinor, r.currency), date: fmt.date(r.createdAt), status: t(r.status) })}</p>)}
           {payment.invoiceNumber ? <a href={`/api/invoices/${payment.id}`} target="_blank" rel="noopener" className="tap inline-flex items-center gap-2 font-semibold text-primary"><Download className="size-4" aria-hidden />{t("Invoice {n}", { n: payment.invoiceNumber })}</a> : null}
-          {completed ? <a href={`/api/consults/${a.id}/claims-pack`} className="tap inline-flex items-center gap-2 font-semibold text-primary"><Download className="size-4" aria-hidden />{t("Insurance claim pack (invoice + prescription + summary)")}</a> : null}
+          {completed ? <a href={`/api/consults/${a.id}/claims-pack`} className="tap inline-flex items-center gap-2 font-semibold text-primary"><Download className="size-4" aria-hidden />{t("Insurance claim pack: invoice, prescription and summary")}</a> : null}
         </section>
       ) : null}
 
-      <p className="text-sm text-fg-muted">{t("Something wrong with this consult?")} <Link href={`/help/contact?ref=${a.ref}`} className="text-primary underline">{t("Tell us")}</Link></p>
+      <p className="text-sm text-fg-muted">{t("Something wrong with this consultation?")} <Link href={`/help/contact?ref=${a.ref}`} className="text-primary underline">{t("Tell us")}</Link></p>
     </div>
   );
 }

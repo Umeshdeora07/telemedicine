@@ -24,9 +24,9 @@ export default async function DoctorLicences() {
     <div className="max-w-3xl space-y-6">
       <PageHeader
         title={t("Licences")}
-        description={t("Patients see you only in places where you hold a verified licence. We remind you 60 and 15 days before a licence expires, and hide you there on the day it expires.")}
+        description={t("Patients can book you only while your Indian registration is verified and valid. We remind you 60 and 15 days before it expires, and hide your profile on the day it expires.")}
       />
-      {d.reverifyDueAt ? <Alert tone="info">{t("Next annual re-verification: {date}", { date: fmt.date(d.reverifyDueAt) })}</Alert> : null}
+      {d.reverifyDueAt ? <Alert tone="info">{t("Next yearly registration check: {date}", { date: fmt.date(d.reverifyDueAt) })}</Alert> : null}
       <ul className="space-y-3">
         {lic.map((l) => (
           <li key={l.id} className="card space-y-2 p-4">
@@ -41,7 +41,7 @@ export default async function DoctorLicences() {
               {l.verifiedAt ? ` · ${t("Verified on {date}", { date: fmt.date(l.verifiedAt) })}` : ""}
             </p>
             {l.daysLeft !== null && l.daysLeft <= 60 && l.status === "verified" ? (
-              <Alert tone={l.daysLeft <= 15 ? "danger" : "warning"}>{l.daysLeft < 0 ? t("Expired. Patients there can no longer see you.") : t("Expires in {n} days. Add the renewed licence below.", { n: l.daysLeft })}</Alert>
+              <Alert tone={l.daysLeft <= 15 ? "danger" : "warning"}>{l.daysLeft < 0 ? t("Expired. Patients can no longer see you.") : t("Expires in {n} days. Add the renewed licence below.", { n: l.daysLeft })}</Alert>
             ) : null}
             {l.status === "rejected" && l.notes ? <Alert tone="danger">{l.notes}</Alert> : null}
           </li>

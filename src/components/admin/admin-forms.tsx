@@ -63,7 +63,7 @@ export function DoctorDecisionForm({ doctorId, status }: { doctorId: string; sta
   const { t } = useI18n();
   const [s, action] = useActionState(decideDoctorAction, {});
   const options = status === "approved" ? ["suspend"] : status === "suspended" ? ["reinstate", "reject"] : ["approve", "reject"];
-  const label: Record<string, string> = { approve: t("Approve — doctor goes live"), reject: t("Send back for changes"), suspend: t("Suspend (hide from patients)"), reinstate: t("Reinstate") };
+  const label: Record<string, string> = { approve: t("Approve and make the doctor live"), reject: t("Send back for changes"), suspend: t("Suspend (hide from patients)"), reinstate: t("Reinstate") };
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="doctorId" value={doctorId} />
@@ -115,7 +115,7 @@ export function RefundForm({ paymentId, left, currency }: { paymentId: string; l
   return (
     <form action={action} className="grid gap-2 sm:grid-cols-[8rem_1fr_auto] sm:items-end">
       <input type="hidden" name="paymentId" value={paymentId} />
-      <div className="sm:col-span-3"><Msg s={s} ok={t("Refund issued. The patient gets it in 5–7 working days.")} /></div>
+      <div className="sm:col-span-3"><Msg s={s} ok={t("Refund issued. The patient gets it in 5 to 7 working days.")} /></div>
       <Field label={t("Amount ({cur})", { cur: currency })} htmlFor={`a-${paymentId}`} hint={t("Up to {left}", { left })}><Input id={`a-${paymentId}`} name="amount" inputMode="decimal" required /></Field>
       <Field label={t("Reason")} htmlFor={`r-${paymentId}`}><Input id={`r-${paymentId}`} name="reason" required minLength={5} /></Field>
       <SubmitButton size="sm">{t("Issue refund")}</SubmitButton>
@@ -146,13 +146,12 @@ export function ComplaintForm({ id, status }: { id: string; status: string }) {
   );
 }
 
-export function CountryToggles({ code, enabled, local }: { code: string; enabled: boolean; local: boolean }) {
+export function CountryToggles({ code, enabled }: { code: string; enabled: boolean }) {
   const { t } = useI18n();
   const [pending, start] = useTransition();
   return (
     <span className="flex flex-wrap gap-3">
       <label className="flex min-h-11 items-center gap-2"><input type="checkbox" defaultChecked={enabled} disabled={pending} onChange={(e) => start(async () => void (await countryAction(code, { enabled: e.target.checked })))} className="size-5 accent-[var(--primary)]" />{t("Sign-ups open")}</label>
-      <label className="flex min-h-11 items-center gap-2"><input type="checkbox" defaultChecked={local} disabled={pending} onChange={(e) => start(async () => void (await countryAction(code, { localConsultsEnabled: e.target.checked })))} className="size-5 accent-[var(--primary)]" />{t("Local-licence consults")}</label>
     </span>
   );
 }
@@ -269,10 +268,10 @@ export function ArticleForm({ doctors, categories }: { doctors: { id: string; na
       <div className="sm:col-span-3"><Msg s={s} ok={t("Article saved.")} /></div>
       <Field label={t("Title")} htmlFor="at" className="sm:col-span-2"><Input id="at" name="title" required /></Field>
       <Field label={t("Category")} htmlFor="ac"><Select id="ac" name="category">{categories.map((c) => <option key={c}>{c}</option>)}</Select></Field>
-      <Field label={t("Summary (1–2 sentences)")} htmlFor="as" className="sm:col-span-3"><Input id="as" name="summary" required /></Field>
+      <Field label={t("Summary (1 or 2 sentences)")} htmlFor="as" className="sm:col-span-3"><Input id="as" name="summary" required /></Field>
       <Field label={t("Body (Markdown, plain language, reading age 12)")} htmlFor="ab" className="sm:col-span-3"><Textarea id="ab" name="body" rows={10} required /></Field>
       <Field label={t("Reviewed by doctor")} htmlFor="ar"><Select id="ar" name="reviewer" defaultValue=""><option value="">{t("Not reviewed yet")}</option>{doctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
-      <Field label={t("Language")} htmlFor="al"><Select id="al" name="language" defaultValue="en"><option value="en">English</option><option value="hi">हिन्दी</option><option value="ar">العربية</option></Select></Field>
+      <Field label={t("Language")} htmlFor="al"><Select id="al" name="language" defaultValue="en"><option value="en">English</option><option value="hi">हिन्दी</option></Select></Field>
       <Checkbox name="publish" label={t("Publish now")} hint={t("Needs a reviewing doctor.")} />
       <div className="sm:col-span-3"><SubmitButton>{t("Save article")}</SubmitButton></div>
     </form>

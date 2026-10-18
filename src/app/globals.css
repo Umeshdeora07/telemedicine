@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
-/* Dark mode follows the .dark class on <html> (set from the user's setting,
-   or from the system preference before hydration). */
+/* Dark mode follows the .dark class on <html>. The server sets it from the
+   pref_theme cookie; light is the default and dark is only used when the
+   visitor turns it on. */
 @custom-variant dark (&:where(.dark, .dark *));
-/* High-contrast mode, toggled from Settings or the accessibility menu. */
-@custom-variant hc (&:where(.hc, .hc *));
 
 /* ---------------------------------------------------------------------------
    Design tokens. Every text pairing below meets WCAG AA (4.5:1 for text,
@@ -25,11 +24,12 @@
   --fg-muted: #475569;
   --heading: #0b2545;
 
-  --primary: #0f766e;
-  --primary-hover: #115e59;
+  /* Medical blue. #1d4ed8 is 6.7:1 on white; #1e3a8a on #eaf1ff is 9.6:1. */
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
   --on-primary: #ffffff;
-  --primary-soft: #e6f4f2;
-  --primary-soft-fg: #0b524c;
+  --primary-soft: #eaf1ff;
+  --primary-soft-fg: #1e3a8a;
 
   --navy: #0b2545;
   --on-navy: #f8fafc;
@@ -48,7 +48,7 @@
   --on-danger: #ffffff;
   --danger-soft: #fee2e2;
 
-  --focus: #0f766e;
+  --focus: #1d4ed8;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.05);
   color-scheme: light;
 }
@@ -67,11 +67,11 @@
   --fg-muted: #a3b1c6;
   --heading: #f8fafc;
 
-  --primary: #2dd4bf;
-  --primary-hover: #5eead4;
-  --on-primary: #04211f;
-  --primary-soft: #0e2f2c;
-  --primary-soft-fg: #99f6e4;
+  --primary: #60a5fa;
+  --primary-hover: #93c5fd;
+  --on-primary: #071a3a;
+  --primary-soft: #0f2547;
+  --primary-soft-fg: #bfdbfe;
 
   --navy: #07182f;
   --on-navy: #f8fafc;
@@ -90,49 +90,9 @@
   --on-danger: #ffffff;
   --danger-soft: #3a1414;
 
-  --focus: #5eead4;
+  --focus: #93c5fd;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
   color-scheme: dark;
-}
-
-/* High contrast: stronger text, borders and focus; links always underlined. */
-.hc {
-  --page: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --line: #0f172a;
-  --field: #0f172a;
-  --fg: #000000;
-  --fg-muted: #1e293b;
-  --heading: #000000;
-  --primary: #0b4f4a;
-  --primary-hover: #063632;
-  --primary-soft: #e6f4f2;
-  --primary-soft-fg: #063632;
-  --success: #0f5a2b;
-  --warning: #7c3a06;
-  --danger: #a51b1b;
-  --danger-solid: #a51b1b;
-  --focus: #000000;
-}
-.dark.hc {
-  --page: #000000;
-  --surface: #000000;
-  --surface-2: #111111;
-  --line: #ffffff;
-  --field: #ffffff;
-  --fg: #ffffff;
-  --fg-muted: #e5e7eb;
-  --heading: #ffffff;
-  --primary: #5eead4;
-  --primary-hover: #99f6e4;
-  --on-primary: #000000;
-  --primary-soft: #062b28;
-  --primary-soft-fg: #ccfbf1;
-  --success: #86efac;
-  --warning: #fde68a;
-  --danger: #fca5a5;
-  --focus: #ffffff;
 }
 
 @theme inline {
@@ -165,8 +125,8 @@
   --color-danger-soft: var(--danger-soft);
   --color-focus: var(--focus);
 
-  --font-sans: var(--font-inter), var(--font-deva), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-jakarta), var(--font-deva), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-jakarta), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
 
   --shadow-card: var(--shadow-card);
   --radius-card: 1rem;
@@ -181,15 +141,6 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-/* Large-text mode (Settings → Accessibility). Everything is sized in rem,
-   so the whole interface scales, and still works at 200% browser zoom. */
-html.lt {
-  font-size: 112.5%;
-}
-html.xlt {
-  font-size: 125%;
-}
-
 body {
   overflow-x: clip;
   background: var(--page);
@@ -204,10 +155,6 @@ body {
 body:lang(hi) {
   font-family: var(--font-inter), var(--font-deva), ui-sans-serif, system-ui, sans-serif;
   line-height: 1.7;
-}
-:lang(ar) body,
-body:lang(ar) {
-  font-family: var(--font-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 h1,
@@ -228,17 +175,10 @@ a {
   color: inherit;
 }
 
-.hc a:not([data-button]) {
-  text-decoration: underline;
-}
-
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
   border-radius: 6px;
-}
-.hc :focus-visible {
-  outline-width: 4px;
 }
 
 ::selection {
@@ -261,7 +201,7 @@ button {
 }
 }
 
-/* Reduced motion: honour the OS setting and the in-app toggle. */
+/* Reduced motion: honour the operating system setting. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -271,13 +211,6 @@ button {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-html.rm *,
-html.rm *::before,
-html.rm *::after {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
 }
 
 /* ---------------------------------------------------------------------------
@@ -402,13 +335,6 @@ html.rm *::after {
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: 0.5rem;
-}
-
-/* Leaflet maps (CSS is inlined here to keep the CSP to 'self'). */
-.leaflet-container {
-  font: inherit;
-  border-radius: 1rem;
-  z-index: 0;
 }
 
 @media print {

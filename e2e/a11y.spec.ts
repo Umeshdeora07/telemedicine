@@ -1,7 +1,19 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const PAGES = ["/", "/doctors", "/doctors/dr-kavita-sharma", "/login", "/emergency", "/triage", "/help", "/pricing", "/specialties/cardiology", "/hospitals"];
+const PAGES = [
+  "/",
+  "/online-consultation",
+  "/treatment-in-india",
+  "/doctors",
+  "/doctors/dr-kavita-sharma",
+  "/specialties",
+  "/specialties/orthopaedics",
+  "/about",
+  "/contact",
+  "/help",
+  "/login",
+];
 
 test.beforeEach(async ({ context }) => {
   await context.addCookies([{ name: "cookie_choice", value: "essential", url: process.env.BASE_URL ?? "http://localhost:3000" }]);

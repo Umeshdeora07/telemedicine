@@ -38,7 +38,7 @@ export function InterpreterAssign({ apptId, options }: { apptId: string; options
   if (link)
     return (
       <div className="space-y-2">
-        <Alert tone="success">{t("{name} is assigned. Send them this one-time join link:", { name: link.name })}</Alert>
+        <Alert tone="success">{t("{name} is assigned. Send them this join link. It works only once:", { name: link.name })}</Alert>
         <div className="flex items-center gap-2">
           <code className="min-w-0 flex-1 truncate rounded-lg bg-surface-2 px-2 py-1 text-sm">{link.url}</code>
           <Button size="sm" variant="ghost" onClick={() => navigator.clipboard?.writeText(link.url)} aria-label={t("Copy link")}><Copy className="size-4" aria-hidden /></Button>
@@ -63,7 +63,7 @@ export function AssistedBookingForm({ hidden, slots, languages }: { hidden: Reco
   if (state.ok)
     return (
       <Alert tone="success" title={t("Booking {ref} reserved", { ref: state.ref ?? "" })}>
-        {t("We sent the patient a payment link by SMS, WhatsApp and in the app. The slot is held for 15 minutes — stay on the call until they pay.")}{" "}
+        {t("We sent the patient a payment link by SMS, WhatsApp and in the app. The slot is held for 15 minutes, so stay on the call until they pay.")}{" "}
         <Link href="/coordinator/book" className="font-semibold underline">{t("Book another")}</Link>
       </Alert>
     );

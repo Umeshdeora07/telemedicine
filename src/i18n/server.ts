@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cookies, headers } from "next/headers";
-import { DEFAULT_LOCALE, enabledLocales, intlLocale, isLocale, LOCALE_COOKIE, localeDir, type Locale } from "./config";
+import { DEFAULT_LOCALE, enabledLocales, intlLocale, isLocale, LOCALE_COOKIE, type Locale } from "./config";
 import { loadDictionary } from "./dictionaries";
 import { makeTranslator } from "./translate";
 
@@ -34,7 +34,7 @@ export const getI18n = cache(async () => {
   const dict = await loadDictionary(locale);
   const intl = intlLocale(locale);
   const { t, tp } = makeTranslator(dict, intl);
-  return { locale, dir: localeDir(locale), intl, dict, t, tp };
+  return { locale, intl, dict, t, tp };
 });
 
 export async function getT() {

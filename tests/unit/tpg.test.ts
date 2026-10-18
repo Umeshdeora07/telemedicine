@@ -21,7 +21,7 @@ describe("Telemedicine Practice Guidelines 2020 prescribing rules", () => {
     expect(blockReason("A", "audio", "first")).toMatch(/video/i);
   });
   it("List B on a first consult is blocked", () => {
-    expect(blockReason("B", "video", "first")).toMatch(/follow-up/i);
+    expect(blockReason("B", "video", "first")).toMatch(/follow up/i);
   });
   it("warns about allergies by drug class and duplicates", () => {
     const r = checkPrescription(

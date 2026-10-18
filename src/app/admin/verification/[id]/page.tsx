@@ -29,7 +29,7 @@ export default async function VerifyDoctor({ params }: { params: Promise<{ id: s
     <div className="max-w-4xl space-y-6">
       <Link href="/admin/verification" className="text-primary underline">{t("Back to queue")}</Link>
       <PageHeader eyebrow={t(r.specialty)} title={r.d.fullName} description={`${r.email ?? ""} · ${r.phone ?? ""} · ${t("{n} years experience", { n: r.d.experienceYears })}`} actions={<Badge tone={r.d.verificationStatus === "approved" ? "success" : r.d.verificationStatus === "submitted" ? "accent" : "neutral"}>{t(humanize(r.d.verificationStatus))}</Badge>} />
-      {r.d.lastVerifiedAt ? <p className="text-fg-muted">{t("Last verified {date}; re-verification due {due}.", { date: fmt.date(r.d.lastVerifiedAt), due: r.d.reverifyDueAt ? fmt.date(r.d.reverifyDueAt) : "—" })}</p> : null}
+      {r.d.lastVerifiedAt ? <p className="text-fg-muted">{r.d.reverifyDueAt ? t("Last verified {date}. Next check due {due}.", { date: fmt.date(r.d.lastVerifiedAt), due: fmt.date(r.d.reverifyDueAt) }) : t("Last verified {date}.", { date: fmt.date(r.d.lastVerifiedAt) })}</p> : null}
 
       <section className="card space-y-3 p-5">
         <h2 className="text-lg font-bold">{t("Identity")}</h2>

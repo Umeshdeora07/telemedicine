@@ -34,7 +34,7 @@ export default async function ClinicToday() {
           [t("Visits today"), visits.length],
           [t("Expected"), expected],
           [t("Waiting now"), waiting],
-          [t("Open international cases"), openCases.length],
+          [t("Open treatment cases"), openCases.length],
         ].map(([k, v]) => (
           <div key={String(k)} className="card p-4">
             <dt className="text-sm text-fg-muted">{k}</dt>

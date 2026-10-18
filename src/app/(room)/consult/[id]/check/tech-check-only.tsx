@@ -10,7 +10,7 @@ export function TechCheckOnly({ backHref }: { backHref: string }) {
   return (
     <TechCheck
       wantVideo
-      joinLabel={t("Looks good — done")}
+      joinLabel={t("Looks good, done")}
       onReady={(c) => {
         c.stream?.getTracks().forEach((tr) => tr.stop());
         router.push(backHref);

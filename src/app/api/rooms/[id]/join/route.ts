@@ -9,11 +9,6 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
   const { access } = g;
   const win = joinWindow(access.appointment, access.role);
   if (!win.ok) return NextResponse.json({ error: win.reason, opensAt: "opensAt" in win ? win.opensAt : undefined }, { status: 409 });
-  // The patient's side must confirm where the patient is, shortly before every consult.
-  const confirmed = access.appointment.locationConfirmedAt;
-  if ((access.role === "patient" || access.role === "caregiver") && (!confirmed || confirmed.getTime() < Date.now() - 2 * 3600_000)) {
-    return NextResponse.json({ error: "confirm_location" }, { status: 409 });
-  }
   const peerId = await joinRoom(access);
   return NextResponse.json({ peerId, role: access.role, displayName: access.displayName, iceServers: await iceServers() });
 }

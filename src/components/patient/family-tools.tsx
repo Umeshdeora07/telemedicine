@@ -36,9 +36,9 @@ export function AddFamilyForm({ countries, defaultCountry, pendingLinkId }: { co
         <Select id="country" name="country" defaultValue={defaultCountry}>{countries.map((c) => <option key={c.code} value={c.code}>{t(c.name)}</option>)}</Select>
       </Field>
       {age !== null && age < 18 ? (
-        <Checkbox name="guardian" required className="sm:col-span-2" label={t("I am this child's parent or legal guardian")} hint={t("Children's consults always need a parent or guardian present.")} />
+        <Checkbox name="guardian" required className="sm:col-span-2" label={t("I am this child's parent or legal guardian")} hint={t("A parent or guardian must always be present at a child's consultation.")} />
       ) : (
-        <Field label={t("Their mobile number (with country code)")} htmlFor="phone" required className="sm:col-span-2" hint={t("We text them a code. They read it to you if they agree to let you book and see their consults. This is the law in India (DPDP Act) and the right thing to do.")}>
+        <Field label={t("Their mobile number (with country code)")} htmlFor="phone" required className="sm:col-span-2" hint={t("We text them a code. They read it to you if they agree to let you book and see their consultations. India's data protection law requires this, and it is the right thing to do.")}>
           <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" placeholder="+91 98xxxxxxxx" />
         </Field>
       )}
@@ -56,9 +56,9 @@ function ConsentStep({ linkId, devCode, note }: { linkId: string; devCode?: stri
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="linkId" value={linkId} />
-      <Alert tone="info" title={t("We sent them a code")}>{t("Ask your family member to read you the 6-digit code from the SMS. They should only share it if they agree.")}</Alert>
+      <Alert tone="info" title={t("We sent them a code")}>{t("Ask your family member to read you the 6 digit code from the text message. They should only share it if they agree.")}</Alert>
       {note ? <Alert tone="warning">{note}</Alert> : null}
-      {code ? <p className="text-sm text-fg-muted">{t("Demo code: {code}", { code })}</p> : null}
+      {code ? <p className="text-sm text-fg-muted">{t("Text messages are not connected yet, so here is the code: {code}", { code })}</p> : null}
       {s.error ? <Alert tone="danger">{s.error}</Alert> : null}
       {resend?.error ? <Alert tone="danger">{resend.error}</Alert> : null}
       <Field label={t("Code")} htmlFor="code"><Input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="max-w-40 font-mono text-2xl tracking-[0.3em]" /></Field>
@@ -81,7 +81,7 @@ export function PermissionToggles({ linkId, perms, mine }: { linkId: string; per
     start(async () => { await familyPermsAction(linkId, next); router.refresh(); });
   };
   const labels: Record<keyof typeof perms, string> = mine
-    ? { canBook: t("Book consults"), canJoin: t("Join video calls"), canViewRecords: t("See records and prescriptions"), receivesNotifications: t("Get reminders") }
+    ? { canBook: t("Book consultations"), canJoin: t("Join video calls"), canViewRecords: t("See records and prescriptions"), receivesNotifications: t("Get reminders") }
     : { canBook: t("They can book for me"), canJoin: t("They can join my calls"), canViewRecords: t("They can see my records"), receivesNotifications: t("They get my reminders") };
   return (
     <fieldset className="grid gap-1 sm:grid-cols-2" disabled={pending}>

@@ -27,8 +27,8 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
     [t("Consults completed"), fmt.number(completed)],
     [t("Payments (₹, all currencies)"), fmt.money(o.money.gmvInr, "INR"), t("{n} payments", { n: o.money.count })],
     [t("Refunded"), fmt.money(o.money.refundedInr, "INR")],
-    [t("Average rating"), o.rating.n ? `${o.rating.avg.toFixed(2)} ★` : "—", t("{n} reviews", { n: o.rating.n })],
-    [t("Doctor no-show rate"), `${(o.doctorNoShowRate * 100).toFixed(1)}%`, t("auto-refunded")],
+    [t("Average rating"), o.rating.n ? `${o.rating.avg.toFixed(2)} ★` : t("No ratings yet"), t("{n} reviews", { n: o.rating.n })],
+    [t("Doctor no-show rate"), `${(o.doctorNoShowRate * 100).toFixed(1)}%`, t("refunded automatically")],
   ];
   return (
     <div className="space-y-6">
@@ -62,7 +62,7 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
           <HBars title={t("Completed consults by specialty")} tableCaption={t("Completed consults by specialty")} valueHeader={t("Consults")} data={o.bySpecialty.slice(0, 8).map((r) => ({ label: t(r.name), value: r.n }))} />
         </section>
         <section className="card p-5">
-          <HBars title={t("Consults by patient location")} tableCaption={t("Consults by patient location")} valueHeader={t("Consults")} data={o.byCountry.slice(0, 8).map((r) => ({ label: t(countries.find((c) => c.code === r.country)?.name ?? r.country), value: r.n }))} />
+          <HBars title={t("Consults by the patient's account country")} tableCaption={t("Consults by the patient's account country")} valueHeader={t("Consults")} data={o.byCountry.slice(0, 8).map((r) => ({ label: t(countries.find((c) => c.code === r.country)?.name ?? r.country), value: r.n }))} />
         </section>
       </div>
     </div>

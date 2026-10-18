@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe } from "lucide-react";
+import { Plane } from "lucide-react";
 import type { getViewContext } from "@/server/context";
 import { CASE_STEPS, type CaseRow, type CaseStatus } from "@/server/cases";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ export function CaseStatusBadge({ status, t }: { status: CaseStatus; t: Ctx["t"]
 
 export function CaseList({ cases, base, ctx }: { cases: { c: CaseRow; patientName: string; clinicName: string | null }[]; base: string; ctx: Ctx }) {
   const { t, fmt } = ctx;
-  if (!cases.length) return <EmptyState icon={<Globe className="size-8" aria-hidden />} title={t("No international cases yet")} />;
+  if (!cases.length) return <EmptyState icon={<Plane className="size-8" aria-hidden />} title={t("No treatment plans yet")} />;
   return (
     <ul className="card divide-y divide-line">
       {cases.map(({ c, patientName, clinicName }) => (

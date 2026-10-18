@@ -16,7 +16,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const rows = await searchAudit({ q: q || undefined, action: a || undefined });
   return (
     <div className="space-y-6">
-      <PageHeader title={t("Audit log")} description={t("Append-only record of who viewed or changed what. Health-record views are logged with the patient, so you can answer “who saw my records?” requests.")} />
+      <PageHeader title={t("Audit log")} description={t("A permanent record of who viewed or changed what. Every view of health records is logged with the patient, so you can answer “who saw my records?” requests.")} />
       <form role="search" className="flex flex-wrap gap-2">
         <label htmlFor="aq" className="sr-only">{t("Person or record id")}</label>
         <Input id="aq" name="q" defaultValue={q} placeholder={t("Person or record id")} className="max-w-xs" />

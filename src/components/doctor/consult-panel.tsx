@@ -58,10 +58,10 @@ export async function ConsultPanel({ access, user }: { access: RoomAccess; user:
       <section className="space-y-2 p-4" aria-labelledby="pt">
         <h2 id="pt" className="text-lg font-bold">{p.fullName}</h2>
         <p className="text-fg-muted">
-          {age !== null ? t("{n} years", { n: age }) : t("Age not given")} · {p.sex ? t(p.sex === "female" ? "Female" : p.sex === "male" ? "Male" : "Other") : "—"} · {t("Consult location: {place}", { place: [a.patientLocationRegion, a.patientLocationCountry].filter(Boolean).join(", ") })}
+          {age !== null ? t("{n} years", { n: age }) : t("Age not given")}{p.sex ? ` · ${t(p.sex === "female" ? "Female" : p.sex === "male" ? "Male" : "Other")}` : ""}
         </p>
         <p className="text-sm text-fg-muted">
-          {a.consultType === "follow_up" ? t("Follow-up") : t("First consult")} · {t(a.mode)} · {a.ref}
+          {a.consultType === "follow_up" ? t("Follow up consult") : t("First consult")} · {t(a.mode)} · {a.ref}
           {a.bookedByRole === "caregiver" ? ` · ${t("Booked by a family member")}` : ""}
           {a.interpreterLanguage ? ` · ${t("Interpreter requested: {lang}", { lang: a.interpreterLanguage })}` : ""}
         </p>
@@ -88,7 +88,7 @@ export async function ConsultPanel({ access, user }: { access: RoomAccess; user:
               {pc.questions ? <div><dt className="inline font-semibold">{t("Questions")}: </dt><dd className="inline">{pc.questions}</dd></div> : null}
               <div className="text-fg-muted">{pc.shareHistory ? t("Patient shared past records with you (30 days).") : t("Past records from other doctors are not shared.")}</div>
             </dl>
-          ) : <p className="text-fg-muted">{t("The patient hasn't filled the pre-consult form.")}</p>}
+          ) : <p className="text-fg-muted">{t("The patient hasn't filled in the health form before the consult.")}</p>}
           {a.triage ? (
             <p className="rounded-lg bg-surface-2 p-2 text-sm">
               <AlertTriangle className="me-1 inline size-4 text-warning" aria-hidden />

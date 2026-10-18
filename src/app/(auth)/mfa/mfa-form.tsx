@@ -34,10 +34,10 @@ export function MfaForm({ enrolled, account, issuer, next, demo }: { enrolled: b
   if (!enrolled && !secret) {
     return (
       <div className="space-y-4">
-        <p>{t("Doctors and staff use two-step verification. You'll need an authenticator app such as Google Authenticator, Microsoft Authenticator or Authy.")}</p>
+        <p>{t("Doctors and staff use two step verification. You need an authenticator app such as Google Authenticator, Microsoft Authenticator or Authy.")}</p>
         <Button size="lg" className="w-full" onClick={() => startMfaEnrollment().then((r) => setSecret(r.secret))}>
           <ShieldCheck className="size-5" aria-hidden />
-          {t("Set up two-step verification")}
+          {t("Set up two step verification")}
         </Button>
       </div>
     );
@@ -53,16 +53,16 @@ export function MfaForm({ enrolled, account, issuer, next, demo }: { enrolled: b
             <img src={qr} alt={t("QR code for your authenticator app")} width={220} height={220} className="rounded-xl border border-line bg-white p-2" />
           ) : null}
           <p className="text-sm text-fg-muted">
-            {t("Can't scan? Enter this key:")} <code className="break-all rounded bg-surface-2 px-1.5 py-0.5 font-mono">{secret}</code>
+            {t("Cannot scan it? Enter this key:")} <code className="break-all rounded bg-surface-2 px-1.5 py-0.5 font-mono">{secret}</code>
           </p>
-          <p>{t("2. Enter the 6-digit code it shows.")}</p>
+          <p>{t("2. Enter the 6 digit code it shows.")}</p>
         </div>
       ) : (
-        <p>{t("Open your authenticator app and enter the 6-digit code for {issuer}.", { issuer })}</p>
+        <p>{t("Open your authenticator app and enter the 6 digit code for {issuer}.", { issuer })}</p>
       )}
       {demo && demoCode ? (
-        <Alert tone="warning" title={t("Demo mode")}>
-          {t("Current code:")} <strong className="font-mono text-lg tracking-widest">{demoCode}</strong>
+        <Alert tone="info">
+          {t("While the site is being set up, the current code is shown here:")} <strong className="font-mono text-lg tracking-widest">{demoCode}</strong>
         </Alert>
       ) : null}
       <form action={action} className="space-y-4">

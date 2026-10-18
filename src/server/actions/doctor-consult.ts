@@ -83,7 +83,7 @@ export async function issueRxAction(apptId: string, input: unknown) {
   const r = await run(async () => {
     const rx = await issuePrescription(user, apptId, { ...v, items: v.items as RxItemInput[] });
     const access = await getRoomAccess(apptId);
-    if (access) await postRoomMessage(access, "The doctor has sent your e-prescription. You'll find it in your consult summary.", null, "system");
+    if (access) await postRoomMessage(access, "The doctor has sent your digital prescription. You'll find it in your consult summary.", null, "system");
     return { id: rx.id, number: rx.number };
   });
   revalidatePath(`/consult/${apptId}`);
@@ -111,7 +111,7 @@ export async function addActionAction(apptId: string, type: "in_person_visit" | 
       specialist_referral: "The doctor recommends seeing a specialist.",
       tests: "The doctor has ordered tests. You can book them after the call.",
       emergency: "The doctor advises you to go to a hospital emergency department now.",
-      follow_up: "The doctor would like a follow-up consult.",
+      follow_up: "The doctor would like a follow up consult.",
     };
     if (access) await postRoomMessage(access, msg[type]!, null, "system");
     if (type === "emergency") await endConsult(user, apptId, "emergency");

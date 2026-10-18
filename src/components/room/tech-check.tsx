@@ -117,7 +117,7 @@ export function TechCheck({ wantVideo, onReady, joinLabel }: { wantVideo: boolea
         <CheckItem ok={wantVideo ? camOk : true} label={wantVideo ? (camOk ? t("Camera works") : t("Camera not working")) : t("Camera not needed")} Icon={camOk ? Camera : CameraOff} />
         <li className={cn("flex items-center gap-2 rounded-xl border p-3", micOk ? "border-success/40 bg-success-soft" : "border-danger/40 bg-danger-soft")}>
           {micOk ? <Mic className="size-5 text-success" aria-hidden /> : <MicOff className="size-5 text-danger" aria-hidden />}
-          <span className="flex-1">{micOk ? t("Microphone works — say something") : t("Microphone not working")}</span>
+          <span className="flex-1">{micOk ? t("Microphone works. Say something.") : t("Microphone not working")}</span>
           {micOk ? (
             <span className="h-2 w-14 overflow-hidden rounded-full bg-line" role="meter" aria-label={t("Microphone level")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level * 100)}>
               <span className="block h-full bg-success transition-[width]" style={{ width: `${Math.round(level * 100)}%` }} />
@@ -127,7 +127,7 @@ export function TechCheck({ wantVideo, onReady, joinLabel }: { wantVideo: boolea
         <CheckItem
           ok={net.status === "good" || net.status === "ok"}
           warn={net.status === "weak"}
-          label={net.status === "checking" ? t("Checking network…") : net.status === "offline" ? t("You're offline") : net.status === "weak" ? t("Weak network — audio may work better") : t("Network is fine")}
+          label={net.status === "checking" ? t("Checking network…") : net.status === "offline" ? t("You're offline") : net.status === "weak" ? t("Weak network. Audio may work better.") : t("Network is fine")}
           Icon={net.status === "offline" ? WifiOff : Wifi}
         />
       </ul>

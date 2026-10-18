@@ -18,8 +18,8 @@ export default async function VerificationQueue() {
   const overdue = docs.filter((d) => d.d.verificationStatus === "approved" && d.d.reverifyDueAt && d.d.reverifyDueAt < new Date(Date.now() + 30 * 86400_000));
   return (
     <div className="space-y-8">
-      <PageHeader title={t("Doctor and clinic verification")} description={t("Check every licence against the official register (NMC / state council, or the foreign board) before a doctor goes live. Record what you checked — it's kept in the audit log.")} />
-      {overdue.length ? <p className="font-semibold text-warning">{t("Re-verification due within 30 days: {names}", { names: overdue.map((d) => d.d.fullName).join(", ") })}</p> : null}
+      <PageHeader title={t("Doctor and clinic verification")} description={t("Check every registration against the official register (National Medical Commission, State Medical Council, or Rehabilitation Council of India for psychologists) before a doctor goes live. Record what you checked. It is kept in the audit log.")} />
+      {overdue.length ? <p className="font-semibold text-warning">{t("Yearly registration check due within 30 days: {names}", { names: overdue.map((d) => d.d.fullName).join(", ") })}</p> : null}
       <section className="space-y-3" aria-labelledby="docs">
         <h2 id="docs" className="text-lg font-bold">{t("Doctors")}</h2>
         <ul className="card divide-y divide-line">
@@ -27,7 +27,7 @@ export default async function VerificationQueue() {
             <li key={d.id}>
               <Link href={`/admin/verification/${d.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 p-3 hover:bg-surface-2">
                 <strong>{d.fullName}</strong>
-                <span className="text-sm text-fg-muted">{t(specialty)} · {email ?? "—"}</span>
+                <span className="text-sm text-fg-muted">{t(specialty)}{email ? ` · ${email}` : ""}</span>
                 <span className="ms-auto flex items-center gap-2">
                   {d.submittedAt && d.verificationStatus === "submitted" ? <span className="text-sm text-fg-muted">{t("submitted {date}", { date: fmt.date(d.submittedAt) })}</span> : null}
                   <Badge tone={TONE[d.verificationStatus]}>{t(humanize(d.verificationStatus))}</Badge>
@@ -43,7 +43,7 @@ export default async function VerificationQueue() {
           {clinics.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-3 p-3">
               <strong>{c.name}</strong>
-              <span className="text-sm text-fg-muted">{c.city}, {c.state} · GSTIN {c.gstin ?? "—"} · {c.accreditations.join(", ") || t("no accreditation listed")}</span>
+              <span className="text-sm text-fg-muted">{c.city}, {c.state} · {c.gstin ? `GSTIN ${c.gstin}` : t("No GSTIN")} · {c.accreditations.join(", ") || t("no accreditation listed")}</span>
               <span className="ms-auto flex items-center gap-2"><Badge tone={TONE[c.verificationStatus]}>{t(humanize(c.verificationStatus))}</Badge><ClinicDecision id={c.id} status={c.verificationStatus} /></span>
             </li>
           ))}

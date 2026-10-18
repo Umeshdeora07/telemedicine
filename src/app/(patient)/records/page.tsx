@@ -13,7 +13,7 @@ import { FileUploader } from "@/components/common/file-uploader";
 import { AbhaForm, ActionButton, DeleteDocButton, ShareForm } from "@/components/patient/records-tools";
 import { humanize } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Health records" };
+export const metadata: Metadata = { title: "Records and prescriptions" };
 
 const CAT_ORDER = ["prescription", "report", "scan", "discharge", "photo", "treatment_plan", "visa_letter", "invoice", "recording"];
 
@@ -31,7 +31,7 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("Health records")} description={t("Reports, scans and prescriptions in one safe place. Encrypted, and only shared when you choose.")} />
+      <PageHeader title={t("Records and prescriptions")} description={t("Your reports, scans and prescriptions in one safe place. They are encrypted and shared only when you choose.")} />
       {people.length > 1 ? <LinkTabs label={t("Whose records")} current={pat.id} tabs={people.map((x) => ({ key: x.patient.id, href: `/records?p=${x.patient.id}`, label: x.link ? `${x.patient.fullName.split(" ")[0]} (${t(x.link.relationship)})` : t("Me") }))} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
@@ -89,7 +89,7 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
           <section className="card space-y-3 p-5" aria-labelledby="who">
             <h2 id="who" className="flex items-center gap-2 text-lg font-bold"><ShieldCheck className="size-5 text-primary" aria-hidden />{t("Who can see these")}</h2>
             <ul className="space-y-3">
-              <li className="text-sm">{t("You{family}, and the doctor during each consult you book.", { family: current.link ? "" : t(" and family members you allow") })}</li>
+              <li className="text-sm">{current.link ? t("You, and the doctor during each consultation you book.") : t("You, family members you allow, and the doctor during each consultation you book.")}</li>
               {r.grants.map(({ g, doctorName }) => (
                 <li key={g.id} className="space-y-1">
                   <p className="flex items-center gap-1.5"><Stethoscope className="size-4 text-primary" aria-hidden /><strong>{doctorName}</strong></p>

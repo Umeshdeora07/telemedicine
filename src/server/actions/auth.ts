@@ -9,6 +9,7 @@ import { consents, patients, users } from "@/db/schema";
 import { env } from "@/config/env";
 import { currencyForCountry, isCurrency } from "@/config/currencies";
 import { getLocale } from "@/i18n/server";
+import { isLocale } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import { isValidTimeZone } from "@/lib/time";
 import { decryptText, encryptText } from "@/lib/crypto";
@@ -97,10 +98,8 @@ async function afterLogin(userId: string, next: string | null) {
   // Bring saved display preferences to this device.
   const p = user.preferences;
   const year = 60 * 60 * 24 * 365;
-  if (p.theme) jar.set(PREF_COOKIES.theme, p.theme, { path: "/", maxAge: year });
-  if (p.text) jar.set(PREF_COOKIES.text, p.text, { path: "/", maxAge: year });
-  if (p.contrast) jar.set(PREF_COOKIES.contrast, p.contrast, { path: "/", maxAge: year });
-  jar.set("lang", user.language, { path: "/", maxAge: year });
+  if (p.theme === "light" || p.theme === "dark") jar.set(PREF_COOKIES.theme, p.theme, { path: "/", maxAge: year });
+  if (isLocale(user.language)) jar.set("lang", user.language, { path: "/", maxAge: year });
   if (isStaff(user.role)) redirect(`/mfa${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   if (!user.onboarded) redirect(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   redirect(next ?? homeFor(user.role));

@@ -16,8 +16,8 @@ export function CallbackForm({ defaults, reason = "booking_help", languages }: {
     return (
       <div className="space-y-2 text-center" role="status">
         <CheckCircle2 className="mx-auto size-12 text-success" aria-hidden />
-        <p className="text-lg font-bold">{t("Thank you. We'll call you back.")}</p>
-        <p className="text-fg-muted">{t("Usually within 30 minutes, 8 am to 10 pm India time.")}</p>
+        <p className="text-lg font-bold">{t("Thank you. We will call you back.")}</p>
+        <p className="text-fg-muted">{t("Usually within 30 minutes, between 8 am and 10 pm India time.")}</p>
       </div>
     );
   return (
@@ -27,9 +27,9 @@ export function CallbackForm({ defaults, reason = "booking_help", languages }: {
       <Field label={t("Phone (with country code)")} htmlFor="cb-p" required><Input id="cb-p" name="phone" type="tel" defaultValue={defaults.phone} autoComplete="tel" /></Field>
       <Field label={t("What do you need help with?")} htmlFor="cb-r" required>
         <Select id="cb-r" name="reason" defaultValue={reason}>
-          <option value="booking_help">{t("Booking a doctor")}</option>
+          <option value="booking_help">{t("Booking an online consultation")}</option>
           <option value="payment">{t("Payment or refund")}</option>
-          <option value="technical">{t("Video call or app problem")}</option>
+          <option value="technical">{t("A problem with the video call or website")}</option>
           <option value="international">{t("Treatment in India")}</option>
           <option value="partnership">{t("Partnering as a clinic or hospital")}</option>
           <option value="other">{t("Something else")}</option>
@@ -38,7 +38,7 @@ export function CallbackForm({ defaults, reason = "booking_help", languages }: {
       <Field label={t("Language to speak in")} htmlFor="cb-l" required>
         <Select id="cb-l" name="language" defaultValue={defaults.language}>{languages.map((l) => <option key={l.code} value={l.code}>{t(l.name)}</option>)}</Select>
       </Field>
-      <Field label={t("Best time to call")} htmlFor="cb-time" optional={t("optional")}><Input id="cb-time" name="preferredTime" placeholder={t("Evening, after 6 pm")} /></Field>
+      <Field label={t("Best time to call")} htmlFor="cb-time" optional={t("optional")}><Input id="cb-time" name="preferredTime" placeholder={t("In the evening, after 6 pm")} /></Field>
       <Field label={t("Anything we should know")} htmlFor="cb-note" optional={t("optional")}><Input id="cb-note" name="note" /></Field>
       <div className="sm:col-span-2"><SubmitButton>{t("Request a call back")}</SubmitButton></div>
     </form>
@@ -51,7 +51,7 @@ export function ComplaintForm({ defaults }: { defaults: { name: string; contact:
   if (s.ok)
     return (
       <div className="space-y-2" role="status">
-        <Alert tone="success" title={t("Complaint {ref} received", { ref: s.ref ?? "" })}>{t("We'll acknowledge it within 24 hours and resolve it within 15 days. Keep this reference.")}</Alert>
+        <Alert tone="success" title={t("Complaint {ref} received", { ref: s.ref ?? "" })}>{t("We will acknowledge it within 24 hours and resolve it within 15 days. Please keep this reference.")}</Alert>
         <Link href={`/help/complaints?ref=${s.ref}`} className="font-semibold text-primary underline">{t("Track your complaint")}</Link>
       </div>
     );
@@ -62,12 +62,12 @@ export function ComplaintForm({ defaults }: { defaults: { name: string; contact:
       <Field label={t("Phone or email")} htmlFor="c-c" required><Input id="c-c" name="contact" defaultValue={defaults.contact} /></Field>
       <Field label={t("About")} htmlFor="c-cat" required>
         <Select id="c-cat" name="category">
-          <option value="consult">{t("A consult")}</option>
+          <option value="consult">{t("A consultation")}</option>
           <option value="doctor">{t("A doctor's behaviour")}</option>
           <option value="payment">{t("Payment")}</option>
           <option value="refund">{t("Refund")}</option>
           <option value="privacy">{t("Privacy or my data")}</option>
-          <option value="technical">{t("Website or app")}</option>
+          <option value="technical">{t("The website")}</option>
           <option value="other">{t("Other")}</option>
         </Select>
       </Field>

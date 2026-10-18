@@ -19,7 +19,7 @@ export async function renderInvoice(paymentId: string, timeZone: string) {
   const [p] = await db.select().from(payments).where(eq(payments.id, paymentId));
   if (!p || !p.invoiceNumber) return null;
   const [a] = p.appointmentId ? await db.select({ ref: appointments.ref, doctorName: doctors.fullName }).from(appointments).innerJoin(doctors, eq(doctors.id, appointments.doctorId)).where(eq(appointments.id, p.appointmentId)) : [];
-  const lines = [{ description: `${PURPOSE[p.purpose] ?? p.purpose}${a ? ` — ${a.doctorName} (${a.ref})` : ""}`, sac: "999312", amountMinor: p.feeMinor }];
+  const lines = [{ description: `${PURPOSE[p.purpose] ?? p.purpose}${a ? `, ${a.doctorName} (${a.ref})` : ""}`, sac: "999312", amountMinor: p.feeMinor }];
   if (p.platformFeeMinor) lines.push({ description: "Platform and booking fee", sac: "998599", amountMinor: p.platformFeeMinor });
   return invoicePdf({
     number: p.invoiceNumber,

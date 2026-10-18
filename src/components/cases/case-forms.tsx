@@ -82,7 +82,7 @@ export function VisaLetterForm({ caseId, nationality, treatment, attendants }: {
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="caseId" value={caseId} />
-      <div className="sm:col-span-2"><Result state={state} ok={t("Visa letter issued. The patient can download it from their case.")} /></div>
+      <div className="sm:col-span-2"><Result state={state} ok={t("Visa letter issued. The patient can download it from their treatment plan page.")} /></div>
       <Field label={t("Patient's passport number")} htmlFor="passportNumber" required><Input id="passportNumber" name="passportNumber" autoComplete="off" className="uppercase" /></Field>
       <Field label={t("Nationality")} htmlFor="nationality" required><Input id="nationality" name="nationality" defaultValue={nationality} /></Field>
       <Field label={t("Treatment")} htmlFor="treatment" required className="sm:col-span-2"><Input id="treatment" name="treatment" defaultValue={treatment} /></Field>
@@ -201,7 +201,7 @@ export function EstimateResponse({ estimateId, caseId }: { estimateId: string; c
           <Button variant="ghost" disabled={pending} onClick={() => setConfirmDecline(true)}>{t("Decline")}</Button>
         )}
       </div>
-      <p className="text-sm text-fg-muted">{t("Accepting doesn't charge you. The hospital then issues your visa letter, and you pay the deposit when you're ready.")}</p>
+      <p className="text-sm text-fg-muted">{t("Accepting does not charge you. The hospital then issues your visa letter, and you pay the deposit when you are ready.")}</p>
     </div>
   );
 }
@@ -227,7 +227,7 @@ export function TravelForm({ caseId, travel, languages }: { caseId: string; trav
           <option value="">{t("Help me choose")}</option>
           <option value="hospital_guest_house">{t("Hospital guest house")}</option>
           <option value="partner_hotel">{t("Partner hotel near the hospital")}</option>
-          <option value="service_apartment">{t("Service apartment (kitchen)")}</option>
+          <option value="service_apartment">{t("Service apartment with a kitchen")}</option>
           <option value="own">{t("My own arrangement")}</option>
         </Select>
       </Field>

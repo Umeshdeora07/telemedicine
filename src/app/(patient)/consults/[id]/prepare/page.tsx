@@ -9,7 +9,7 @@ import { PreConsultForm } from "@/components/booking/pre-consult-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { ageFrom } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Tell the doctor" };
+export const metadata: Metadata = { title: "Health form" };
 
 export default async function PreparePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,7 +22,7 @@ export default async function PreparePage({ params }: { params: Promise<{ id: st
   const pc = row.a.preConsult;
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <PageHeader title={ctx.t("Tell {doctor} what's going on", { doctor: row.doctorName })} description={ctx.t("For {name}. You can update this any time before the consult.", { name: row.patientName })} />
+      <PageHeader title={ctx.t("Tell {doctor} what's going on", { doctor: row.doctorName })} description={ctx.t("For {name}. You can update this at any time before the consultation.", { name: row.patientName })} />
       <div className="card p-5 sm:p-6">
         <PreConsultForm
           apptId={id}

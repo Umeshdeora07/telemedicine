@@ -1,4 +1,4 @@
-// Fictional demo people. Phone numbers use reserved/test ranges where possible.
+// Demo people. Phone numbers use reserved or test ranges where possible.
 export type PersonSeed = {
   fullName: string;
   dob: string;
@@ -22,12 +22,10 @@ export type AccountSeed = {
   email?: string;
   phone: string;
   country: string;
-  region?: string;
   language: string;
   currency: string;
   timeZone: string;
   whatsappOptIn?: boolean;
-  preferences?: { text?: "large" | "normal" };
   self: PersonSeed | null;
   family: (PersonSeed & { key: string; relationship: string; consent: "otp" | "guardian_declaration" | "pending" })[];
 };
@@ -43,7 +41,6 @@ export const ACCOUNTS: AccountSeed[] = [
     currency: "INR",
     timeZone: "Asia/Kolkata",
     whatsappOptIn: true,
-    preferences: { text: "large" },
     self: {
       fullName: "Asha Verma",
       dob: "1963-05-12",
@@ -85,7 +82,7 @@ export const ACCOUNTS: AccountSeed[] = [
     },
     family: [
       { key: "priya", relationship: "Spouse", fullName: "Priya Mehta", dob: "1993-01-09", sex: "female", phone: "+919810000022", country: "IN", city: "Mumbai", bloodGroup: "A+", conditions: ["PCOS"], consent: "otp" },
-      { key: "kabir", relationship: "Son", fullName: "Kabir Mehta", dob: "2019-11-03", sex: "male", country: "IN", city: "Mumbai", allergies: ["Peanuts"], consent: "guardian_declaration" },
+      { key: "kabir", relationship: "Son", fullName: "Kabir Mehta", dob: "2019-11-03", sex: "male", country: "IN", city: "Mumbai", allergies: ["Peanuts"], conditions: ["Eczema"], consent: "guardian_declaration" },
     ],
   },
   {
@@ -174,7 +171,6 @@ export const ACCOUNTS: AccountSeed[] = [
     email: "meera.iyer@demo.example",
     phone: "+971501234567",
     country: "AE",
-    region: "AE-DU",
     language: "en",
     currency: "AED",
     timeZone: "Asia/Dubai",
@@ -220,25 +216,25 @@ export const ACCOUNTS: AccountSeed[] = [
     family: [],
   },
   {
-    key: "john",
+    key: "daniel",
     role: "patient",
-    name: "John Carter",
-    email: "john.carter@demo.example",
-    phone: "+12125550100",
-    country: "US",
-    region: "US-NY",
+    name: "Daniel Otieno",
+    email: "daniel.otieno@demo.example",
+    phone: "+254700000100",
+    country: "KE",
     language: "en",
     currency: "USD",
-    timeZone: "America/New_York",
+    timeZone: "Africa/Nairobi",
     self: {
-      fullName: "John Carter",
-      dob: "1972-07-04",
+      fullName: "Daniel Otieno",
+      dob: "1979-02-17",
       sex: "male",
-      phone: "+12125550100",
-      country: "US",
-      city: "New York",
-      conditions: ["High blood pressure", "High cholesterol"],
-      currentMedicines: ["Lisinopril 10 mg once daily"],
+      phone: "+254700000100",
+      country: "KE",
+      city: "Nairobi",
+      bloodGroup: "A+",
+      conditions: ["Lower back pain"],
+      currentMedicines: [],
     },
     family: [],
   },
@@ -273,7 +269,7 @@ export const ACCOUNTS: AccountSeed[] = [
       city: "Jaipur",
       bloodGroup: "A+",
       allergies: ["Aspirin"],
-      conditions: ["High blood pressure", "High cholesterol"],
+      conditions: ["High blood pressure", "Knee pain"],
       currentMedicines: ["Telmisartan 40 mg once daily"],
     },
     family: [],
@@ -317,57 +313,6 @@ export const INTERPRETERS = [
   { name: "Claire Dubois", languages: ["fr", "en"], phone: "+919800000305" },
 ];
 
-export const PLANS = [
-  {
-    slug: "family-care",
-    name: "Family care plan",
-    kind: "family",
-    condition: null,
-    priceMinor: 99900,
-    consultsPerMonth: 4,
-    membersAllowed: 4,
-    features: ["4 online consults a month for up to 4 family members", "General physician, child specialist and women's health", "Free follow-up chat for 7 days", "Priority Consult now queue"],
-    readingTypes: [],
-    sortOrder: 1,
-  },
-  {
-    slug: "diabetes-care",
-    name: "Diabetes care plan",
-    kind: "chronic",
-    condition: "diabetes",
-    priceMinor: 69900,
-    consultsPerMonth: 1,
-    membersAllowed: 1,
-    features: ["Monthly check-in with a diabetes doctor", "Sugar readings log your doctor can see", "Medicine reminders and refill alerts", "Quarterly HbA1c test reminder"],
-    readingTypes: ["glucose_fasting", "glucose_post_meal", "weight"],
-    sortOrder: 2,
-  },
-  {
-    slug: "blood-pressure-care",
-    name: "Blood pressure care plan",
-    kind: "chronic",
-    condition: "blood_pressure",
-    priceMinor: 59900,
-    consultsPerMonth: 1,
-    membersAllowed: 1,
-    features: ["Monthly check-in with a doctor", "Blood pressure log with trends", "Medicine reminders and refill alerts"],
-    readingTypes: ["bp", "pulse", "weight"],
-    sortOrder: 3,
-  },
-  {
-    slug: "thyroid-care",
-    name: "Thyroid care plan",
-    kind: "chronic",
-    condition: "thyroid",
-    priceMinor: 49900,
-    consultsPerMonth: 1,
-    membersAllowed: 1,
-    features: ["Check-in every month", "TSH results tracked over time", "Dose reminders"],
-    readingTypes: ["tsh", "weight"],
-    sortOrder: 4,
-  },
-] as const;
-
 export const REVIEW_TEXTS = [
   { rating: 5, text: "Very patient and explained everything clearly. I knew exactly what to do after the call." },
   { rating: 5, text: "The doctor listened to my mother carefully and spoke to her in her own language." },
@@ -378,5 +323,5 @@ export const REVIEW_TEXTS = [
   { rating: 4, text: "Booked the clinic visit from the same app after the online consult. Smooth." },
   { rating: 5, text: "Took time to answer all our questions, even the silly ones." },
   { rating: 3, text: "Good advice but the call started about 10 minutes late." },
-  { rating: 4, text: "Clear plan and a follow-up date. Video was clear even on my old phone." },
+  { rating: 4, text: "Clear plan and a follow up date. Video was clear even on my old phone." },
 ];

@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { humanize } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Payments and invoices" };
+export const metadata: Metadata = { title: "Payments" };
 
-const PURPOSE: Record<string, string> = { consult: "Consult", clinic_visit: "Clinic visit", plan: "Care plan", second_opinion: "Second opinion", case_deposit: "Treatment deposit", case_final: "Hospital bill" };
+const PURPOSE: Record<string, string> = { consult: "Online consultation", clinic_visit: "Clinic visit", plan: "Earlier care plan", second_opinion: "Earlier report review", case_deposit: "Treatment deposit", case_final: "Hospital bill" };
 
 export default async function InvoicesPage() {
   const ctx = await getViewContext();
@@ -17,7 +17,7 @@ export default async function InvoicesPage() {
   const rows = await myPayments(user!.id);
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader title={t("Payments and invoices")} description={t("GST invoices for every payment. Useful for insurance claims and company reimbursements.")} />
+      <PageHeader title={t("Payments")} description={t("Every payment with its GST invoice. Useful for insurance claims and company reimbursements.")} />
       {rows.length ? (
         <ul className="card divide-y divide-line">
           {rows.map(({ p, apptRef, doctorName }) => (

@@ -28,15 +28,13 @@ export async function assistedBookingAction(_prev: AssistState, form: FormData):
       doctorId: z.string().uuid(),
       mode: z.enum(["video", "audio", "chat", "in_clinic"]),
       slotId: z.string().uuid(),
-      country: z.string().regex(/^[A-Z]{2}$/),
-      region: z.string().max(10).optional(),
       interpreterLanguage: z.string().max(10).optional(),
       agreed: z.literal("on"),
     })
     .safeParse(Object.fromEntries(form));
   if (!v.success) return { error: t("Choose a time and confirm the patient asked for this booking.") };
   try {
-    const a = await assistedBooking(user, { ...v.data, region: v.data.region || null, interpreterLanguage: v.data.interpreterLanguage || null, patientAgreed: true });
+    const a = await assistedBooking(user, { ...v.data, interpreterLanguage: v.data.interpreterLanguage || null, patientAgreed: true });
     revalidatePath("/coordinator");
     return { ok: true, apptId: a.id, ref: a.ref };
   } catch (e) {

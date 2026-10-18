@@ -1,10 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/logo";
-import { DemoBanner } from "@/components/layout/demo-banner";
 import { IdleLogout } from "@/components/layout/idle-logout";
-import { RegionMenu } from "@/components/layout/region-menu";
-import { PrefsMenu } from "@/components/layout/prefs-menu";
+import { LanguageToggle } from "@/components/layout/language-toggle";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { getPrefs } from "@/lib/prefs";
 import { PortalNav } from "./portal-nav";
 import { enabledLocales } from "@/i18n/config";
 import { getViewContext } from "@/server/context";
@@ -16,16 +16,16 @@ export type NavItem = { href: string; label: string; icon: string; badge?: numbe
 export async function PortalShell({ title, nav, children, idleMinutes }: { title: string; nav: NavItem[]; children: ReactNode; idleMinutes: number }) {
   const ctx = await getViewContext();
   const { t, user } = ctx;
+  const { theme } = await getPrefs();
   return (
     <>
-      <DemoBanner />
       <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur">
         <div className="flex h-16 items-center gap-3 px-4">
           <Logo href={nav[0]?.href ?? "/"} />
           <span className="hidden rounded-full bg-primary-soft px-2.5 py-0.5 text-sm font-semibold text-primary-soft-fg sm:inline">{title}</span>
           <div className="ms-auto flex items-center gap-1">
-            <RegionMenu locales={enabledLocales()} currency={ctx.currency} />
-            <PrefsMenu />
+            <LanguageToggle locales={enabledLocales()} />
+            <ThemeToggle initial={theme} />
             <span className="hidden items-center gap-2 px-2 md:flex">
               <InitialsAvatar name={user?.name ?? "?"} size={32} />
               <span className="text-sm font-semibold">{user?.name}</span>

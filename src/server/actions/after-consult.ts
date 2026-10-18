@@ -58,7 +58,7 @@ export async function partnerOrderAction(apptId: string, kind: "pharmacy" | "lab
   if (!items.length) return { ok: false as const, error: t("Nothing to order.") };
   const [o] = await db
     .insert(partnerOrders)
-    .values({ kind, partner: kind === "pharmacy" ? "PharmaPartner (demo)" : "LabPartner (demo)", patientId: a.patientId, userId: user.id, prescriptionId, appointmentId: a.id, items, address: address.slice(0, 300), externalRef: `DEMO-${Date.now().toString(36).toUpperCase()}` })
+    .values({ kind, partner: kind === "pharmacy" ? "Partner pharmacy" : "Partner lab", patientId: a.patientId, userId: user.id, prescriptionId, appointmentId: a.id, items, address: address.slice(0, 300), externalRef: `DEMO-${Date.now().toString(36).toUpperCase()}` })
     .returning();
   await audit({ actor: { id: user.id, role: user.role }, action: `partner_order.${kind}`, entityType: "partner_order", entityId: o!.id, patientId: a.patientId });
   revalidatePath(`/consults/${apptId}`);

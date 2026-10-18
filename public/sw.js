@@ -1,12 +1,12 @@
 /* Service worker: installable app, offline fallback, offline visit passes and
  * prescriptions, and push notifications. Caches are cleared on logout
  * (the logout response sends Clear-Site-Data). */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC = `static-${VERSION}`;
 const PAGES = `pages-${VERSION}`;
-const PRECACHE = ["/offline", "/icons/icon-192.png", "/icons/icon.svg", "/emergency"];
+const PRECACHE = ["/offline", "/icons/icon-192.png", "/icons/icon.svg"];
 // Pages people may need without internet: the clinic visit pass and prescriptions.
-const KEEP_OFFLINE = [/^\/consults\/[^/]+\/pass$/, /^\/prescriptions\/[^/]+$/, /^\/api\/prescriptions\/[^/]+\/pdf$/, /^\/emergency$/, /^\/emergency-card$/];
+const KEEP_OFFLINE = [/^\/consults\/[^/]+\/pass$/, /^\/prescriptions\/[^/]+$/, /^\/api\/prescriptions\/[^/]+\/pdf$/];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));

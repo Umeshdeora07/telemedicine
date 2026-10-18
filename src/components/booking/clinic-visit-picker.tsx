@@ -43,7 +43,7 @@ export function ClinicVisitPicker({ parentId, options }: { parentId: string; opt
           </div>
         ))
       ) : (
-        <Alert tone="warning">{t("No clinic slots in the next 2 weeks. Ask for a call back and our team will arrange one.")}</Alert>
+        <Alert tone="warning">{t("There are no clinic times in the next 2 weeks. Ask for a call back and our team will arrange one for you.")}</Alert>
       )}
       {err ? <p role="alert" className="text-danger">{err}</p> : null}
       <Button size="lg" className="w-full" disabled={!slot || pending} onClick={() => start(async () => { const r = await bookClinicVisitAction(parentId, slot!, opt!.doctorId); if (r?.error) setErr(r.error); })}>

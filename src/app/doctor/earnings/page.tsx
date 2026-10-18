@@ -63,7 +63,7 @@ export default async function DoctorEarnings() {
               <tbody className="divide-y divide-line">
                 {e.payouts.map((p) => (
                   <tr key={p.id}>
-                    <td className="p-3">{fmt.date(p.periodStart, undefined, { day: "numeric", month: "short" })} – {fmt.date(p.periodEnd)}</td>
+                    <td className="p-3">{t("{from} to {to}", { from: fmt.date(p.periodStart, undefined, { day: "numeric", month: "short" }), to: fmt.date(p.periodEnd) })}</td>
                     <td className="p-3">{p.consults}</td>
                     <td className="p-3 text-end tabular-nums">{inr(p.grossMinor)}</td>
                     <td className="p-3 text-end font-semibold tabular-nums">{inr(p.netMinor)}</td>

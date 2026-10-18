@@ -16,7 +16,7 @@ export default async function ApplyAsDoctor() {
   const specs = await getSpecialties();
   return (
     <div className="container-page max-w-xl space-y-6 py-8">
-      <PageHeader title={t("Apply as a doctor")} description={t("Next you'll set up two-step sign-in, then upload your documents for verification.")} />
+      <PageHeader title={t("Apply as a doctor")} description={t("Next you will set up two step verification, then upload your documents for verification.")} />
       <div className="card p-5"><DoctorApplyForm specialties={specs.map((s) => ({ slug: s.slug, name: s.name }))} name={session.user.name} /></div>
     </div>
   );

@@ -21,7 +21,7 @@ export default async function CoordinatorHome() {
           [t("Callbacks waiting"), cb.filter((c) => c.status === "open").length, "/coordinator/callbacks"],
           [t("Calls in progress"), cb.filter((c) => c.status === "in_progress").length, "/coordinator/callbacks"],
           [t("Interpreters to arrange"), iq.filter((q) => !q.a.interpreterId).length, "/coordinator/interpreters"],
-          [t("Open international cases"), open.length, "/coordinator/cases"],
+          [t("Open treatment cases"), open.length, "/coordinator/cases"],
         ].map(([k, v, href]) => (
           <Link key={String(k)} href={String(href)} className="card p-4 hover:border-primary">
             <dt className="text-sm text-fg-muted">{k}</dt>
@@ -30,7 +30,7 @@ export default async function CoordinatorHome() {
         ))}
       </dl>
       <section className="space-y-3" aria-labelledby="cases">
-        <h2 id="cases" className="text-lg font-bold">{t("International cases")}</h2>
+        <h2 id="cases" className="text-lg font-bold">{t("Treatment in India cases")}</h2>
         <CaseList cases={open.slice(0, 5)} base="/coordinator/cases" ctx={ctx} />
       </section>
     </div>

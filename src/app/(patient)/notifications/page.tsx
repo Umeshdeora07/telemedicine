@@ -19,7 +19,7 @@ export default async function NotificationsPage() {
   await markAllRead(await getDb(), user!.id);
   return (
     <div className="max-w-2xl space-y-6">
-      <PageHeader title={t("Notifications")} description={t("Reminders and updates. You also get them by SMS, WhatsApp (if you turned it on) and email.")} />
+      <PageHeader title={t("Notifications")} description={t("Reminders and updates. You also get them by text message, email and WhatsApp if you turned it on.")} />
       {rows.length ? (
         <ul className="card divide-y divide-line">
           {rows.map((n) => {

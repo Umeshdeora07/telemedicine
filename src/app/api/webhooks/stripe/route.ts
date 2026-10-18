@@ -4,7 +4,6 @@ import { getDb } from "@/db";
 import { payments } from "@/db/schema";
 import { stripeVerifyWebhook } from "@/server/payments/gateways";
 import { capturePayment, failPayment } from "@/server/booking";
-import { capturePlanPayment } from "@/server/plans";
 import { captureCasePayment } from "@/server/cases-payments";
 
 /** Stripe webhooks: checkout.session.completed / async_payment_failed. */
@@ -19,12 +18,9 @@ export async function POST(req: NextRequest) {
   if (!p) return NextResponse.json({ ok: true });
   if (evt.type === "checkout.session.completed") {
     const gid = evt.data.object.payment_intent ?? evt.data.object.id;
-    if (p.purpose === "plan") await capturePlanPayment(p.id, gid, "card");
-    else if (p.purpose === "case_deposit" || p.purpose === "case_final") await captureCasePayment(p.id, gid, "intl_card");
-    else if (p.purpose === "second_opinion") {
-      const { captureSecondOpinionPayment } = await import("@/server/second-opinion");
-      await captureSecondOpinionPayment(p.id, gid, "intl_card");
-    } else await capturePayment(p.id, { gatewayPaymentId: gid, method: "intl_card" });
+    // Care plans and written second opinions are no longer sold, so those payments are ignored.
+    if (p.purpose === "case_deposit" || p.purpose === "case_final") await captureCasePayment(p.id, gid, "intl_card");
+    else if (p.purpose !== "plan" && p.purpose !== "second_opinion") await capturePayment(p.id, { gatewayPaymentId: gid, method: "intl_card" });
   }
   if (evt.type === "checkout.session.async_payment_failed" || evt.type === "checkout.session.expired") await failPayment(p.id, evt.type);
   return NextResponse.json({ ok: true });

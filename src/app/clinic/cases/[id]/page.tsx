@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CaseView } from "@/components/cases/case-view";
 import { CaseStatusBadge } from "@/components/cases/case-list";
 
-export const metadata: Metadata = { title: "International case" };
+export const metadata: Metadata = { title: "Treatment case" };
 
 export default async function ClinicCase({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

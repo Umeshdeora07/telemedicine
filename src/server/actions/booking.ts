@@ -12,9 +12,7 @@ import { getT } from "@/i18n/server";
 import { getViewerRegion } from "@/lib/prefs";
 import { decodeTriage } from "@/lib/triage";
 import { requireUser } from "@/server/auth/session";
-import { getCountries } from "@/server/queries/reference";
 import { applyCoupon, BookingError, cancelAppointment, createDraftAppointment, removeCoupon, rescheduleAppointment, startAppointmentPayment } from "@/server/booking";
-import { setLocationAction } from "./prefs";
 
 export type BookingFormState = { error?: string; code?: string };
 
@@ -23,8 +21,6 @@ const schema = z.object({
   mode: z.enum(["video", "audio", "chat", "in_clinic"]),
   slotId: z.string().uuid().optional().or(z.literal("")),
   patientId: z.string().uuid(),
-  country: z.string().regex(/^[A-Z]{2}$/),
-  region: z.string().optional(),
   interpreter: z.string().max(5).optional(),
   caregiverConsent: z.literal("on").optional(),
   from: z.string().uuid().optional().or(z.literal("")),
@@ -35,20 +31,15 @@ export async function createBookingAction(_prev: BookingFormState, form: FormDat
   const t = await getT();
   const user = await requireUser();
   const parsed = schema.safeParse(Object.fromEntries([...form.entries()].filter(([k]) => k !== "redFlags")));
-  if (!parsed.success) return { error: t("Please choose who the consult is for and where they are.") };
+  if (!parsed.success) return { error: t("Please choose who the consultation is for.") };
   const v = parsed.data;
   const redFlags = form.getAll("redFlags").map(String);
-  if (redFlags.length) redirect(`/emergency?flags=${redFlags.join(",")}&from=booking&for=${v.country}`);
+  if (redFlags.length) return { error: t("Some of your answers can be signs of an emergency. This service is not for emergencies. Please go to the nearest hospital now or call your local emergency number.") };
 
   const db = await getDb();
   const [doctor] = await db.select({ id: doctors.id }).from(doctors).where(eq(doctors.slug, v.doctorSlug));
   if (!doctor) return { error: t("Doctor not found.") };
-  const countries = await getCountries();
-  const country = countries.find((c) => c.code === v.country);
-  if (v.mode !== "in_clinic" && country?.licenceScope === "region" && !v.region) return { error: t("Please choose the state or province the patient is in."), code: "needs_region" };
-  const region = country?.licenceScope === "region" ? (v.region ?? null) : null;
   const { currency, tz } = await getViewerRegion(user);
-  const patientTz = country?.timeZones.length === 1 ? country.timeZones[0]! : tz;
 
   // Answers from the symptom checker travel with the booking so the doctor sees them.
   const triageCookie = (await cookies()).get("triage")?.value;
@@ -62,9 +53,8 @@ export async function createBookingAction(_prev: BookingFormState, form: FormDat
       mode: v.mode,
       slotId: v.slotId || null,
       patientId: v.patientId,
-      location: { country: v.country, region },
       currency,
-      patientTimeZone: patientTz,
+      patientTimeZone: tz,
       consultType: v.type || undefined,
       interpreterLanguage: v.interpreter || null,
       redFlags: [],
@@ -78,7 +68,7 @@ export async function createBookingAction(_prev: BookingFormState, form: FormDat
     if (e instanceof BookingError) {
       const messages: Record<string, string> = {
         slot_taken: t("Sorry, someone just booked that time. Please go back and pick another slot."),
-        not_licensed: t("This doctor isn't licensed to treat a patient in that location. Choose another doctor, or check the patient's location."),
+        not_licensed: t("This doctor is not taking bookings at the moment. Please choose another doctor."),
         consent_pending: t("This family member hasn't confirmed that you can book for them yet. Ask them to confirm from the Family page."),
         not_allowed: t("You can't book for this person."),
         mode_unavailable: t("This doctor doesn't offer that type of consult."),
@@ -87,7 +77,6 @@ export async function createBookingAction(_prev: BookingFormState, form: FormDat
     }
     throw e;
   }
-  if (v.mode !== "in_clinic") await setLocationAction(v.country, region);
   redirect(`/book/review/${apptId}`);
 }
 

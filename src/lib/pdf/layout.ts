@@ -4,11 +4,11 @@ import { pdfSafe } from "./text";
 export const A4 = { w: 595.28, h: 841.89 };
 export const COLORS = {
   navy: rgb(11 / 255, 37 / 255, 69 / 255),
-  teal: rgb(15 / 255, 118 / 255, 110 / 255),
+  primary: rgb(29 / 255, 78 / 255, 216 / 255),
   text: rgb(15 / 255, 23 / 255, 42 / 255),
   muted: rgb(71 / 255, 85 / 255, 105 / 255),
   line: rgb(226 / 255, 232 / 255, 240 / 255),
-  soft: rgb(240 / 255, 247 / 255, 246 / 255),
+  soft: rgb(234 / 255, 241 / 255, 255 / 255),
   danger: rgb(220 / 255, 38 / 255, 38 / 255),
 };
 
@@ -85,7 +85,7 @@ export class Writer {
   heading(text: string) {
     this.ensure(30);
     this.y -= 8;
-    this.text(text.toUpperCase(), { size: 9, bold: true, color: COLORS.teal, gap: 6 });
+    this.text(text.toUpperCase(), { size: 9, bold: true, color: COLORS.primary, gap: 6 });
   }
 
   rule(color = COLORS.line) {

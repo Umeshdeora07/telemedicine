@@ -15,7 +15,6 @@ import {
   documents,
   exchangeRates,
   payments,
-  plans,
   refunds,
   reviews,
   securityIncidents,
@@ -69,11 +68,13 @@ export async function adminOverview(days = 30) {
     .where(and(gte(appointments.startAt, since), eq(appointments.status, "completed")))
     .groupBy(specialties.name)
     .orderBy(desc(sql`2`));
+  // Where the people booking live (every consult itself is under India's rules).
   const byCountry = await db
-    .select({ country: appointments.patientLocationCountry, n: sql<number>`count(*)`.mapWith(Number) })
+    .select({ country: users.countryCode, n: sql<number>`count(*)`.mapWith(Number) })
     .from(appointments)
+    .innerJoin(users, eq(users.id, appointments.bookedByUserId))
     .where(and(gte(appointments.startAt, since), inArray(appointments.status, ["completed", "confirmed"])))
-    .groupBy(appointments.patientLocationCountry)
+    .groupBy(users.countryCode)
     .orderBy(desc(sql`2`));
   const [rating] = await db.select({ avg: sql<number>`coalesce(avg(${reviews.rating}), 0)`.mapWith(Number), n: sql<number>`count(*)`.mapWith(Number) }).from(reviews).where(gte(reviews.createdAt, since));
   const [pending] = await db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(doctors).where(eq(doctors.verificationStatus, "submitted"));
@@ -247,14 +248,13 @@ export async function updateComplaint(admin: SessionUser, id: string, input: { s
 
 export async function getSettingsBundle() {
   const db = await getDb();
-  const [cs, rates, st, cps, pls] = await Promise.all([
+  const [cs, rates, st, cps] = await Promise.all([
     db.select().from(countries).orderBy(asc(countries.name)),
     db.select().from(exchangeRates).orderBy(desc(exchangeRates.asOf), asc(exchangeRates.quote)).limit(60),
     db.select().from(settings),
     db.select().from(coupons).orderBy(desc(coupons.createdAt)),
-    db.select().from(plans).orderBy(asc(plans.sortOrder)),
   ]);
-  return { countries: cs, rates, settings: st, coupons: cps, plans: pls };
+  return { countries: cs, rates, settings: st, coupons: cps };
 }
 
 export async function setCountry(admin: SessionUser, code: string, patch: Partial<{ enabled: boolean; localConsultsEnabled: boolean; emergency: typeof countries.$inferSelect.emergency }>) {

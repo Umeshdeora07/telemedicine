@@ -27,7 +27,7 @@ export default async function DoctorMessages({ searchParams }: { searchParams: P
     : [];
   return (
     <div className="space-y-6">
-      <PageHeader title={t("Follow-up messages")} description={t("Patients can message you free for {n} days after a consult. Reply within {h} hours where you can; ask them to book a consult if a new problem needs assessment.", { n: d.followUpChatDays, h: Math.round(d.chatResponseMinutes / 60) || 1 })} />
+      <PageHeader title={t("Follow up messages")} description={t("Patients can message you free for {n} days after a consult. Reply within {h} hours where you can; ask them to book a consult if a new problem needs assessment.", { n: d.followUpChatDays, h: Math.round(d.chatResponseMinutes / 60) || 1 })} />
       {chats.length ? (
         <div className="grid gap-4 lg:grid-cols-[20rem_1fr]">
           <ul className={cn("card divide-y divide-line self-start", current && "hidden lg:block")} aria-label={t("Open chats")}>
@@ -54,7 +54,7 @@ export default async function DoctorMessages({ searchParams }: { searchParams: P
                 key={current.a.id}
                 apptId={current.a.id}
                 open
-                note={t("Reply in plain words. Don't prescribe new medicines in chat; book a follow-up consult instead.")}
+                note={t("Reply in plain words. Don't prescribe new medicines in chat; book a follow up consult instead.")}
                 closedText={t("Chat is closed.")}
                 initial={thread.map((m) => ({ id: m.id, senderRole: m.senderRole, senderName: m.senderName, body: m.body, documentId: m.documentId, kind: m.kind, createdAt: m.createdAt.toISOString(), mine: m.senderUserId === user!.id }))}
               />
@@ -64,7 +64,7 @@ export default async function DoctorMessages({ searchParams }: { searchParams: P
           )}
         </div>
       ) : (
-        <EmptyState icon={<MessageSquare className="size-8" aria-hidden />} title={t("No open chats")}>{t("Follow-up chats appear here after your consults.")}</EmptyState>
+        <EmptyState icon={<MessageSquare className="size-8" aria-hidden />} title={t("No open chats")}>{t("Follow up chats appear here after your consults.")}</EmptyState>
       )}
     </div>
   );

@@ -31,7 +31,7 @@ export default async function ClinicDoctors() {
     : [];
   return (
     <div className="space-y-6">
-      <PageHeader title={t("Doctors and clinic slots")} description={t("In-clinic slots for the next 7 days. Tap a free slot to close it (for example, doctor on leave); tap again to reopen. Booked slots can't be closed here — cancel the visit instead.")} />
+      <PageHeader title={t("Doctors and clinic slots")} description={t("Clinic slots for the next 7 days. Tap a free slot to close it (for example, when the doctor is on leave) and tap again to reopen it. Booked slots can't be closed here. Cancel the visit instead.")} />
       {roster.length ? (
         roster.map((r) => {
           const mine = slots.filter((s) => s.doctorId === r.d.id);
@@ -42,7 +42,7 @@ export default async function ClinicDoctors() {
                 <DoctorAvatar name={r.d.fullName} seed={r.d.avatarSeed} gender={r.d.gender} photoUrl={r.d.photoUrl} size={48} senior={r.d.experienceYears >= 20} />
                 <div>
                   <h2 id={`doc-${r.d.id}`} className="text-lg font-bold"><Link href={`/doctors/${r.d.slug}`} className="hover:underline">{r.d.fullName}</Link></h2>
-                  <p className="text-sm text-fg-muted">{t(r.specialty)} · {t(r.role)} · {t("In-clinic fee {fee}", { fee: fmt.money(r.inClinicFeeMinor, "INR") })}</p>
+                  <p className="text-sm text-fg-muted">{t(r.specialty)} · {t(r.role)} · {t("Clinic fee {fee}", { fee: fmt.money(r.inClinicFeeMinor, "INR") })}</p>
                 </div>
                 <p className="ms-auto text-sm"><strong>{r.booked}</strong> {t("booked")} · <strong>{r.open}</strong> {t("free")}</p>
               </div>

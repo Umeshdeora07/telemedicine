@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { setupProblems } from "@/lib/setup-check";
 import { statusPage } from "@/lib/setup-page";
 
-const LOCALES = ["en", "hi", "ar", "bn", "fr", "ru", "sw"];
+const LOCALES = ["en", "hi"];
 
 /** Constant-time string comparison (no Node crypto needed here). */
 function sameText(a: string, b: string) {
@@ -48,9 +48,9 @@ export function proxy(request: NextRequest) {
   if (password) {
     const given = basicPassword(request);
     if (given === null || !sameText(given, password)) {
-      return new NextResponse("Enter the demo password to see this site.", {
+      return new NextResponse("Enter the password to see this site.", {
         status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="Demo", charset="UTF-8"', "Content-Type": "text/plain; charset=utf-8" },
+        headers: { "WWW-Authenticate": 'Basic realm="Private preview", charset="UTF-8"', "Content-Type": "text/plain; charset=utf-8" },
       });
     }
   }

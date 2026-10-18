@@ -7,6 +7,19 @@ import { dayInZone } from "@/lib/time";
 
 const LOADED_ON = "demo:loaded_on";
 
+/**
+ * Bump this whenever the demo data changes in a way hosted demos should pick
+ * up (new specialties, doctors, people). It is part of the marker, so the next
+ * start reloads a demo database that was loaded with an older version.
+ * v2: four specialties, doctors registered in India only, no patient location.
+ */
+export const DEMO_DATA_VERSION = "v2";
+
+/** What the marker holds for data loaded on this day: "<day in India>#<version>". */
+export function demoMarker(now = new Date()) {
+  return `${dayInZone(now, "Asia/Kolkata")}#${DEMO_DATA_VERSION}`;
+}
+
 /** Load demo data into an empty database (local demo mode only). */
 export async function ensureDemoData(db: DB) {
   const [r] = rows<{ n: number }>(await db.execute(sql`select count(*)::int as n from users`));
@@ -23,18 +36,20 @@ export async function ensureDemoData(db: DB) {
  * Hosted demos (PostgreSQL with DEMO_AUTO_SEED=true). Demo appointments are
  * dated around the day the data was loaded, so on the first start of a new day
  * (India time) the data is wiped and loaded again and "today's" visits stay
- * today. Only a database this function loaded itself is ever wiped: one that
- * has users but no marker is left alone. Call inside a transaction.
+ * today. The marker also carries DEMO_DATA_VERSION, so new demo data replaces
+ * old demo data the same way. Only a database this function loaded itself is
+ * ever wiped: one that has users but no marker is left alone. Call inside a
+ * transaction.
  */
 export async function loadOrRefreshDemoData(db: DB, now = new Date()) {
-  const today = dayInZone(now, "Asia/Kolkata");
+  const current = demoMarker(now);
   const [marker] = rows<{ value: string }>(await db.execute(sql`select value #>> '{}' as value from settings where key = ${LOADED_ON}`));
-  if (marker?.value === today) return "current";
+  if (marker?.value === current) return "current";
   const [users] = rows<{ n: number }>(await db.execute(sql`select count(*)::int as n from users`));
   const hasData = Number(users?.n ?? 0) > 0;
   if (hasData && !marker) return "not a demo database";
   if (hasData) {
-    console.log(`[db] Demo data is from ${marker!.value}: reloading it for ${today}…`);
+    console.log(`[db] Demo data is from ${marker!.value}: reloading it as ${current}…`);
     // Only this app's own tables, never anything else sharing the database.
     const tables = Object.values(schema)
       .filter((t) => is(t, PgTable))
@@ -42,6 +57,6 @@ export async function loadOrRefreshDemoData(db: DB, now = new Date()) {
     await db.execute(sql.raw(`truncate table ${tables.join(", ")} restart identity cascade`));
   }
   await ensureDemoData(db);
-  await db.execute(sql`insert into settings (key, value) values (${LOADED_ON}, to_jsonb(${today}::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`);
+  await db.execute(sql`insert into settings (key, value) values (${LOADED_ON}, to_jsonb(${current}::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`);
   return hasData ? "reloaded" : "loaded";
 }

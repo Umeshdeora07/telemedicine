@@ -42,7 +42,7 @@ export async function captureCasePayment(paymentId: string, gatewayPaymentId: st
     .where(eq(payments.id, p.id));
   await db.insert(caseEvents).values({
     caseId: p.caseId,
-    note: p.purpose === "case_deposit" ? "Deposit received. Thank you — your receipt is in the case tracker." : "Final bill paid. Receipts for insurance are in your records.",
+    note: p.purpose === "case_deposit" ? "Deposit received. Thank you. Your receipt is in your treatment plan." : "Final bill paid. Receipts for insurance are in your records.",
     actorRole: "system",
   });
 }

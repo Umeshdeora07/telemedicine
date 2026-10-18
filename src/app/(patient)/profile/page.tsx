@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, AlarmClock, BadgeCheck, Bell, ChevronRight, FileSearch, Globe, Heart, IdCard, LifeBuoy, Receipt, Settings, Users } from "lucide-react";
+import { Bell, CalendarCheck, ChevronRight, FolderHeart, LifeBuoy, Plane, Receipt, Settings, Users } from "lucide-react";
 import { getViewContext } from "@/server/context";
 import { myPeople } from "@/server/patient";
 import { SPOKEN_LANGUAGES } from "@/config/languages";
@@ -19,17 +19,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   const { p } = await searchParams;
   const cur = people.find((x) => x.patient.id === p) ?? people[0];
   const links = [
-    { href: "/family", label: t("Family"), Icon: Users },
-    { href: "/reminders", label: t("Medicine reminders"), Icon: AlarmClock },
-    { href: "/health/readings", label: t("BP, sugar and weight"), Icon: Activity },
-    { href: "/emergency-card", label: t("Emergency health card"), Icon: IdCard },
-    { href: "/plans", label: t("Care plans"), Icon: BadgeCheck },
-    { href: "/second-opinion", label: t("Second opinions"), Icon: FileSearch },
-    { href: "/international/cases", label: t("Treatment in India"), Icon: Globe },
-    { href: "/saved", label: t("Saved doctors"), Icon: Heart },
-    { href: "/invoices", label: t("Payments and invoices"), Icon: Receipt },
+    { href: "/consults", label: t("My consultations"), Icon: CalendarCheck },
+    { href: "/international/cases", label: t("My treatment plans"), Icon: Plane },
+    { href: "/records", label: t("Records and prescriptions"), Icon: FolderHeart },
+    { href: "/invoices", label: t("Payments"), Icon: Receipt },
+    { href: "/family", label: t("Family members"), Icon: Users },
     { href: "/notifications", label: t("Notifications"), Icon: Bell },
-    { href: "/settings", label: t("Settings and privacy"), Icon: Settings },
+    { href: "/settings", label: t("Settings"), Icon: Settings },
     { href: "/help", label: t("Help and support"), Icon: LifeBuoy },
   ];
   return (
@@ -59,7 +55,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       </nav>
       {cur ? (
         <section className="space-y-3" aria-labelledby="health">
-          <PageHeader title={t("Health details")} description={t("Doctors see these before each consult. Keep allergies and medicines up to date.")} />
+          <PageHeader title={t("Health details")} description={t("Your doctor sees these before each consultation. Keep allergies and medicines up to date.")} />
           {people.length > 1 ? <LinkTabs label={t("Whose details")} current={cur.patient.id} tabs={people.map((x) => ({ key: x.patient.id, href: `/profile?p=${x.patient.id}`, label: x.link ? x.patient.fullName.split(" ")[0]! : t("Me") }))} /> : null}
           <div className="card p-5" id="health">
             <HealthProfileForm

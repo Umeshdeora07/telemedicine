@@ -24,6 +24,7 @@ export function PayPanel({
   couponCode,
   covered,
   holdUntil,
+  testGateway = false,
 }: {
   apptId: string;
   methods: (keyof typeof METHOD_ICON)[];
@@ -31,6 +32,8 @@ export function PayPanel({
   couponCode: string | null;
   covered: boolean;
   holdUntil: string | null;
+  /** No payment gateway is connected yet: the next page is a test payment that takes no money. */
+  testGateway?: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -66,7 +69,7 @@ export function PayPanel({
           s.onload = () => resolve();
           s.onerror = () => reject(new Error("load"));
           document.body.appendChild(s);
-        }).catch(() => setMsg({ tone: "error", text: t("Couldn't load the payment window. Check your connection and try again.") }));
+        }).catch(() => setMsg({ tone: "error", text: t("We could not open the payment window. Please check your connection and try again.") }));
         if (!window.Razorpay) return;
         const rzp = new window.Razorpay({
           ...r.options,
@@ -74,9 +77,9 @@ export function PayPanel({
           handler: async (resp: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
             const res = await fetch("/api/payments/razorpay/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paymentId: r.paymentId, ...resp }) });
             if (res.ok) router.push(`/book/done/${apptId}`);
-            else setMsg({ tone: "error", text: t("We couldn't confirm the payment. If money was taken, it will be refunded automatically.") });
+            else setMsg({ tone: "error", text: t("We could not confirm the payment. If any money was taken, it will be refunded to you automatically.") });
           },
-          theme: { color: "#0F766E" },
+          theme: { color: "#1D4ED8" },
         });
         rzp.on("payment.failed", () => setMsg({ tone: "error", text: t("Payment failed. No money was taken. Please try again or use another method.") }));
         rzp.open();
@@ -90,7 +93,7 @@ export function PayPanel({
     <div className="space-y-5">
       {left !== null ? (
         <p role="timer" aria-live="off" className={cn("rounded-xl p-3 text-center text-[0.9375rem]", expired ? "bg-danger-soft text-danger" : "bg-accent-soft")}>
-          {expired ? t("Your hold on this time has ended. You can still try to pay — if the slot was taken, we'll ask you to pick another.") : t("We're holding this time for you for {time}", { time: `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}` })}
+          {expired ? t("The hold on this time has ended. You can still try to pay. If someone else has booked it, we will ask you to choose another time.") : t("We are holding this time for you for {time}.", { time: `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}` })}
         </p>
       ) : null}
 
@@ -152,7 +155,9 @@ export function PayPanel({
         <Lock className="size-5" aria-hidden />
         {covered ? t("Confirm booking") : t("Pay {amount} securely", { amount: totalLabel })}
       </Button>
-      <p className="text-center text-sm text-fg-muted">{t("Payments are processed by a PCI-DSS compliant gateway. We never see or store your card details.")}</p>
+      {!covered && !testGateway ? (
+        <p className="text-center text-sm text-fg-muted">{t("Payments are processed by a PCI DSS compliant payment gateway. We never see or store your card details.")}</p>
+      ) : null}
     </div>
   );
 }

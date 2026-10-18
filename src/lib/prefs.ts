@@ -1,66 +1,60 @@
-import { cookies } from "next/headers";
-import { isCurrency, currencyForCountry, type Currency } from "@/config/currencies";
+import { cookies, headers } from "next/headers";
+import { CURRENCY_CODES, currencyForCountry, type Currency } from "@/config/currencies";
 import { canonicalZone, isValidTimeZone } from "./time";
 
-export type Prefs = {
-  theme: "system" | "light" | "dark";
-  text: "normal" | "large" | "xlarge";
-  contrast: "normal" | "high";
-  motion: "system" | "reduce";
-  dataSaver: boolean;
-};
+/** Display preferences. Light is the default; dark only when the visitor turns it on. */
+export type Theme = "light" | "dark";
+export type Prefs = { theme: Theme };
 
 export const PREF_COOKIES = {
   theme: "pref_theme",
-  text: "pref_text",
-  contrast: "pref_contrast",
-  motion: "pref_motion",
-  dataSaver: "pref_datasaver",
   currency: "currency",
   tz: "tz",
-  location: "loc",
 } as const;
 
+export function isTheme(value: unknown): value is Theme {
+  return value === "light" || value === "dark";
+}
+
+/** Strict check (own keys only, so "toString" and friends are rejected). */
+export function isKnownCurrency(value: unknown): value is Currency {
+  return typeof value === "string" && (CURRENCY_CODES as readonly string[]).includes(value);
+}
+
 export async function getPrefs(): Promise<Prefs> {
-  const c = await cookies();
-  const theme = c.get(PREF_COOKIES.theme)?.value;
-  const text = c.get(PREF_COOKIES.text)?.value;
-  return {
-    theme: theme === "light" || theme === "dark" ? theme : "system",
-    text: text === "large" || text === "xlarge" ? text : "normal",
-    contrast: c.get(PREF_COOKIES.contrast)?.value === "high" ? "high" : "normal",
-    motion: c.get(PREF_COOKIES.motion)?.value === "reduce" ? "reduce" : "system",
-    dataSaver: c.get(PREF_COOKIES.dataSaver)?.value === "1",
-  };
+  const theme = (await cookies()).get(PREF_COOKIES.theme)?.value;
+  return { theme: theme === "dark" ? "dark" : "light" };
 }
 
 export function htmlClasses(p: Prefs) {
-  return [
-    p.theme === "dark" ? "dark" : "",
-    p.contrast === "high" ? "hc" : "",
-    p.text === "large" ? "lt" : p.text === "xlarge" ? "xlt" : "",
-    p.motion === "reduce" ? "rm" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  return p.theme === "dark" ? "dark" : "";
 }
 
-/** Viewer's display currency and time zone (cookie, then account, then a default). */
-export async function getViewerRegion(user?: { currency: string; timeZone: string; countryCode: string } | null) {
+/** Country of the visitor from the host's geo header (Vercel or Cloudflare), if any. */
+async function requestCountry(): Promise<string | null> {
+  const h = await headers();
+  const raw = (h.get("x-vercel-ip-country") || h.get("cf-ipcountry") || "").trim().toUpperCase();
+  // Cloudflare uses XX for unknown and T1 for Tor.
+  return /^[A-Z]{2}$/.test(raw) && raw !== "XX" ? raw : null;
+}
+
+/**
+ * Viewer's display currency and time zone.
+ * Currency: cookie, then the signed in user's currency, then the visitor's
+ * country from the request, then INR. Time zone: cookie, then account, then IST.
+ */
+export async function getViewerRegion(user?: { currency: string; timeZone: string } | null) {
   const c = await cookies();
   const curCookie = c.get(PREF_COOKIES.currency)?.value;
   const rawTz = c.get(PREF_COOKIES.tz)?.value;
   const tzCookie = rawTz ? canonicalZone(rawTz) : undefined;
-  const currency: Currency = isCurrency(curCookie) ? curCookie : user && isCurrency(user.currency) ? user.currency : currencyForCountry(user?.countryCode ?? "IN");
+  let currency: Currency;
+  if (isKnownCurrency(curCookie)) currency = curCookie;
+  else if (user && isKnownCurrency(user.currency)) currency = user.currency;
+  else {
+    const country = await requestCountry();
+    currency = country ? currencyForCountry(country) : "INR";
+  }
   const tz = tzCookie && isValidTimeZone(tzCookie) ? tzCookie : user?.timeZone && isValidTimeZone(user.timeZone) ? user.timeZone : "Asia/Kolkata";
   return { currency, tz, tzFromCookie: Boolean(tzCookie) };
-}
-
-/** "IN", "US-NY": where the viewer says they are right now. */
-export async function getDeclaredLocation(): Promise<{ country: string; region: string | null } | null> {
-  const raw = (await cookies()).get(PREF_COOKIES.location)?.value;
-  if (!raw) return null;
-  const [country, ...rest] = raw.split("-");
-  if (!country || !/^[A-Z]{2}$/.test(country)) return null;
-  return { country, region: rest.length ? `${country}-${rest.join("-")}` : null };
 }

@@ -13,7 +13,7 @@ import { PermissionToggles } from "@/components/patient/family-tools";
 import { ActionButton } from "@/components/patient/records-tools";
 import { ageFrom, maskPhone } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Family" };
+export const metadata: Metadata = { title: "Family members" };
 
 export default async function FamilyPage({ searchParams }: { searchParams: Promise<{ added?: string }> }) {
   const sp = await searchParams;
@@ -22,7 +22,7 @@ export default async function FamilyPage({ searchParams }: { searchParams: Promi
   const f = await familyOverview(user!);
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader title={t("Family")} description={t("Book and join consults for your parents, children or spouse — even from abroad. Adults agree by a code sent to their phone.")} actions={<ButtonLink href="/family/new"><UserPlus className="size-5" aria-hidden />{t("Add family member")}</ButtonLink>} />
+      <PageHeader title={t("Family members")} description={t("Book and join consultations for your parents, children or partner, even from abroad. Adults agree with a code sent to their phone.")} actions={<ButtonLink href="/family/new"><UserPlus className="size-5" aria-hidden />{t("Add family member")}</ButtonLink>} />
       {sp.added ? <Alert tone="success">{t("Done. You can now book for them.")}</Alert> : null}
       {f.mine.length ? (
         <ul className="space-y-3">
@@ -46,7 +46,7 @@ export default async function FamilyPage({ searchParams }: { searchParams: Promi
                     <ActionButton action={resendFamilyCodeAction.bind(null, l.id)} label={t("Send code again")} />
                   </div>
                 )}
-                <ActionButton action={revokeFamilyAction.bind(null, l.id)} label={t("Remove")} confirmText={t("Remove {name}? You won't see their consults any more.", { name: p.fullName })} />
+                <ActionButton action={revokeFamilyAction.bind(null, l.id)} label={t("Remove")} confirmText={t("Remove {name}? You will no longer see their consultations.", { name: p.fullName })} />
               </li>
             );
           })}

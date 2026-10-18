@@ -45,7 +45,7 @@ export function OnboardingForm({
             <User className="size-6 text-primary" aria-hidden />
             <span>
               <span className="block font-semibold">{t("Myself")}</span>
-              <span className="text-sm text-fg-muted">{t("I'll book consults for myself")}</span>
+              <span className="text-sm text-fg-muted">{t("I will book consultations for myself")}</span>
             </span>
           </RadioCard>
           <RadioCard name="forWhom" value="both" checked={forWhom === "both"} onChange={setForWhom}>
@@ -142,7 +142,7 @@ export function OnboardingForm({
           required
           label={
             <>
-              {t("I understand online consults have limits, and the doctor may ask me to visit in person.")}{" "}
+              {t("I understand that online consultations have limits, and the doctor may ask me to visit in person.")}{" "}
               <a className="text-primary underline" href="/legal/telemedicine-consent" target="_blank">{t("Read more")}</a>
             </>
           }

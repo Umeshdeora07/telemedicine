@@ -16,7 +16,7 @@ export default async function Interpreters() {
   const lang = (c: string) => t(SPOKEN_LANGUAGES[c as keyof typeof SPOKEN_LANGUAGES] ?? c);
   return (
     <div className="max-w-4xl space-y-6">
-      <PageHeader title={t("Interpreters for consults")} description={t("Assign a medically trained interpreter and send them the one-time join link. They join the call as a third person; the doctor sees who is present.")} />
+      <PageHeader title={t("Interpreters for consults")} description={t("Assign a medically trained interpreter and send them the join link, which works only once. They join the call as a third person, and the doctor sees who is present.")} />
       {q.length ? (
         <ul className="space-y-3">
           {q.map((r) => (

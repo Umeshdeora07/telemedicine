@@ -37,11 +37,12 @@ export function LoginForm({ next, defaultDial }: { next?: string; defaultDial: s
     return (
       <div className="space-y-5">
         <p>
-          {t("Enter the 6-digit code we sent to")} <strong dir="ltr" className="whitespace-nowrap">{state.display}</strong>
+          {t("Enter the 6 digit code we sent to")} <strong dir="ltr" className="whitespace-nowrap">{state.display}</strong>
         </p>
         {state.devCode ? (
-          <Alert tone="warning" title={t("Demo mode")}>
-            {t("No SMS is sent in the demo. Your code is")} <strong className="font-mono text-lg tracking-widest">{state.devCode}</strong>
+          <Alert tone="info">
+            {state.kind === "email" ? t("Emails are not connected yet, so here is your code:") : t("Text messages are not connected yet, so here is your code:")}{" "}
+            <strong className="font-mono text-lg tracking-widest">{state.devCode}</strong>
           </Alert>
         ) : null}
         <form action={action} className="space-y-4">
@@ -140,11 +141,11 @@ export function LoginForm({ next, defaultDial }: { next?: string; defaultDial: s
               />
             </div>
             <p id="identifier-hint" className="text-sm text-fg-muted">
-              {t("We'll send a 6-digit code by SMS. No password needed.")}
+              {t("We will send a 6 digit code by text message.")}
             </p>
           </div>
         ) : (
-          <Field label={t("Email")} htmlFor="identifier" required hint={t("We'll email you a 6-digit code. No password needed.")}>
+          <Field label={t("Email")} htmlFor="identifier" required hint={t("We will email you a 6 digit code.")}>
             <Input id="identifier" name="identifier" type="email" autoComplete="email" required aria-invalid={Boolean(state.error)} />
           </Field>
         )}

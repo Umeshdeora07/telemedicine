@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, gt, gte, inArray, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 import { getDb, withRls } from "@/db";
 import {
   appointments,
@@ -8,7 +8,6 @@ import {
   consultNotes,
   doctors,
   familyLinks,
-  medicineReminders,
   notifications,
   patients,
   payments,
@@ -16,8 +15,6 @@ import {
   prescriptions,
   reviews,
   specialties,
-  subscriptions,
-  plans,
 } from "@/db/schema";
 import type { SessionUser } from "./auth/session";
 
@@ -135,27 +132,6 @@ export async function recentPrescriptions(user: SessionUser, limit = 5) {
       .orderBy(desc(prescriptions.issuedAt))
       .limit(limit),
   );
-}
-
-export async function todaysReminders(userId: string) {
-  const ids = await myPatientIds(userId, "records");
-  if (!ids.length) return [];
-  const db = await getDb();
-  const today = new Date().toISOString().slice(0, 10);
-  return db
-    .select({ r: medicineReminders, patientName: patients.fullName })
-    .from(medicineReminders)
-    .innerJoin(patients, eq(patients.id, medicineReminders.patientId))
-    .where(and(inArray(medicineReminders.patientId, ids), eq(medicineReminders.active, true), sql`${medicineReminders.startDate} <= ${today}`, sql`(${medicineReminders.endDate} is null or ${medicineReminders.endDate} >= ${today})`));
-}
-
-export async function activePlans(userId: string) {
-  const db = await getDb();
-  return db
-    .select({ s: subscriptions, plan: plans })
-    .from(subscriptions)
-    .innerJoin(plans, eq(plans.id, subscriptions.planId))
-    .where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, "active"), gt(subscriptions.periodEnd, new Date())));
 }
 
 export async function myPayments(userId: string) {

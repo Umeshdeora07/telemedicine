@@ -37,7 +37,7 @@ export default async function ClinicVisitPage({ params }: { params: Promise<{ id
         <p><span className="block text-sm text-fg-muted">{t("Doctor")}</span><strong>{v.doctorName}</strong></p>
         <p><span className="block text-sm text-fg-muted">{t("Time")}</span><strong>{fmt.dateTime(a.startAt, clinic.timeZone)}</strong></p>
         <p><span className="block text-sm text-fg-muted">{t("Booked by")}</span>{v.bookedByName}{a.bookedByRole === "caregiver" ? ` (${t("family member")})` : ""}</p>
-        <p><span className="block text-sm text-fg-muted">{t("Checked in")}</span>{a.checkedInAt ? fmt.time(a.checkedInAt, clinic.timeZone) : "—"}</p>
+        <p><span className="block text-sm text-fg-muted">{t("Checked in")}</span>{a.checkedInAt ? fmt.time(a.checkedInAt, clinic.timeZone) : t("Not yet")}</p>
         {p.allergies.length ? <p className="flex items-center gap-1.5 sm:col-span-2"><ShieldAlert className="size-4 text-danger" aria-hidden /><strong className="text-danger">{t("Allergies:")}</strong> {p.allergies.join(", ")}</p> : null}
       </section>
 

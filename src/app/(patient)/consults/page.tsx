@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ButtonLink } from "@/components/ui/button";
 import { AppointmentCard } from "@/components/patient/appointment-card";
 
-export const metadata: Metadata = { title: "My consults" };
+export const metadata: Metadata = { title: "My consultations" };
 
 export default async function ConsultsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const sp = await searchParams;
@@ -18,9 +18,9 @@ export default async function ConsultsPage({ searchParams }: { searchParams: Pro
   const rows = await listAppointments(ctx.user!.id, tab);
   return (
     <div className="space-y-6">
-      <PageHeader title={t("My consults")} description={t("Consults and clinic visits for you and your family. Times in {zone}.", { zone: ctx.fmt.zone() })} actions={<ButtonLink href="/consult-now">{t("Consult now")}</ButtonLink>} />
+      <PageHeader title={t("My consultations")} description={t("Consultations and clinic visits for you and your family. Times are shown in {zone}.", { zone: ctx.fmt.zone() })} actions={<ButtonLink href="/doctors">{t("Book a consultation")}</ButtonLink>} />
       <LinkTabs
-        label={t("Consults")}
+        label={t("My consultations")}
         current={tab}
         tabs={[
           { key: "upcoming", href: "/consults", label: t("Upcoming") },
@@ -35,8 +35,8 @@ export default async function ConsultsPage({ searchParams }: { searchParams: Pro
           ))}
         </div>
       ) : (
-        <EmptyState icon={<CalendarCheck className="size-7" aria-hidden />} title={tab === "upcoming" ? t("No upcoming consults") : t("Nothing here yet")}>
-          {tab === "upcoming" ? t("Book a consult and it will show here.") : null}
+        <EmptyState icon={<CalendarCheck className="size-7" aria-hidden />} title={tab === "upcoming" ? t("No upcoming consultations") : t("Nothing here yet")} action={tab === "upcoming" ? <ButtonLink href="/doctors">{t("Book a consultation")}</ButtonLink> : undefined}>
+          {tab === "upcoming" ? t("When you book a consultation, it appears here with the time and a link to join.") : null}
         </EmptyState>
       )}
     </div>

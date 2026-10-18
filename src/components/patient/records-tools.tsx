@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Share2, Trash2 } from "lucide-react";
 import { useI18n } from "@/i18n/client";
-import { linkAbhaAction, remindersFromRxAction, shareRecordsAction, type PState } from "@/server/actions/patient-app";
+import { linkAbhaAction, shareRecordsAction, type PState } from "@/server/actions/patient-app";
 import { Field, Input, Select } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function ShareForm({ patientId, docs }: { patientId: string; docs: { id: 
       </fieldset>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t("Link works for")} htmlFor="days"><Select id="days" name="days" defaultValue="7"><option value="1">{t("1 day")}</option><option value="7">{t("7 days")}</option><option value="30">{t("30 days")}</option></Select></Field>
-        <Field label={t("Who is it for? (only you see this)")} htmlFor="note"><Input id="note" name="note" placeholder={t("Dr. Rao, Apollo")} /></Field>
+        <Field label={t("Who is it for? (only you see this)")} htmlFor="note"><Input id="note" name="note" placeholder={t("Dr. Rao, family doctor")} /></Field>
       </div>
       <SubmitButton variant="secondary">{t("Create secure link")}</SubmitButton>
     </form>
@@ -92,14 +92,9 @@ export function AbhaForm({ patientId }: { patientId: string }) {
   return (
     <form action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="patientId" value={patientId} />
-      <Field label={t("ABHA address")} htmlFor="abha" hint={t("Demo: linking is simulated. Live linking needs ABDM approval.")} className="min-w-0 flex-1"><Input id="abha" name="abha" placeholder="name.surname@abdm" autoComplete="off" /></Field>
+      <Field label={t("ABHA address")} htmlFor="abha" hint={t("Your ABHA address looks like name@abdm.")} className="min-w-0 flex-1"><Input id="abha" name="abha" placeholder="name.surname@abdm" autoComplete="off" /></Field>
       <SubmitButton variant="secondary">{t("Link ABHA")}</SubmitButton>
       {s.error ? <p role="alert" className="w-full text-sm text-danger">{s.error}</p> : null}
     </form>
   );
-}
-
-export function RemindersFromRx({ id }: { id: string }) {
-  const { t } = useI18n();
-  return <ActionButton action={() => remindersFromRxAction(id)} label={t("Set medicine reminders")} variant="secondary" />;
 }

@@ -34,7 +34,7 @@ export default async function CompliancePage() {
             ))}
           </ul>
         ) : <EmptyState title={t("No data requests")} />}
-        <p className="text-sm text-fg-muted">{t("Downloads are self-service in Settings. Deletion requests keep records the law requires (prescriptions, invoices, consult notes) for the retention period and erase the rest.")}</p>
+        <p className="text-sm text-fg-muted">{t("People download their data themselves in Settings. Deletion requests keep records the law requires (prescriptions, invoices, consult notes) for the retention period and erase the rest.")}</p>
       </section>
       <section className="space-y-3" aria-labelledby="inc">
         <h2 id="inc" className="text-lg font-bold">{t("Security incidents")}</h2>
@@ -46,7 +46,7 @@ export default async function CompliancePage() {
               <Badge tone={i.status === "closed" ? "success" : "accent"} className="ms-auto">{t(humanize(i.status))}</Badge>
             </div>
             <p>{i.description}</p>
-            <p className="text-sm text-fg-muted">{t("Detected {d} · contained {c} · reported {r} · users told {u} · affected {n}", { d: fmt.dateTime(i.detectedAt), c: i.containedAt ? fmt.dateTime(i.containedAt) : "—", r: i.reportedToBoardAt ? fmt.dateTime(i.reportedToBoardAt) : "—", u: i.usersNotifiedAt ? fmt.dateTime(i.usersNotifiedAt) : "—", n: i.affectedUsers })}</p>
+            <p className="text-sm text-fg-muted">{t("Detected {d} · contained {c} · reported {r} · users told {u} · affected {n}", { d: fmt.dateTime(i.detectedAt), c: i.containedAt ? fmt.dateTime(i.containedAt) : t("not yet"), r: i.reportedToBoardAt ? fmt.dateTime(i.reportedToBoardAt) : t("not yet"), u: i.usersNotifiedAt ? fmt.dateTime(i.usersNotifiedAt) : t("not yet"), n: i.affectedUsers })}</p>
             {i.status !== "closed" ? (
               <div className="flex flex-wrap gap-2">
                 {!i.containedAt ? <IncidentStep id={i.id} field="containedAt" label={t("Mark contained")} /> : null}

@@ -328,7 +328,7 @@ export function LineChart({ points, series, title, unit, targets = [], height = 
           <table className="w-full text-left">
             <caption className="sr-only">{tableCaption}</caption>
             <thead className="sticky top-0 bg-surface"><tr><th scope="col" className="p-2">{t("When")}</th>{series.map((s) => <th key={s.key} scope="col" className="p-2 text-end">{s.name} ({unit})</th>)}</tr></thead>
-            <tbody className="divide-y divide-line">{[...points].reverse().map((p) => <tr key={p.at}><th scope="row" className="p-2 font-normal">{p.label}</th>{p.values.map((v, i) => <td key={i} className="p-2 text-end tabular-nums">{v ?? "—"}</td>)}</tr>)}</tbody>
+            <tbody className="divide-y divide-line">{[...points].reverse().map((p) => <tr key={p.at}><th scope="row" className="p-2 font-normal">{p.label}</th>{p.values.map((v, i) => <td key={i} className="p-2 text-end tabular-nums">{v ?? t("No reading")}</td>)}</tr>)}</tbody>
           </table>
         </div>
       </details>

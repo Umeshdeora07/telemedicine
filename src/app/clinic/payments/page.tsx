@@ -40,7 +40,7 @@ export default async function ClinicPaymentsPage() {
                   <td className="p-3">{r.doctorName}</td>
                   <td className="p-3 text-end tabular-nums">{fmt.money(r.p.amountMinor, r.p.currency)}</td>
                   <td className="p-3"><Badge tone={r.p.status === "captured" ? "success" : "warning"}>{r.p.gateway === "clinic_desk" ? t("Desk ({m})", { m: r.p.method ?? "" }) : t("Online")}</Badge></td>
-                  <td className="p-3">{r.p.invoiceNumber ? <a href={`/api/invoices/${r.p.id}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-primary underline"><Receipt className="size-4" aria-hidden />{r.p.invoiceNumber}</a> : "—"}</td>
+                  <td className="p-3">{r.p.invoiceNumber ? <a href={`/api/invoices/${r.p.id}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-primary underline"><Receipt className="size-4" aria-hidden />{r.p.invoiceNumber}</a> : t("None")}</td>
                 </tr>
               ))}
             </tbody>

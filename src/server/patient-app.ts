@@ -1,17 +1,14 @@
 import "server-only";
 import { UserError } from "@/lib/errors";
-import { and, asc, desc, eq, gt, gte, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
 import { getDb, withRls } from "@/db";
 import {
   appointments,
   consents,
-  countries,
   dataRequests,
   documents,
   doctors,
-  doseLogs,
   familyLinks,
-  medicineReminders,
   messages,
   patients,
   payments,
@@ -22,7 +19,6 @@ import {
   savedDoctors,
   sessions,
   shareLinks,
-  specialties,
   users,
 } from "@/db/schema";
 import type { SessionUser } from "@/server/auth/session";
@@ -32,8 +28,6 @@ import { audit } from "@/server/audit";
 import { notifyUser } from "@/server/notify";
 import { randomToken, sha256 } from "@/lib/crypto";
 import { env } from "@/config/env";
-import { addDays, dayInZone, zonedTimeToUtc } from "@/lib/time";
-import { FREQUENCIES, TIMINGS } from "@/lib/tpg";
 
 export class PatientError extends UserError {}
 
@@ -210,123 +204,6 @@ export async function revokeLink(user: SessionUser, linkId: string) {
   await audit({ actor: who(user), action: "family.revoke", entityType: "family_link", entityId: linkId, patientId: l.patientId });
 }
 
-/* ------------------------------------------------------------ reminders */
-
-export async function remindersFor(user: SessionUser) {
-  const ids = await myPatientIds(user.id, "records");
-  if (!ids.length) return { list: [], today: [] as { reminderId: string; name: string; dose: string; patientName: string; at: Date; status: string | null }[] };
-  const db = await getDb();
-  const list = await db.select({ r: medicineReminders, patientName: patients.fullName }).from(medicineReminders).innerJoin(patients, eq(patients.id, medicineReminders.patientId)).where(inArray(medicineReminders.patientId, ids)).orderBy(desc(medicineReminders.active), asc(medicineReminders.name));
-  const today: { reminderId: string; name: string; dose: string; patientName: string; at: Date; status: string | null }[] = [];
-  for (const { r, patientName } of list) {
-    if (!r.active) continue;
-    const day = dayInZone(new Date(), r.timeZone);
-    if (r.startDate > day || (r.endDate && r.endDate < day)) continue;
-    for (const time of r.times) today.push({ reminderId: r.id, name: r.name, dose: r.dose, patientName, at: zonedTimeToUtc(day, time, r.timeZone), status: null });
-  }
-  const logs = today.length ? await db.select().from(doseLogs).where(and(inArray(doseLogs.reminderId, [...new Set(today.map((x) => x.reminderId))]), gte(doseLogs.scheduledFor, new Date(Date.now() - 36 * 3600_000)))) : [];
-  for (const x of today) x.status = logs.find((l) => l.reminderId === x.reminderId && l.scheduledFor.getTime() === x.at.getTime())?.status ?? null;
-  today.sort((a, b) => a.at.getTime() - b.at.getTime());
-  // Adherence over the last 7 days.
-  const weekLogs = list.length ? await db.select().from(doseLogs).where(and(inArray(doseLogs.reminderId, list.map((l) => l.r.id)), gte(doseLogs.scheduledFor, new Date(Date.now() - 7 * 86400_000)))) : [];
-  return { list, today, taken7: weekLogs.filter((l) => l.status === "taken").length, logged7: weekLogs.length };
-}
-
-export async function logDose(user: SessionUser, reminderId: string, scheduledFor: Date, status: "taken" | "skipped") {
-  const db = await getDb();
-  const [r] = await db.select().from(medicineReminders).where(eq(medicineReminders.id, reminderId));
-  if (!r) throw new PatientError("Not found.");
-  await must(user, r.patientId, "records");
-  await db.insert(doseLogs).values({ reminderId, scheduledFor, status }).onConflictDoUpdate({ target: [doseLogs.reminderId, doseLogs.scheduledFor], set: { status, loggedAt: new Date() } });
-}
-
-export async function addReminder(user: SessionUser, input: { patientId: string; name: string; dose: string; times: string[]; days: number | null; instructions: string; timeZone: string }) {
-  const db = await must(user, input.patientId, "records");
-  const start = dayInZone(new Date(), input.timeZone);
-  const end = input.days ? addDays(start, input.days - 1) : null;
-  await db.insert(medicineReminders).values({ patientId: input.patientId, name: input.name, dose: input.dose, times: input.times, timeZone: input.timeZone, startDate: start, endDate: end, refillAlertDate: end ? addDays(end, -3) : null, instructions: input.instructions || null });
-}
-
-export async function remindersFromPrescription(user: SessionUser, prescriptionId: string, timeZone: string) {
-  const db = await getDb();
-  const [rx] = await db.select().from(prescriptions).where(eq(prescriptions.id, prescriptionId));
-  if (!rx) throw new PatientError("Not found.");
-  await must(user, rx.patientId, "records");
-  const items = await db.select().from(prescriptionItems).where(eq(prescriptionItems.prescriptionId, rx.id));
-  const existing = await db.select({ itemId: medicineReminders.prescriptionItemId }).from(medicineReminders).where(inArray(medicineReminders.prescriptionItemId, items.map((i) => i.id)));
-  let n = 0;
-  for (const i of items) {
-    // Daily schedules only; "when needed", single doses and weekly medicines get no daily reminder.
-    const times = i.frequency === "weekly" ? [] : (FREQUENCIES[i.frequency]?.times ?? []);
-    if (!times.length || existing.some((e) => e.itemId === i.id)) continue;
-    const start = dayInZone(new Date(), timeZone);
-    const end = addDays(start, i.durationDays - 1);
-    await db.insert(medicineReminders).values({ patientId: rx.patientId, prescriptionItemId: i.id, name: `${i.name} ${i.strength}`.trim(), dose: i.dose, times, timeZone, startDate: start, endDate: end, refillAlertDate: i.durationDays > 7 ? addDays(end, -3) : null, instructions: [TIMINGS[i.timing], i.instructions].filter(Boolean).join(". ") || null });
-    n++;
-  }
-  return n;
-}
-
-export async function toggleReminder(user: SessionUser, id: string, active: boolean) {
-  const db = await getDb();
-  const [r] = await db.select().from(medicineReminders).where(eq(medicineReminders.id, id));
-  if (!r) throw new PatientError("Not found.");
-  await must(user, r.patientId, "records");
-  await db.update(medicineReminders).set({ active }).where(eq(medicineReminders.id, id));
-}
-
-/* ------------------------------------------------------------- readings */
-
-export const READING_TYPES = {
-  bp: { label: "Blood pressure", unit: "mmHg", min: 60, max: 260 },
-  glucose_fasting: { label: "Sugar (fasting)", unit: "mg/dL", min: 30, max: 600 },
-  glucose_post_meal: { label: "Sugar (after meal)", unit: "mg/dL", min: 30, max: 700 },
-  weight: { label: "Weight", unit: "kg", min: 1, max: 300 },
-  pulse: { label: "Pulse", unit: "bpm", min: 30, max: 220 },
-  spo2: { label: "Oxygen (SpO₂)", unit: "%", min: 50, max: 100 },
-  temperature: { label: "Temperature", unit: "°F", min: 90, max: 110 },
-} as const;
-export type ReadingType = keyof typeof READING_TYPES;
-
-export async function readingsFor(user: SessionUser, patientId: string, days = 90) {
-  await must(user, patientId, "records");
-  return withRls({ userId: user.id, role: user.role }, (tx) =>
-    tx.select().from(readings).where(and(eq(readings.patientId, patientId), gte(readings.takenAt, new Date(Date.now() - days * 86400_000)))).orderBy(asc(readings.takenAt)),
-  );
-}
-
-export async function addReading(user: SessionUser, patientId: string, type: ReadingType, value: number, value2: number | null, takenAt: Date, note: string) {
-  const db = await must(user, patientId, "records");
-  const spec = READING_TYPES[type];
-  if (value < spec.min || value > spec.max) throw new PatientError("That number looks unusual. Please check it.");
-  if (type === "bp" && (!value2 || value2 < 30 || value2 > 160 || value2 >= value)) throw new PatientError("Enter both numbers, like 130 / 85.");
-  await db.insert(readings).values({ patientId, type, value, value2, unit: spec.unit, takenAt, note: note || null, recordedByUserId: user.id });
-  // Very high or low values: tell the person what to do now.
-  const urgent = (type === "bp" && (value >= 180 || (value2 ?? 0) >= 120)) || ((type === "glucose_fasting" || type === "glucose_post_meal") && (value < 70 || value > 400)) || (type === "spo2" && value < 92);
-  return { urgent };
-}
-
-/* -------------------------------------------------------- emergency card */
-
-export async function setEmergencyCard(user: SessionUser, patientId: string, on: boolean) {
-  const db = await must(user, patientId, "book");
-  const [p] = await db.select().from(patients).where(eq(patients.id, patientId));
-  const token = p!.emergencyCardToken ?? randomToken(12);
-  await db.update(patients).set({ emergencyCardEnabled: on, emergencyCardToken: token }).where(eq(patients.id, patientId));
-  await db.insert(consents).values({ userId: user.id, patientId, type: "emergency_card", version: "1.0", granted: on, method: "toggle" });
-  await audit({ actor: who(user), action: on ? "emergency_card.on" : "emergency_card.off", entityType: "patient", entityId: patientId, patientId });
-  return token;
-}
-
-export async function emergencyCardByToken(token: string) {
-  const db = await getDb();
-  const [p] = await db.select().from(patients).where(and(eq(patients.emergencyCardToken, token), eq(patients.emergencyCardEnabled, true), isNull(patients.deletedAt)));
-  if (!p) return null;
-  const [c] = await db.select().from(countries).where(eq(countries.code, p.country));
-  await audit({ actor: null, action: "emergency_card.view", entityType: "patient", entityId: p.id, patientId: p.id });
-  return { p, country: c ?? null };
-}
-
 /* ------------------------------------------------------ profile & privacy */
 
 export async function updateHealthProfile(user: SessionUser, patientId: string, f: { bloodGroup: string | null; heightCm: number | null; weightKg: number | null; allergies: string[]; conditions: string[]; currentMedicines: string[]; emergencyContact: { name: string; phone: string; relationship?: string } | null; preferredLanguage: string | null; city: string | null }) {
@@ -384,17 +261,6 @@ export async function requestDeletion(user: SessionUser, reason: string) {
   await db.update(users).set({ deletionRequestedAt: new Date(), status: "suspended" }).where(eq(users.id, user.id));
   await db.delete(sessions).where(eq(sessions.userId, user.id));
   await audit({ actor: who(user), action: "account.delete_request", entityType: "user", entityId: user.id });
-}
-
-export async function savedDoctorList(userId: string) {
-  const db = await getDb();
-  return db
-    .select({ d: doctors, specialty: specialties.name })
-    .from(savedDoctors)
-    .innerJoin(doctors, eq(doctors.id, savedDoctors.doctorId))
-    .innerJoin(specialties, eq(specialties.id, doctors.specialtyId))
-    .where(and(eq(savedDoctors.userId, userId), eq(doctors.verificationStatus, "approved")))
-    .orderBy(desc(savedDoctors.createdAt));
 }
 
 export async function prescriptionForUser(user: SessionUser, id: string) {

@@ -74,7 +74,7 @@ export async function dispatchDue(limit = 100) {
   for (const { n, u } of due) {
     let result: { ok: boolean; error?: string } = { ok: true };
     const link = n.link ? `${env.appUrl}${n.link}` : "";
-    const text = `${n.title}\n${n.body}${link ? `\n${link}` : ""}\n— ${brand.name}`;
+    const text = `${n.title}\n${n.body}${link ? `\n${link}` : ""}\n${brand.name}`;
     try {
       if (n.channel === "in_app") result = { ok: true };
       else if (n.channel === "sms") result = await sendSms(n.to ?? u?.phone ?? "", text);

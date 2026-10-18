@@ -10,7 +10,7 @@ import { SPOKEN_LANGUAGES } from "@/config/languages";
 import { PageHeader } from "@/components/ui/page-header";
 import { EnquiryForm } from "@/components/cases/enquiry-form";
 
-export const metadata: Metadata = { title: "Treatment in India enquiry" };
+export const metadata: Metadata = { title: "Get a free treatment plan" };
 
 export default async function NewEnquiry() {
   const ctx = await getViewContext();
@@ -18,7 +18,7 @@ export default async function NewEnquiry() {
   const [people, countries, specs, hospitals] = await Promise.all([myPeople(user!.id), getCountries(), getSpecialties(), (await getDb()).select().from(clinics).where(eq(clinics.acceptsInternational, true))]);
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader title={t("Plan treatment in India")} description={t("Send your reports. A coordinator replies within 24 hours, and a specialist sends a plan and cost estimate in your currency — free, with no obligation.")} />
+      <PageHeader title={t("Get a free treatment plan in India")} description={t("Send your reports. A specialist reviews them for free and usually replies within 2 working days with a written treatment plan and a cost estimate in your currency. There is no obligation.")} />
       <div className="card p-5">
         <EnquiryForm
           people={people.filter((p) => !p.link || (p.link.status === "active" && p.link.canBook)).map((p) => ({ id: p.patient.id, name: p.patient.fullName }))}

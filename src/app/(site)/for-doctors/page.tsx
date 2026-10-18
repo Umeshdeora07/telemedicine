@@ -1,37 +1,127 @@
 import type { Metadata } from "next";
-import { BadgeCheck, CalendarClock, Coins, FileSignature, Globe2, ShieldCheck, Stethoscope, Video } from "lucide-react";
+import Link from "next/link";
+import { BadgeCheck, CalendarClock, Coins, FileSignature, Globe2, Plane, ShieldCheck, Video } from "lucide-react";
+import { getI18n } from "@/i18n/server";
 import { getViewContext } from "@/server/context";
 import { env } from "@/config/env";
-import { PageHeader } from "@/components/ui/page-header";
+import { brand } from "@/config/brand";
+import { PHOTOS } from "@/config/images";
 import { ButtonLink } from "@/components/ui/button";
+import { Photo } from "@/components/ui/photo";
+import { CheckList, CtaBand, FeatureGrid, SectionHeading, StepList } from "@/components/marketing/blocks";
 
-export const metadata: Metadata = { title: "For doctors", description: "Consult online and in clinic, with TPG-compliant prescriptions, fair payouts and verified patients." };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return {
+    title: t("For doctors"),
+    description: t("For doctors registered in India in four specialties: Orthopaedics, Dermatology, General Physician and Psychology. Consult patients from India and around the world, on your own hours."),
+  };
+}
 
 export default async function ForDoctors() {
   const { t } = await getViewContext();
+  const specialties = [
+    { photo: "orthopaedics" as const, name: t("Orthopaedics"), text: t("Orthopaedic surgeons for bones, joints, spine and sports injuries.") },
+    { photo: "dermatology" as const, name: t("Dermatology"), text: t("Dermatologists for skin, hair and nails.") },
+    { photo: "generalPhysician" as const, name: t("General Physician"), text: t("Physicians for everyday illness, diabetes, blood pressure, thyroid and check ups.") },
+    { photo: "psychology" as const, name: t("Psychology"), text: t("Clinical psychologists for counselling and therapy, and psychiatrists for care that may need medicine.") },
+  ];
   const points = [
-    { Icon: CalendarClock, title: t("Your hours, your fees"), body: t("Set online and clinic hours, consult length and fees per mode and currency. Go “available now” for instant consults when you have a gap.") },
-    { Icon: FileSignature, title: t("Prescriptions done right"), body: t("Templates and quick buttons. Medicine lists follow the Telemedicine Practice Guidelines 2020; prohibited drugs are blocked, allergy and duplicate warnings shown. Digitally signed with a QR check.") },
-    { Icon: Video, title: t("A calm consult room"), body: t("Patient answers, reports and history beside the video. Notes autosave. Recommend a clinic visit or tests in one tap.") },
-    { Icon: Coins, title: t("Paid weekly"), body: t("Fees are released after each consult and paid every Monday, with a clear statement. Platform commission {p}%.", { p: Math.round(env.commissionRate * 100) }) },
-    { Icon: Globe2, title: t("Patients from abroad"), body: t("Families abroad book for parents in India. If you hold a foreign licence (e.g. US state, UK GMC), add it to see patients located there.") },
-    { Icon: ShieldCheck, title: t("Protected"), body: t("Identity confirmation and consent are built into every consult. Records are encrypted and every access is logged.") },
+    { Icon: CalendarClock, title: t("Your hours, your fees"), text: t("Set your online hours, consultation length and fees. Add clinic hours too if you see patients in person.") },
+    { Icon: Globe2, title: t("Patients from India and abroad"), text: t("Patients in India, and people living in other countries who want a doctor registered in India, book with you by video.") },
+    { Icon: Plane, title: t("Treatment in India requests"), text: t("Review reports from patients abroad who are planning treatment in India, and help them with a clear treatment plan.") },
+    { Icon: FileSignature, title: t("Prescriptions done right"), text: t("Templates and quick buttons that follow the Telemedicine Practice Guidelines, 2020. Allergy and duplicate warnings are shown, and every prescription is digitally signed with a QR check.") },
+    { Icon: Video, title: t("A calm consultation room"), text: t("The patient's health form, reports and history sit beside the video. Notes save automatically.") },
+    { Icon: Coins, title: t("Paid every week"), text: t("Fees are released after each consultation and paid every Monday, with a clear statement. Platform commission is {p}%.", { p: Math.round(env.commissionRate * 100) }) },
+  ];
+  const steps = [
+    { title: t("Apply"), text: t("Sign in with your work email, choose your specialty and set up two step verification.") },
+    { title: t("Send your documents"), text: t("Upload your registration certificate, degree certificates, a government photo ID and a photo of yourself.") },
+    { title: t("We verify you"), text: t("We check your registration on the official register and call you if anything is unclear. This usually takes 1 or 2 working days.") },
+    { title: t("Start consulting"), text: t("Set up your profile, fees and signature, and start seeing patients. We check your registration again every 12 months.") },
   ];
   return (
-    <div className="container-page space-y-12 py-8">
-      <PageHeader eyebrow={<span className="inline-flex items-center gap-2"><Stethoscope className="size-4" aria-hidden />{t("For doctors")}</span>} title={t("Practise online the right way")} description={t("Join verified doctors seeing patients from across India and families abroad.")} actions={<ButtonLink href="/for-doctors/apply" size="lg">{t("Apply to join")}</ButtonLink>} />
-      <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {points.map(({ Icon, title, body }) => <li key={title} className="card space-y-2 p-5"><Icon className="size-6 text-primary" aria-hidden /><h2 className="text-lg font-bold">{title}</h2><p className="text-fg-muted">{body}</p></li>)}
-      </ul>
-      <section className="card space-y-3 p-6">
-        <h2 className="flex items-center gap-2 text-xl font-bold"><BadgeCheck className="size-6 text-primary" aria-hidden />{t("How verification works")}</h2>
-        <ol className="list-decimal space-y-1 ps-5">
-          <li>{t("Sign up with your work email and set up two-step sign-in.")}</li>
-          <li>{t("Upload your registration certificate (NMC / State Medical Council), degree certificates, a government ID and a selfie.")}</li>
-          <li>{t("We check your registration on the official register and call you if anything is unclear — usually 1–2 working days.")}</li>
-          <li>{t("Set up your profile, fees and signature, and go live. We re-verify every year.")}</li>
-        </ol>
+    <>
+      <section aria-labelledby="title" className="bg-primary-soft">
+        <div className="container-page grid items-center gap-8 py-10 sm:py-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
+          <div className="min-w-0 space-y-5">
+            <nav aria-label={t("Breadcrumb")} className="text-sm text-fg-muted">
+              <Link href="/" className="hover:underline">
+                {t("Home")}
+              </Link>{" "}
+              › <span aria-current="page">{t("For doctors")}</span>
+            </nav>
+            <h1 id="title" className="text-[2rem] font-extrabold leading-tight sm:text-5xl">
+              {t("Join {brand} as a doctor", { brand: brand.name })}
+            </h1>
+            <p className="max-w-xl text-lg text-fg sm:text-xl">
+              {t("We invite doctors registered in India in four specialties, Orthopaedics, Dermatology, General Physician and Psychology, to consult patients from India and around the world.")}
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href="/for-doctors/apply" size="lg">
+                <BadgeCheck className="size-5" aria-hidden />
+                {t("Apply to join")}
+              </ButtonLink>
+            </div>
+          </div>
+          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-card">
+            <Photo photo="doctorCorridor" alt={t(PHOTOS.doctorCorridor.alt)} sizes="(min-width: 1024px) 40vw, 100vw" preload className="absolute inset-0" />
+          </div>
+        </div>
       </section>
-    </div>
+
+      <section aria-labelledby="specs" className="container-page space-y-6 py-12">
+        <SectionHeading id="specs" title={t("Specialties we are looking for")} />
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {specialties.map((s) => (
+            <li key={s.name} className="card overflow-hidden">
+              <div className="relative aspect-[16/10]">
+                <Photo photo={s.photo} alt="" sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 100vw" className="absolute inset-0" />
+              </div>
+              <div className="space-y-1 p-5">
+                <h3 className="text-lg font-bold">{s.name}</h3>
+                <p className="text-fg-muted">{s.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="why" className="bg-primary-soft">
+        <div className="container-page space-y-6 py-12">
+          <SectionHeading id="why" title={t("Why doctors join")} />
+          <FeatureGrid items={points} />
+        </div>
+      </section>
+
+      <section aria-labelledby="who" className="container-page grid gap-8 py-12 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="space-y-4">
+          <SectionHeading id="who" title={t("Who can apply")} />
+          <CheckList
+            className="text-lg"
+            items={[
+              t("Doctors registered with the National Medical Commission or a State Medical Council."),
+              t("Clinical psychologists registered with the Rehabilitation Council of India."),
+              t("A valid degree in your specialty."),
+              t("Willing to follow the Telemedicine Practice Guidelines, 2020."),
+            ]}
+          />
+          <p className="flex items-start gap-2 text-fg-muted">
+            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            {t("Patient identity and consent are confirmed in every consultation. Records are encrypted and every access is logged.")}
+          </p>
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-extrabold sm:text-3xl">{t("How verification works")}</h2>
+          <StepList steps={steps} layout="column" />
+        </div>
+      </section>
+
+      <CtaBand id="apply" title={t("Ready to join?")} text={t("Keep your registration certificate and degree certificates ready before you start.")}>
+        <ButtonLink href="/for-doctors/apply" size="lg" className="bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
+          {t("Apply to join")}
+        </ButtonLink>
+      </CtaBand>
+    </>
   );
 }
