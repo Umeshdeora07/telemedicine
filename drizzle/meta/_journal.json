@@ -29,6 +29,13 @@
       "when": 1792295422480,
       "tag": "0003_direct_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792330147107,
+      "tag": "0004_passwords",
+      "breakpoints": true
     }
   ]
 }

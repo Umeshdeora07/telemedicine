@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { buttonClass } from "@/components/ui/button";
 import { oauthConfigured } from "@/server/auth/oauth";
-import { emailConfigured, phoneCodesConfigured } from "@/lib/providers";
+import { emailConfigured, passwordLoginEnabled, phoneCodesConfigured } from "@/lib/providers";
 import { demoLogin } from "@/server/actions/auth";
 import { getSession } from "@/server/auth/session";
 import { homeFor } from "@/server/auth/roles";
@@ -54,6 +54,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     oauth_state: t("Signing in took too long. Please try again."),
     oauth_failed: t("We could not sign you in with that account. Please try again."),
     suspended: t("This account is suspended. Please contact support."),
+    contact_taken: t("This email or number is already used by another account. Please log in the way you set that account up, or contact us."),
     demo: t("Test account not found. Run npm run db:reset."),
   };
   const nextQuery = sp.next ? `?next=${encodeURIComponent(sp.next)}` : "";
@@ -64,6 +65,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     ...(env.demoMode || phoneCodesConfigured() ? (["phone"] as const) : []),
     ...(env.demoMode || emailConfigured() ? (["email"] as const) : []),
   ];
+  const passwords = passwordLoginEnabled();
   return (
     <div className="mx-auto max-w-md space-y-6">
       <Card className="space-y-6 p-6 sm:p-8">
@@ -76,17 +78,20 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
                 ? t("Use your email. We will send you a one time code, so you do not need a password.")
                 : methods[0] === "phone"
                   ? t("Use your mobile number. We will send you a one time code, so you do not need a password.")
-                  : google || apple
-                    ? t("Continue with your Google or Apple account. You do not need a password.")
-                    : t("Logging in is not available yet. Please contact us if you need help.")}
+                  : passwords
+                    ? t("Use your mobile number or email with a password. New here? Choose Create account.")
+                    : google || apple
+                      ? t("Continue with your Google or Apple account. You do not need a password.")
+                      : t("Logging in is not available yet. Please contact us if you need help.")}
           </p>
         </div>
         {sp.reason === "idle" ? <Alert tone="info">{t("You were logged out after a period of inactivity, to keep your information safe.")}</Alert> : null}
         {sp.error && errors[sp.error] ? <Alert tone="danger">{errors[sp.error]}</Alert> : null}
-        {methods.length ? <LoginForm next={sp.next} defaultDial={defaultDial} methods={[...methods]} /> : null}
+        {sp.reset ? <Alert tone="success">{t("Your new password is set. Please log in with it.")}</Alert> : null}
+        {methods.length || passwords ? <LoginForm next={sp.next} defaultDial={defaultDial} methods={[...methods]} passwords={passwords} /> : null}
         {google || apple ? (
           <div className="space-y-3">
-            {methods.length ? (
+            {methods.length || passwords ? (
               <div className="flex items-center gap-3 text-sm text-fg-muted" aria-hidden>
                 <span className="h-px flex-1 bg-line" />
                 {t("or")}

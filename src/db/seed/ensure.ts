@@ -29,6 +29,9 @@ export async function ensureDemoData(db: DB) {
   const started = Date.now();
   console.log("[db] Empty database: loading demo data…");
   await seedDemo(db);
+  // The demo people's numbers and addresses count as proven, like real ones that logged in by code.
+  await db.execute(sql`update users set phone_verified_at = created_at where phone is not null`);
+  await db.execute(sql`update users set email_verified_at = created_at where email is not null`);
   console.log(`[db] Demo data ready in ${((Date.now() - started) / 1000).toFixed(1)}s`);
   return true;
 }

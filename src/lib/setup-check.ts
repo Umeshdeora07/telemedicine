@@ -5,7 +5,7 @@
  * same plus live database checks.
  */
 import { env } from "@/config/env";
-import { emailConfigured, phoneCodesConfigured } from "@/lib/providers";
+import { emailConfigured, passwordLoginEnabled, phoneCodesConfigured } from "@/lib/providers";
 
 export type SetupProblem = { id: string; title: string; steps: string[] };
 
@@ -102,6 +102,7 @@ export function setupProblems(): SetupProblem[] {
 
   const canSignIn =
     env.demoMode ||
+    passwordLoginEnabled() ||
     phoneCodesConfigured() ||
     emailConfigured() ||
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ||
@@ -111,6 +112,7 @@ export function setupProblems(): SetupProblem[] {
       id: "no-sign-in",
       title: "Nobody can log in yet",
       steps: [
+        "Password login is turned off (PASSWORD_LOGIN=false). Remove that setting to let people log in with their email or mobile number and a password.",
         "Email codes from your own Gmail (free): add SMTP_USER (your Gmail address) and SMTP_PASSWORD (a Google app password). See README, section \"Go live without sample data\".",
         "Phone codes by text message: add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_VERIFY_SERVICE_SID from Twilio Verify (paid per code).",
         "Google sign in (free): add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, see README, section \"Log in with Google\".",

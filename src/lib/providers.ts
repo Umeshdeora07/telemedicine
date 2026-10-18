@@ -19,3 +19,6 @@ export const resendConfigured = () => set("RESEND_API_KEY", "EMAIL_FROM");
 export const smtpConfigured = () => set("SMTP_USER", "SMTP_PASSWORD");
 
 export const emailConfigured = () => resendConfigured() || smtpConfigured();
+
+/** Email or mobile number with a password. Needs no outside service, so it is on unless PASSWORD_LOGIN=false. */
+export const passwordLoginEnabled = () => (process.env.PASSWORD_LOGIN ?? "").toLowerCase() !== "false";

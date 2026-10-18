@@ -5,7 +5,7 @@ const saved = { ...process.env };
 const KEYS = [
   "DATABASE_URL", "POSTGRES_URL", "STORAGE_DATABASE_URL", "STORAGE_DATABASE_URL_UNPOOLED", "STORAGE_POSTGRES_URL", "ANALYTICS_DATABASE_URL",
   "VERCEL", "VERCEL_ENV", "APP_SECRET", "DEMO_MODE", "NODE_ENV", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
-  "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID", "SMTP_USER", "SMTP_PASSWORD",
+  "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID", "SMTP_USER", "SMTP_PASSWORD", "PASSWORD_LOGIN",
 ];
 afterEach(() => {
   for (const k of KEYS) delete process.env[k];
@@ -39,7 +39,13 @@ describe("setupProblems", () => {
   const ids = () => setupProblems().map((p) => p.id);
   it("lists everything missing on a fresh Vercel project", () => {
     setEnv({ VERCEL: "1", NODE_ENV: "production" });
-    expect(ids()).toEqual(["secret-missing", "database-missing", "no-sign-in"]);
+    expect(ids()).toEqual(["secret-missing", "database-missing"]);
+  });
+  it("lets people log in with a password with no other service set up", () => {
+    setEnv({ VERCEL: "1", VERCEL_ENV: "production", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a" });
+    expect(ids()).toEqual([]);
+    setEnv({ VERCEL: "1", VERCEL_ENV: "production", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a", PASSWORD_LOGIN: "false" });
+    expect(ids()).toEqual(["no-sign-in"]);
   });
   it("asks only for the database once the settings are in", () => {
     setEnv({ VERCEL: "1", NODE_ENV: "production", DEMO_MODE: "true", APP_SECRET: "x".repeat(40) });
@@ -50,18 +56,18 @@ describe("setupProblems", () => {
     expect(ids()).toEqual(["database-ambiguous"]);
   });
   it("counts Google sign-in as a way to log in", () => {
-    setEnv({ VERCEL: "1", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a", GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "secret" });
+    setEnv({ VERCEL: "1", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a", PASSWORD_LOGIN: "false", GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "secret" });
     expect(ids()).toEqual([]);
   });
   it("counts Twilio Verify and Gmail codes as ways to log in", () => {
-    const base = { VERCEL: "1", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a" };
+    const base = { VERCEL: "1", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a", PASSWORD_LOGIN: "false" };
     setEnv({ ...base, TWILIO_ACCOUNT_SID: "AC1", TWILIO_AUTH_TOKEN: "t", TWILIO_VERIFY_SERVICE_SID: "VA1" });
     expect(ids()).toEqual([]);
     setEnv({ ...base, SMTP_USER: "me@gmail.com", SMTP_PASSWORD: "abcd efgh ijkl mnop" });
     expect(ids()).toEqual([]);
   });
   it("needs a real way to log in on the production site, even with DEMO_MODE=true", () => {
-    setEnv({ VERCEL: "1", VERCEL_ENV: "production", NODE_ENV: "production", DEMO_MODE: "true", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a" });
+    setEnv({ VERCEL: "1", VERCEL_ENV: "production", NODE_ENV: "production", DEMO_MODE: "true", PASSWORD_LOGIN: "false", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a" });
     expect(ids()).toEqual(["no-sign-in"]);
   });
   it("never shows the secret's length", () => {

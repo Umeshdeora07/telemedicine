@@ -249,7 +249,9 @@ export async function exportMyData(user: SessionUser) {
   const fam = await db.select().from(familyLinks).where(eq(familyLinks.caregiverUserId, user.id));
   const saved = await db.select().from(savedDoctors).where(eq(savedDoctors.userId, user.id));
   await audit({ actor: who(user), action: "data.export", entityType: "user", entityId: user.id });
-  const { mfaSecretEnc: _m, ...account } = u!;
+  // Never the secrets that guard the account.
+  const { mfaSecretEnc: _m, passwordHash: _p, authVersion: _v, ...rest } = u!;
+  const account = { ...rest, hasPassword: Boolean(u!.passwordHash) };
   return { exportedAt: new Date().toISOString(), account, ...data, appointments: appts, payments: pays, consents: cons, familyLinks: fam, savedDoctors: saved, note: "Document files can be downloaded one by one from your records. Ask support for a full archive." };
 }
 

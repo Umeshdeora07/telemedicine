@@ -6,7 +6,7 @@ import { databaseUrl, setupProblems } from "@/lib/setup-check";
 import { statusPage, type StatusRow } from "@/lib/setup-page";
 import { adminEmails, FIRST_ADMIN_CLAIMED } from "@/server/auth/admin-emails";
 import { oauthConfigured } from "@/server/auth/oauth";
-import { emailConfigured, phoneCodesConfigured } from "@/lib/providers";
+import { emailConfigured, passwordLoginEnabled, phoneCodesConfigured } from "@/lib/providers";
 
 export const dynamic = "force-dynamic";
 // The first request after a deploy may create the tables and load demo data.
@@ -41,6 +41,7 @@ function explain(e: unknown): { detail: string; steps: string[] } {
 /** How people can log in, in plain words. */
 function loginMethods() {
   const ways = [
+    passwordLoginEnabled() && "email or mobile number with a password",
     phoneCodesConfigured() && "mobile number (text message code)",
     emailConfigured() && "email (code by email)",
     oauthConfigured("google") && "Google",
@@ -128,7 +129,11 @@ export async function GET() {
           admin?.found
             ? { label: "Admin account", state: "ok", detail: "An admin account exists." }
             : adminEmails().length
-              ? { label: "Admin account", state: "info", detail: "Not yet. Log in with your admin email (the one in ADMIN_EMAILS) and the account becomes the admin." }
+              ? {
+                  label: "Admin account",
+                  state: "info",
+                  detail: "Not yet. Log in with your admin email (the one in ADMIN_EMAILS) by email code or Google, and the account becomes the admin. A password login doesn't prove the address, so it doesn't count.",
+                }
               : claimed?.found
                 ? {
                     label: "Admin account",
@@ -141,7 +146,7 @@ export async function GET() {
                     state: "problem",
                     detail: "No admin yet. The first person to log in becomes the admin.",
                     steps: [
-                      "Log in yourself now, before anyone else: open /login on this site.",
+                      "Create your account yourself now, before anyone else: open /login on this site and choose Create account.",
                       "Your account becomes the admin. You will then add the site to an authenticator app (such as Google Authenticator) for two step verification.",
                     ],
                   },

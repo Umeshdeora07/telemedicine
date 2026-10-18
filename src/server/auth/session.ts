@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { env } from "@/config/env";
@@ -24,7 +24,13 @@ export async function clientIp() {
   return (h.get("x-forwarded-for")?.split(",")[0] ?? h.get("x-real-ip") ?? "").trim() || null;
 }
 
-export async function createSession(userId: string, opts: { mfaVerified?: boolean } = {}) {
+/**
+ * `authVersion`: the account's users.authVersion as read before checking a
+ * password. If the password changed or the account changed hands meanwhile,
+ * the new session is born stale and never works. Without it, the current
+ * value is used.
+ */
+export async function createSession(userId: string, opts: { mfaVerified?: boolean; authVersion?: number } = {}) {
   const db = await getDb();
   const token = randomToken(32);
   const h = await headers();
@@ -33,6 +39,7 @@ export async function createSession(userId: string, opts: { mfaVerified?: boolea
     id: sha256(token),
     userId,
     mfaVerified: opts.mfaVerified ?? false,
+    authVersion: opts.authVersion ?? sql`(select ${users.authVersion} from ${users} where ${users.id} = ${userId})`,
     expiresAt,
     ip: await clientIp(),
     userAgent: h.get("user-agent")?.slice(0, 300) ?? null,
@@ -60,7 +67,9 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const now = Date.now();
   const idle = idleMinutesFor(row.u.role);
   const expired = row.s.expiresAt.getTime() < now || row.s.lastSeenAt.getTime() + idle * 60_000 < now;
-  if (expired || row.u.status === "suspended" || row.u.status === "deleted") {
+  // A session from before a password change or a change of owner no longer counts.
+  const stale = row.s.authVersion !== row.u.authVersion;
+  if (expired || stale || row.u.status === "suspended" || row.u.status === "deleted") {
     await db.delete(sessions).where(eq(sessions.id, id));
     return null;
   }

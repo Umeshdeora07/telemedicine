@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { UserStatusButton } from "@/components/admin/admin-forms";
+import { ResetLinkButton, UserStatusButton } from "@/components/admin/admin-forms";
 import { maskPhone, humanize } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Users" };
@@ -18,7 +18,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const rows = await searchUsers(q);
   return (
     <div className="space-y-6">
-      <PageHeader title={t("Users")} description={t("Search by name, phone or email. Suspending signs the person out everywhere.")} />
+      <PageHeader title={t("Users")} description={t("Search by name, phone or email. Suspending signs the person out everywhere. Someone who forgot their password can get a reset link from you.")} />
       <form role="search" className="flex max-w-lg gap-2">
         <label htmlFor="uq" className="sr-only">{t("Search users")}</label>
         <Input id="uq" name="q" defaultValue={q} placeholder={t("Name, phone or email")} />
@@ -36,7 +36,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 <td className="p-3">{u.email ?? maskPhone(u.phone)}</td>
                 <td className="p-3">{u.countryCode}</td>
                 <td className="p-3">{u.lastLoginAt ? fmt.date(u.lastLoginAt) : t("Never")}</td>
-                <td className="p-3 text-end"><span className="inline-flex items-center gap-2">{u.status !== "active" ? <Badge tone="danger">{t(humanize(u.status))}</Badge> : null}<UserStatusButton id={u.id} status={u.status} /></span></td>
+                <td className="p-3 text-end"><span className="inline-flex flex-wrap items-center justify-end gap-2">{u.status !== "active" ? <Badge tone="danger">{t(humanize(u.status))}</Badge> : null}{u.role !== "super_admin" && (u.email || u.phone) ? <ResetLinkButton id={u.id} /> : null}<UserStatusButton id={u.id} status={u.status} /></span></td>
               </tr>
             ))}
           </tbody>

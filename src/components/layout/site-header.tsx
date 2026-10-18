@@ -38,7 +38,10 @@ export async function SiteHeader({ minimal = false }: { minimal?: boolean }) {
 
   const userLinks = user
     ? staff
-      ? [{ href: homeFor(user.role), label: t("My portal") }]
+      ? [
+          { href: homeFor(user.role), label: t("My portal") },
+          { href: "/password", label: t("Password") },
+        ]
       : [
           { href: "/dashboard", label: t("Dashboard") },
           { href: "/consults", label: t("My consultations") },
@@ -46,6 +49,7 @@ export async function SiteHeader({ minimal = false }: { minimal?: boolean }) {
           { href: "/records", label: t("Records and prescriptions") },
           { href: "/invoices", label: t("Payments") },
           { href: "/settings", label: t("Settings") },
+          { href: "/password", label: t("Password") },
         ]
     : [];
 

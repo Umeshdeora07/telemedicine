@@ -238,8 +238,15 @@ temporary), so they survive redeploys. Each file can be up to 4 MB there.
 
 **Steps in Vercel** (Settings → Environment Variables, then Redeploy):
 
-1. **Real login.** Add at least one way to log in. Without one, the site
-   works but nobody can log in. You can add all of them.
+1. **Real login.** People can always create an account and log in with
+   their email or mobile number and a password: this needs no outside
+   service. A password login does not prove the address or number belongs
+   to the person; a code sent to it or Google does, so add one of these too
+   when you can. If someone forgets their password, open Admin → Users and
+   click "Password reset link", then send them the link (it works once, for
+   24 hours). With a code service connected they can also log in with a code
+   and choose a new password under Password. Set `PASSWORD_LOGIN=false` to
+   turn passwords off once codes or Google work.
    - **Mobile number** (codes by text message, India and abroad): sign up at
      twilio.com, add credit (a trial account only texts numbers you have
      verified), then Verify → Services → Create new (any friendly name, SMS
@@ -259,12 +266,13 @@ temporary), so they survive redeploys. Each file can be up to 4 MB there.
      redirect URIs" add `https://<your-site>/api/auth/oauth/google/callback`.
      Copy the client ID and secret into `GOOGLE_CLIENT_ID` and
      `GOOGLE_CLIENT_SECRET`.
-2. **The admin.** The first person to log in to a site that has no admin
-   becomes the admin, once. So redeploy and log in yourself straight away,
-   then set up the authenticator app it asks for. To allow only your own
-   address instead, set `ADMIN_EMAILS` (several, separated by commas): then
-   only those addresses become admins, when they log in with that email or
-   Google.
+2. **The admin.** The first person to create an account on a site that has
+   no admin becomes the admin, once. So right after deploying, open
+   `/login`, choose **Create account** and make yours, then set up the
+   authenticator app it asks for. To allow only your own address instead,
+   set `ADMIN_EMAILS` (several, separated by commas): then only those
+   addresses become admins, when they log in with an email code or Google
+   (not with a password, which proves nothing about the address).
 3. Redeploy, open `/status` to check, then log in.
 
 **Payments go straight to each doctor.** Every doctor adds their own fees

@@ -22,6 +22,7 @@ import {
   verifyLicenceAction,
   type AdminState,
 } from "@/server/actions/admin";
+import { createResetLinkAction } from "@/server/actions/password";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,37 @@ export function UserStatusButton({ id, status }: { id: string; status: string })
         {next === "suspended" ? t("Suspend") : t("Reactivate")}
       </Button>
       {err ? <span role="alert" className="text-sm text-danger">{err}</span> : null}
+    </span>
+  );
+}
+
+/** Makes a one time link for someone to choose a new password; the admin sends it to them. */
+export function ResetLinkButton({ id }: { id: string }) {
+  const { t } = useI18n();
+  const [pending, start] = useTransition();
+  const [res, setRes] = useState<{ url?: string; error?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  if (res?.url) {
+    return (
+      <span className="flex max-w-xs flex-col items-end gap-1 text-start">
+        <span className="text-sm text-fg-muted">{t("Send this link to the person yourself, for example by WhatsApp. It works once, for 24 hours.")}</span>
+        <input readOnly value={res.url} aria-label={t("Password reset link")} onFocus={(e) => e.currentTarget.select()} className="w-full rounded-lg border border-line bg-surface-2 px-2 py-1 font-mono text-xs" />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => navigator.clipboard?.writeText(res.url!).then(() => setCopied(true), () => setCopied(false))}
+        >
+          {copied ? t("Copied") : t("Copy link")}
+        </Button>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex flex-col items-end gap-1">
+      <Button size="sm" variant="ghost" disabled={pending} onClick={() => start(async () => setRes(await createResetLinkAction(id)))}>
+        {t("Password reset link")}
+      </Button>
+      {res?.error ? <span role="alert" className="text-sm text-danger">{res.error}</span> : null}
     </span>
   );
 }

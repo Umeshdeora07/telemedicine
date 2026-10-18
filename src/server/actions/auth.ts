@@ -7,9 +7,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { consents, patients, users } from "@/db/schema";
 import { env } from "@/config/env";
-import { currencyForCountry, isCurrency } from "@/config/currencies";
-import { getLocale } from "@/i18n/server";
-import { isLocale } from "@/i18n/config";
+import { currencyForCountry } from "@/config/currencies";
 import { getT } from "@/i18n/server";
 import { isValidTimeZone } from "@/lib/time";
 import { decryptText, encryptText } from "@/lib/crypto";
@@ -20,16 +18,13 @@ import { parseIdentifier, requestOtp, verifyOtp } from "@/server/auth/otp";
 import { homeFor, isStaff } from "@/server/auth/roles";
 import { audit } from "@/server/audit";
 import { grantAdminOnLogin } from "@/server/auth/admin-emails";
+import { accountForProvenContact, afterLogin, createUser, grantPasswordReset, safeNext } from "@/server/auth/identity";
 import { ACCOUNTS } from "@/db/seed/data/people";
 import { DIAL_CODES } from "@/config/dial-codes";
 
 export type LoginState =
   | { step: "start"; error?: string }
   | { step: "verify"; identifier: string; display: string; kind: "phone" | "email"; devCode?: string; error?: string; info?: string };
-
-function safeNext(next: unknown) {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/api/") ? next : null;
-}
 
 async function requestLoginCode(_prev: LoginState, form: FormData): Promise<LoginState> {
   const t = await getT();
@@ -63,49 +58,6 @@ async function resendLoginCode(prev: LoginState): Promise<LoginState> {
   return { ...prev, devCode: res.devCode, error: undefined, info: t("We sent a new code.") };
 }
 
-async function findOrCreateUser(kind: "phone" | "email", value: string) {
-  const db = await getDb();
-  const [existing] = await db
-    .select()
-    .from(users)
-    .where(kind === "phone" ? eq(users.phone, value) : sql`lower(${users.email}) = ${value}`);
-  if (existing) return { user: existing, created: false };
-  const dial = kind === "phone" ? DIAL_CODES.find((d) => value.startsWith(d.code)) : undefined;
-  const country = dial?.country ?? "IN";
-  const jar = await cookies();
-  const tz = jar.get(PREF_COOKIES.tz)?.value;
-  const cur = jar.get(PREF_COOKIES.currency)?.value;
-  const [user] = await db
-    .insert(users)
-    .values({
-      role: "patient",
-      phone: kind === "phone" ? value : null,
-      email: kind === "email" ? value : null,
-      countryCode: country,
-      language: await getLocale(),
-      currency: isCurrency(cur) ? cur : currencyForCountry(country),
-      timeZone: tz && isValidTimeZone(tz) ? tz : "Asia/Kolkata",
-    })
-    .returning();
-  return { user: user!, created: true };
-}
-
-async function afterLogin(userId: string, next: string | null) {
-  const db = await getDb();
-  const [user] = await db.select().from(users).where(eq(users.id, userId));
-  if (!user) redirect("/login");
-  if (user.status === "suspended") redirect("/login?error=suspended");
-  const jar = await cookies();
-  // Bring saved display preferences to this device.
-  const p = user.preferences;
-  const year = 60 * 60 * 24 * 365;
-  if (p.theme === "light" || p.theme === "dark") jar.set(PREF_COOKIES.theme, p.theme, { path: "/", maxAge: year });
-  if (isLocale(user.language)) jar.set("lang", user.language, { path: "/", maxAge: year });
-  if (isStaff(user.role)) redirect(`/mfa${next ? `?next=${encodeURIComponent(next)}` : ""}`);
-  if (!user.onboarded) redirect(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`);
-  redirect(next ?? homeFor(user.role));
-}
-
 async function verifyLoginCode(prev: LoginState, form: FormData): Promise<LoginState> {
   const t = await getT();
   if (prev.step !== "verify") return prev;
@@ -113,12 +65,17 @@ async function verifyLoginCode(prev: LoginState, form: FormData): Promise<LoginS
   if (!id) return { step: "start" };
   const res = await verifyOtp(id, String(form.get("code") ?? ""), "login");
   if (!res.ok) return { ...prev, error: t(res.error, "params" in res ? res.params : undefined), info: undefined };
-  const { user, created } = await findOrCreateUser(id.kind, id.value);
-  user.role = (await grantAdminOnLogin(await getDb(), user, id.kind === "email" ? id.value : null)) as typeof user.role;
+  const db = await getDb();
+  const found = await accountForProvenContact(db, id.kind, id.value);
+  if (found === "taken") return { step: "start", error: t("This email or number is already used by another account. Please log in the way you set that account up, or contact us.") };
+  const created = !found;
+  const user = found ?? (await createUser(db, id.kind, id.value, true));
+  if (user.status !== "active") redirect("/login?error=suspended");
+  user.role = (await grantAdminOnLogin(db, user, id.kind === "email" ? id.value : null)) as typeof user.role;
   await createSession(user.id);
+  await grantPasswordReset(user.id);
   await audit({ actor: { id: user.id, role: user.role }, action: created ? "auth.signup" : "auth.login", entityType: "user", entityId: user.id, metadata: { method: id.kind } });
-  await afterLogin(user.id, safeNext(form.get("next")));
-  return prev;
+  return afterLogin(db, user.id, safeNext(form.get("next")));
 }
 
 const DEMO_PHONES = new Set(ACCOUNTS.map((a) => a.phone));

@@ -141,6 +141,17 @@ export const users = pgTable(
     onboarded: boolean().notNull().default(false),
     mfaSecretEnc: text(), // AES-GCM encrypted TOTP secret
     mfaEnabledAt: ts(),
+    // Password login (scrypt hash), for sites without an email or SMS service.
+    passwordHash: text(),
+    failedLogins: integer().notNull().default(0),
+    lockedUntil: ts(),
+    // When the email or phone was proven by a code sent to it or by Google or
+    // Apple. Empty for one typed at password sign up or onboarding.
+    emailVerifiedAt: ts(),
+    phoneVerifiedAt: ts(),
+    // Goes up whenever the password changes or the account changes hands;
+    // sessions made with an older value stop working.
+    authVersion: integer().notNull().default(0),
     preferences: jsonb().$type<UserPreferences>().notNull().default({}),
     whatsappOptIn: boolean().notNull().default(false),
     lastLoginAt: ts(),
@@ -176,6 +187,7 @@ export const sessions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     mfaVerified: boolean().notNull().default(false),
+    authVersion: integer().notNull().default(0), // users.authVersion when the session was made
     createdAt: createdAt(),
     lastSeenAt: ts().notNull().defaultNow(),
     expiresAt: ts().notNull(),
