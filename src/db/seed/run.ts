@@ -585,7 +585,8 @@ export async function seedDemo(db: DB, now = new Date()) {
       sections: [{ heading: "Details", lines: o.lines }],
       footer: "Demo document made for testing. Not a real medical record.",
     });
-    const saved = await saveFile(pdf);
+    // The database is still starting while demo data loads: save through this same connection.
+    const saved = await saveFile(pdf, db);
     const [row] = await db
       .insert(s.documents)
       .values({

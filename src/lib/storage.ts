@@ -9,6 +9,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { decryptBuffer, encryptBuffer, sha256 } from "./crypto";
+import type { Executor } from "@/db";
 
 const root = () => process.env.STORAGE_DIR || path.join(process.cwd(), ".data", "uploads");
 
@@ -16,9 +17,14 @@ const root = () => process.env.STORAGE_DIR || path.join(process.cwd(), ".data", 
 const inDatabase = () =>
   process.env.STORAGE_DRIVER === "database" || (process.env.STORAGE_DRIVER !== "disk" && Boolean(process.env.VERCEL) && !process.env.STORAGE_DIR);
 
-async function database() {
+/**
+ * `executor`: pass the open connection or transaction when saving while the
+ * database itself is starting (loading demo data). getDb() waits for that
+ * start to finish, so calling it from inside would wait forever.
+ */
+async function database(executor?: Executor) {
   const [{ getDb }, { storedFiles }, { eq }] = await Promise.all([import("@/db"), import("@/db/schema"), import("drizzle-orm")]);
-  return { db: await getDb(), storedFiles, eq };
+  return { db: executor ?? (await getDb()), storedFiles, eq };
 }
 
 export const ALLOWED_UPLOAD_TYPES: Record<string, string> = {
@@ -48,7 +54,7 @@ export function sniffMime(buf: Buffer, claimed: string): string | null {
   return null;
 }
 
-export async function saveFile(data: Buffer) {
+export async function saveFile(data: Buffer, executor?: Executor) {
   const now = new Date();
   const key = path.posix.join(
     String(now.getUTCFullYear()),
@@ -56,7 +62,7 @@ export async function saveFile(data: Buffer) {
     `${crypto.randomUUID()}.bin`,
   );
   if (inDatabase()) {
-    const { db, storedFiles } = await database();
+    const { db, storedFiles } = await database(executor);
     await db.insert(storedFiles).values({ key, data: encryptBuffer(data) });
   } else {
     const file = path.join(/*turbopackIgnore: true*/ root(), key);
