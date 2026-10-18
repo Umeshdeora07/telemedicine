@@ -160,8 +160,8 @@ e2e/              Playwright journeys and accessibility scans
 Copy `.env.example` to `.env.local` and fill in what you need. Every
 setting is optional for a local demo. The main groups:
 
-- **Mode** — `DEMO_MODE` (on by default in development, off in production)
-  and `APP_URL`.
+- **Mode** — `DEMO_MODE` (on by default in development, off in production,
+  always off on the Vercel production site) and `APP_URL`.
 - **Database and files** — `DATABASE_URL`, `STORAGE_DIR`.
 - **Secrets** — `DATA_ENCRYPTION_KEY`, `SIGNING_PRIVATE_KEY`,
   `SIGNING_PUBLIC_KEY`, `HASH_SECRET` (required in production; generate
@@ -169,8 +169,9 @@ setting is optional for a local demo. The main groups:
 - **Payments** — Razorpay for India (UPI, cards, net banking, wallets) and
   Stripe for international cards. Without them a test payment page is used,
   in demo mode only.
-- **Messages** — Twilio SMS, WhatsApp Business Cloud API, Resend email and
-  Web Push (VAPID). Without them messages are written to the server log.
+- **Messages** — Twilio Verify (login codes by SMS), Twilio SMS, WhatsApp
+  Business Cloud API, Resend or SMTP email (for example Gmail) and Web Push
+  (VAPID). Without them messages are written to the server log.
 - **Video** — `TURN_URLS`, `TURN_USERNAME`, `TURN_CREDENTIAL`. A TURN server
   is needed for calls on strict mobile and office networks.
 - **Business rules** — platform fee, GST rate and state, doctor commission,
@@ -178,25 +179,26 @@ setting is optional for a local demo. The main groups:
 
 ## Deploying
 
-### Free demo: Vercel (website) + Neon (database)
+### Vercel (website) + Neon (database)
 
-The free plans suit a demo with sample data only: Vercel's Hobby plan is
-for non-commercial use, Neon's closest region to India is Singapore, and
-uploaded files are temporary. Keep `DEMO_MODE=true` and no real patients.
+Vercel's Hobby plan is for non-commercial use (use Pro for a business), and
+Neon's closest region to India is Singapore. The production site always
+runs without demo mode (see "Go live" below); sample data and test accounts
+appear only on preview deployments with `DEMO_MODE=true`.
 
 1. Make two random strings of 32+ characters (a password manager's
    generator): one for `APP_SECRET`, one for `CRON_SECRET`. Keep them safe;
    changing `APP_SECRET` later makes stored files and signatures invalid.
 2. Vercel → Add New → Project → import this repository. Before deploying,
-   add environment variables: `APP_SECRET`, `CRON_SECRET`,
-   `DEMO_MODE=true`, and optionally `DEMO_ACCESS_PASSWORD` (a password for
-   the whole site). Deploy. Until a database is connected the site shows a
+   add environment variables: `APP_SECRET`, `CRON_SECRET`, a way to log in
+   (see "Real login" below), and optionally `DEMO_ACCESS_PASSWORD` (a
+   password for the whole site, while you get ready). Deploy. Until a database is connected the site shows a
    "needs setting up" page listing what's missing.
 3. Project → Storage → Create Database → Neon, region Singapore
    (aws-ap-southeast-1), Free plan → connect it to the project for all
    environments. This sets `DATABASE_URL` (pooled; works as is).
-4. Deployments → ⋯ → Redeploy. The first visit creates the tables and loads
-   the demo data (about a minute). `/status` shows a checklist (secret key,
+4. Deployments → ⋯ → Redeploy. The first visit creates the tables (about a
+   minute). `/status` shows a checklist (secret key,
    database, demo data, background jobs) with what to fix for any red cross.
 5. Background jobs: `vercel.json` runs them daily (the most Hobby allows).
    For reminders and no-show refunds, add a free job at cron-job.org:
@@ -209,10 +211,12 @@ The public address comes from Vercel; set `APP_URL` only for a custom domain.
 
 ### Go live without sample data (doctors join themselves)
 
-With `DEMO_MODE=false` the site has no sample doctors or patients. On the
-next start after switching it off, the demo data that demo mode loaded is
-removed automatically (only from a database that demo mode filled), and the
-four specialties are kept. Doctors then join like this:
+The Vercel production site always runs for real: demo mode is off there
+whatever `DEMO_MODE` says, so there are no test accounts, no codes shown on
+screen and no test payments. On the first start without demo mode, the demo
+data that demo mode loaded is removed automatically (only from a database
+that demo mode filled), and the four specialties are kept. Doctors then join
+like this:
 
 1. A doctor opens **For doctors → Join as a doctor**, logs in and applies in
    one of the four specialties.
@@ -234,20 +238,34 @@ temporary), so they survive redeploys. Each file can be up to 4 MB there.
 
 **Steps in Vercel** (Settings → Environment Variables, then Redeploy):
 
-1. `ADMIN_EMAILS`: your email address (several, separated by commas). The
-   first time you log in with that address, the account becomes the admin.
-2. A way to log in. Without one, the site works but nobody can log in.
-   - **Log in with Google** (free, recommended): go to
-     console.cloud.google.com → create a project → "APIs & Services" →
-     "OAuth consent screen" (External, add your app name and email, then
-     publish it) → "Credentials" → "Create credentials" → "OAuth client
-     ID" → Web application. Under "Authorised redirect URIs" add
-     `https://<your-site>/api/auth/oauth/google/callback`. Copy the client
-     ID and secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
-   - Or email codes with Resend: `RESEND_API_KEY` and `EMAIL_FROM` (needs
-     your own domain verified in Resend).
-3. `DEMO_MODE=false`.
-4. Redeploy, open `/status` to check, then log in with your admin email.
+1. **Real login.** Add at least one way to log in. Without one, the site
+   works but nobody can log in. You can add all of them.
+   - **Mobile number** (codes by text message, India and abroad): sign up at
+     twilio.com, add credit (a trial account only texts numbers you have
+     verified), then Verify → Services → Create new (any friendly name, SMS
+     on). Copy `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` (Account info on
+     the console home page) and the service's `TWILIO_VERIFY_SERVICE_SID`
+     (starts with VA). Twilio charges for each code. If Indian numbers get
+     no text, ask Twilio support about India (DLT) for Verify.
+   - **Email codes from your Gmail** (free, up to about 500 a day): turn on
+     2-Step Verification for your Google account, then open
+     myaccount.google.com/apppasswords and create an app password. Add
+     `SMTP_USER` (your Gmail address) and `SMTP_PASSWORD` (that app password).
+     Or use Resend (`RESEND_API_KEY`, `EMAIL_FROM`) with your own domain.
+   - **Log in with Google** (free): go to console.cloud.google.com → create
+     a project → "APIs & Services" → "OAuth consent screen" (External, add
+     your app name and email, then publish it) → "Credentials" → "Create
+     credentials" → "OAuth client ID" → Web application. Under "Authorised
+     redirect URIs" add `https://<your-site>/api/auth/oauth/google/callback`.
+     Copy the client ID and secret into `GOOGLE_CLIENT_ID` and
+     `GOOGLE_CLIENT_SECRET`.
+2. **The admin.** The first person to log in to a site that has no admin
+   becomes the admin, once. So redeploy and log in yourself straight away,
+   then set up the authenticator app it asks for. To allow only your own
+   address instead, set `ADMIN_EMAILS` (several, separated by commas): then
+   only those addresses become admins, when they log in with that email or
+   Google.
+3. Redeploy, open `/status` to check, then log in.
 
 **Payments go straight to each doctor.** Every doctor adds their own fees
 (consultation fees per call type, plus a list of treatment and other fees)

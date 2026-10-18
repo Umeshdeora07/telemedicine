@@ -174,7 +174,7 @@ export async function confirmFamilyConsent(user: SessionUser, linkId: string, co
   if (!row?.p.phone) throw new PatientError("Not found.");
   const { verifyOtp } = await import("@/server/auth/otp");
   const ok = await verifyOtp({ kind: "phone", value: row.p.phone }, code, "family_consent");
-  if (!ok.ok) throw new PatientError(ok.error);
+  if (!ok.ok) throw new PatientError(ok.error, "params" in ok ? ok.params : undefined);
   if ((ok.meta as { linkId?: string } | null)?.linkId !== linkId) throw new PatientError("That code was sent for a different request. Send a new code.");
   await db.update(familyLinks).set({ status: "active", consentMethod: "otp", consentAt: new Date() }).where(eq(familyLinks.id, linkId));
   await db.insert(consents).values({ userId: user.id, patientId: row.p.id, type: "caregiver_booking", version: "1.0", granted: true, method: "otp" });

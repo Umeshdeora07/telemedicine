@@ -5,6 +5,7 @@
  * same plus live database checks.
  */
 import { env } from "@/config/env";
+import { emailConfigured, phoneCodesConfigured } from "@/lib/providers";
 
 export type SetupProblem = { id: string; title: string; steps: string[] };
 
@@ -101,8 +102,8 @@ export function setupProblems(): SetupProblem[] {
 
   const canSignIn =
     env.demoMode ||
-    Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) ||
-    Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM) ||
+    phoneCodesConfigured() ||
+    emailConfigured() ||
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ||
     Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY);
   if (!canSignIn) {
@@ -110,8 +111,9 @@ export function setupProblems(): SetupProblem[] {
       id: "no-sign-in",
       title: "Nobody can log in yet",
       steps: [
-        "The easiest way is Google sign in (free): see README, section \"Log in with Google\". It needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
-        "Or connect an email service (Resend: RESEND_API_KEY and EMAIL_FROM) or a text message service (Twilio) so login codes can be sent.",
+        "Email codes from your own Gmail (free): add SMTP_USER (your Gmail address) and SMTP_PASSWORD (a Google app password). See README, section \"Go live without sample data\".",
+        "Phone codes by text message: add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_VERIFY_SERVICE_SID from Twilio Verify (paid per code).",
+        "Google sign in (free): add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, see README, section \"Log in with Google\".",
         settingsPlace,
         redeploy,
       ],

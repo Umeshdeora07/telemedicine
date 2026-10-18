@@ -19,7 +19,7 @@ async function wrap(fn: () => Promise<Partial<PState> | void>, paths: string[]):
     for (const p of paths) revalidatePath(p);
     return { ok: true, ...r };
   } catch (e) {
-    if (e instanceof app.PatientError || e instanceof BookingError) return { error: t(e.message) };
+    if (e instanceof app.PatientError || e instanceof BookingError) return { error: t(e.message, e.params) };
     if (e instanceof z.ZodError) return { error: t("Please check the details and try again.") };
     throw e;
   }
@@ -76,7 +76,7 @@ export async function addFamilyAction(_p: PState, f: FormData): Promise<PState> 
     linkId = out.link.id;
     if (out.needsConsent) {
       const sent = await app.sendFamilyConsentCode(user, out.link.id);
-      return { linkId: out.link.id, devCode: sent.ok ? sent.devCode : undefined, message: sent.ok ? undefined : sent.error };
+      return { linkId: out.link.id, devCode: sent.ok ? sent.devCode : undefined, message: sent.ok ? undefined : t(sent.error, "params" in sent ? sent.params : undefined) };
     }
   }, ["/family"]);
   if (r.ok && !r.linkId) redirect("/family?added=1");
@@ -88,9 +88,9 @@ export async function resendFamilyCodeAction(linkId: string): Promise<PState> {
   const t = await getT();
   try {
     const r = await app.sendFamilyConsentCode(user, linkId);
-    return r.ok ? { ok: true, linkId, devCode: r.devCode } : { error: t(r.error), linkId };
+    return r.ok ? { ok: true, linkId, devCode: r.devCode } : { error: t(r.error, "params" in r ? r.params : undefined), linkId };
   } catch (e) {
-    if (e instanceof app.PatientError) return { error: t(e.message), linkId };
+    if (e instanceof app.PatientError) return { error: t(e.message, e.params), linkId };
     throw e;
   }
 }

@@ -6,8 +6,13 @@ export const env = {
   get isProd() {
     return process.env.NODE_ENV === "production";
   },
-  /** Demo mode: shows demo logins and OTP codes, uses the test payment page. Never enable for real patients. */
+  /**
+   * Demo mode: shows demo logins and OTP codes, uses the test payment page.
+   * Never for real patients, so it is always off on the Vercel production site
+   * whatever DEMO_MODE says (preview deployments may still use it).
+   */
   get demoMode() {
+    if (process.env.VERCEL_ENV === "production") return false;
     return bool(process.env.DEMO_MODE, process.env.NODE_ENV !== "production");
   },
   /** Public address. Falls back to the address Vercel, Render or Railway give the service. */

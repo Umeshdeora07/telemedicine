@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { buttonClass } from "@/components/ui/button";
 import { oauthConfigured } from "@/server/auth/oauth";
+import { emailConfigured, phoneCodesConfigured } from "@/lib/providers";
 import { demoLogin } from "@/server/actions/auth";
 import { getSession } from "@/server/auth/session";
 import { homeFor } from "@/server/auth/roles";
@@ -60,8 +61,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const apple = oauthConfigured("apple");
   // Codes go out by text message or email only when that service is connected (demo mode shows them on screen).
   const methods = [
-    ...(env.demoMode || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) ? (["phone"] as const) : []),
-    ...(env.demoMode || (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) ? (["email"] as const) : []),
+    ...(env.demoMode || phoneCodesConfigured() ? (["phone"] as const) : []),
+    ...(env.demoMode || emailConfigured() ? (["email"] as const) : []),
   ];
   return (
     <div className="mx-auto max-w-md space-y-6">

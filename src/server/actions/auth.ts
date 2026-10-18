@@ -19,7 +19,7 @@ import { createSession, getSession, markMfaVerified, requireSession } from "@/se
 import { parseIdentifier, requestOtp, verifyOtp } from "@/server/auth/otp";
 import { homeFor, isStaff } from "@/server/auth/roles";
 import { audit } from "@/server/audit";
-import { promoteIfAdminEmail } from "@/server/auth/admin-emails";
+import { grantAdminOnLogin } from "@/server/auth/admin-emails";
 import { ACCOUNTS } from "@/db/seed/data/people";
 import { DIAL_CODES } from "@/config/dial-codes";
 
@@ -40,7 +40,7 @@ async function requestLoginCode(_prev: LoginState, form: FormData): Promise<Logi
     return { step: "start", error: raw.includes("@") ? t("Please enter a valid email address.") : t("Please enter a valid mobile number, for example 98100 00001.") };
   }
   const res = await requestOtp(id, "login");
-  if (!res.ok) return { step: "start", error: t(res.error) };
+  if (!res.ok) return { step: "start", error: t(res.error, "params" in res ? res.params : undefined) };
   return { step: "verify", identifier: id.value, display: id.value, kind: id.kind, devCode: res.devCode };
 }
 
@@ -59,7 +59,7 @@ async function resendLoginCode(prev: LoginState): Promise<LoginState> {
   const id = parseIdentifier(prev.identifier);
   if (!id) return { step: "start" };
   const res = await requestOtp(id, "login");
-  if (!res.ok) return { ...prev, error: t(res.error), info: undefined };
+  if (!res.ok) return { ...prev, error: t(res.error, "params" in res ? res.params : undefined), info: undefined };
   return { ...prev, devCode: res.devCode, error: undefined, info: t("We sent a new code.") };
 }
 
@@ -112,9 +112,9 @@ async function verifyLoginCode(prev: LoginState, form: FormData): Promise<LoginS
   const id = parseIdentifier(prev.identifier);
   if (!id) return { step: "start" };
   const res = await verifyOtp(id, String(form.get("code") ?? ""), "login");
-  if (!res.ok) return { ...prev, error: t(res.error), info: undefined };
+  if (!res.ok) return { ...prev, error: t(res.error, "params" in res ? res.params : undefined), info: undefined };
   const { user, created } = await findOrCreateUser(id.kind, id.value);
-  if (id.kind === "email") user.role = (await promoteIfAdminEmail(await getDb(), user, id.value)) as typeof user.role;
+  user.role = (await grantAdminOnLogin(await getDb(), user, id.kind === "email" ? id.value : null)) as typeof user.role;
   await createSession(user.id);
   await audit({ actor: { id: user.id, role: user.role }, action: created ? "auth.signup" : "auth.login", entityType: "user", entityId: user.id, metadata: { method: id.kind } });
   await afterLogin(user.id, safeNext(form.get("next")));

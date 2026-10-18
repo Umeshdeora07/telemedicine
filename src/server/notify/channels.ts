@@ -3,12 +3,20 @@
  * otherwise logs to the server console (local demo). Providers:
  *   SMS       Twilio (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM)
  *             For India, register DLT templates with your SMS provider.
+ *   Login     Twilio Verify (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
+ *   by phone  TWILIO_VERIFY_SERVICE_SID) sends and checks the login codes
+ *             itself, with Twilio's own message.
  *   WhatsApp  Meta WhatsApp Cloud API (WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID);
  *             business-initiated messages need approved templates.
- *   Email     Resend (RESEND_API_KEY, EMAIL_FROM)
+ *   Email     Resend (RESEND_API_KEY, EMAIL_FROM), or any mail account by SMTP
+ *             (SMTP_USER, SMTP_PASSWORD; SMTP_HOST defaults to Gmail)
  *   Push      Web Push with VAPID (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT)
  */
 import { env } from "@/config/env";
+import { brand } from "@/config/brand";
+import { resendConfigured, smtpConfigured } from "@/lib/providers";
+
+export { emailConfigured, phoneCodesConfigured, smsConfigured, verifyConfigured } from "@/lib/providers";
 
 type Result = { ok: true; id?: string; simulated?: boolean } | { ok: false; error: string };
 
@@ -25,12 +33,40 @@ function log(channel: string, to: string, body: string) {
   console.log(`[notify:${channel}] → ${to}\n${body.split("\n").map((l) => "    " + l).join("\n")}`);
 }
 
-export function smsConfigured() {
-  return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM);
+/** A call to Twilio Verify. A network failure reads as status 0. */
+async function twilioVerify(path: "Verifications" | "VerificationCheck", params: Record<string, string>) {
+  const sid = process.env.TWILIO_ACCOUNT_SID!;
+  try {
+    const res = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + Buffer.from(`${sid}:${process.env.TWILIO_AUTH_TOKEN}`).toString("base64"),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(params),
+      signal: AbortSignal.timeout(15_000),
+    });
+    const json = (await res.json().catch(() => ({}))) as { status?: string; code?: number; message?: string };
+    return { ok: res.ok, status: res.status, json };
+  } catch (e) {
+    return { ok: false, status: 0, json: { message: e instanceof Error ? e.message : String(e) } as { status?: string; code?: number; message?: string } };
+  }
 }
 
-export function emailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+/** Ask Twilio Verify to text a login code to this number. */
+export async function startPhoneVerification(to: string): Promise<Result> {
+  const { ok, status, json } = await twilioVerify("Verifications", { To: to, Channel: "sms" });
+  if (!ok) return { ok: false, error: `Twilio Verify ${status}: ${json.code ?? ""} ${json.message ?? ""}`.trim() };
+  return { ok: true };
+}
+
+/** Check a code with Twilio Verify. "expired" also covers too many wrong tries. */
+export async function checkPhoneVerification(to: string, code: string): Promise<"approved" | "wrong" | "expired" | "error"> {
+  const { ok, status, json } = await twilioVerify("VerificationCheck", { To: to, Code: code });
+  if (ok) return json.status === "approved" ? "approved" : json.status === "pending" ? "wrong" : "expired";
+  if (status === 404 || status === 429) return "expired";
+  console.error(`[notify:sms] Twilio Verify check failed: ${status} ${json.code ?? ""}`);
+  return "error";
 }
 
 export async function sendSms(to: string, body: string): Promise<Result> {
@@ -91,6 +127,7 @@ export async function sendWhatsApp(
 export async function sendEmail(to: string, subject: string, text: string, html?: string): Promise<Result> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
+  if (!resendConfigured() && smtpConfigured()) return sendSmtp(to, subject, text, html);
   if (!key || !from) {
     log("email", to, `Subject: ${subject}\n${text}`);
     return { ok: true, simulated: true };
@@ -103,6 +140,34 @@ export async function sendEmail(to: string, subject: string, text: string, html?
   if (!res.ok) return { ok: false, error: `Resend ${res.status}: ${await res.text()}` };
   const json = (await res.json()) as { id?: string };
   return { ok: true, id: json.id };
+}
+
+/** Plain SMTP, for example a Gmail account with an app password. */
+async function sendSmtp(to: string, subject: string, text: string, html?: string): Promise<Result> {
+  const nodemailer = (await import("nodemailer")).default;
+  const user = process.env.SMTP_USER!;
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = Number(process.env.SMTP_PORT || 465);
+  // Google shows app passwords in groups of four: "abcd efgh ijkl mnop".
+  const pass = host === "smtp.gmail.com" ? process.env.SMTP_PASSWORD!.replace(/\s+/g, "") : process.env.SMTP_PASSWORD!;
+  const transport = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+    // Fail fast rather than hold the login page for minutes.
+    connectionTimeout: 15_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
+  });
+  try {
+    const info = await transport.sendMail({ from: process.env.EMAIL_FROM || `${brand.name} <${user}>`, to, subject, text, html });
+    return { ok: true, id: info.messageId };
+  } catch (e) {
+    return { ok: false, error: `SMTP: ${e instanceof Error ? e.message : String(e)}` };
+  } finally {
+    transport.close();
+  }
 }
 
 export function pushConfigured() {

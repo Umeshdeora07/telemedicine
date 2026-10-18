@@ -4,7 +4,8 @@ import { databaseUrl, setupProblems } from "@/lib/setup-check";
 const saved = { ...process.env };
 const KEYS = [
   "DATABASE_URL", "POSTGRES_URL", "STORAGE_DATABASE_URL", "STORAGE_DATABASE_URL_UNPOOLED", "STORAGE_POSTGRES_URL", "ANALYTICS_DATABASE_URL",
-  "VERCEL", "APP_SECRET", "DEMO_MODE", "NODE_ENV", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+  "VERCEL", "VERCEL_ENV", "APP_SECRET", "DEMO_MODE", "NODE_ENV", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+  "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID", "SMTP_USER", "SMTP_PASSWORD",
 ];
 afterEach(() => {
   for (const k of KEYS) delete process.env[k];
@@ -51,6 +52,17 @@ describe("setupProblems", () => {
   it("counts Google sign-in as a way to log in", () => {
     setEnv({ VERCEL: "1", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a", GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "secret" });
     expect(ids()).toEqual([]);
+  });
+  it("counts Twilio Verify and Gmail codes as ways to log in", () => {
+    const base = { VERCEL: "1", NODE_ENV: "production", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a" };
+    setEnv({ ...base, TWILIO_ACCOUNT_SID: "AC1", TWILIO_AUTH_TOKEN: "t", TWILIO_VERIFY_SERVICE_SID: "VA1" });
+    expect(ids()).toEqual([]);
+    setEnv({ ...base, SMTP_USER: "me@gmail.com", SMTP_PASSWORD: "abcd efgh ijkl mnop" });
+    expect(ids()).toEqual([]);
+  });
+  it("needs a real way to log in on the production site, even with DEMO_MODE=true", () => {
+    setEnv({ VERCEL: "1", VERCEL_ENV: "production", NODE_ENV: "production", DEMO_MODE: "true", APP_SECRET: "x".repeat(40), DATABASE_URL: "postgres://a" });
+    expect(ids()).toEqual(["no-sign-in"]);
   });
   it("never shows the secret's length", () => {
     setEnv({ VERCEL: "1", NODE_ENV: "production", DEMO_MODE: "true", APP_SECRET: "short", DATABASE_URL: "postgres://a" });

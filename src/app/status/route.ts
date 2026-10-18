@@ -4,7 +4,9 @@ import { connectionUrl, getDb, rows } from "@/db";
 import { env } from "@/config/env";
 import { databaseUrl, setupProblems } from "@/lib/setup-check";
 import { statusPage, type StatusRow } from "@/lib/setup-page";
-import { adminEmails } from "@/server/auth/admin-emails";
+import { adminEmails, FIRST_ADMIN_CLAIMED } from "@/server/auth/admin-emails";
+import { oauthConfigured } from "@/server/auth/oauth";
+import { emailConfigured, phoneCodesConfigured } from "@/lib/providers";
 
 export const dynamic = "force-dynamic";
 // The first request after a deploy may create the tables and load demo data.
@@ -34,6 +36,17 @@ function explain(e: unknown): { detail: string; steps: string[] } {
       steps: ["With Neon this works by default: use the database's default owner role (neondb_owner) in the connection, not a role you created yourself.", reconnect],
     };
   return { detail: `The database reported an error${code ? ` (code ${code})` : ""}.`, steps: ["Open Vercel → your project → Logs and look for lines starting with [db].", reconnect] };
+}
+
+/** How people can log in, in plain words. */
+function loginMethods() {
+  const ways = [
+    phoneCodesConfigured() && "mobile number (text message code)",
+    emailConfigured() && "email (code by email)",
+    oauthConfigured("google") && "Google",
+    oauthConfigured("apple") && "Apple",
+  ].filter(Boolean);
+  return `Real login is on: ${ways.join(", ")}.`;
 }
 
 async function withTimeout<T>(p: Promise<T>, ms: number) {
@@ -99,7 +112,7 @@ export async function GET() {
         const seedingOff = process.env.DEMO_AUTO_SEED === "false";
         rowsOut.push(
           u?.found
-            ? { label: "Accounts", state: "ok", detail: d?.found ? "Demo patients, doctors and clinics are loaded." : "Accounts exist." }
+            ? { label: "Accounts", state: "ok", detail: d?.found ? "Demo patients, doctors and clinics are loaded (test data, not real people)." : "Accounts exist." }
             : env.demoMode && !seedingOff
               ? {
                   label: "Accounts",
@@ -110,17 +123,28 @@ export async function GET() {
               : { label: "Accounts", state: "info", detail: seedingOff ? "No accounts yet (loading demo data is turned off)." : "No accounts yet." },
         );
         const [admin] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from users where role = 'super_admin') as found`));
+        const [claimed] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from settings where key = ${FIRST_ADMIN_CLAIMED}) as found`));
         rowsOut.push(
           admin?.found
             ? { label: "Admin account", state: "ok", detail: "An admin account exists." }
             : adminEmails().length
               ? { label: "Admin account", state: "info", detail: "Not yet. Log in with your admin email (the one in ADMIN_EMAILS) and the account becomes the admin." }
-              : {
-                  label: "Admin account",
-                  state: "problem",
-                  detail: "No admin yet.",
-                  steps: ["In Vercel → Settings → Environment Variables, add ADMIN_EMAILS with your email address, then redeploy.", "Then log in with that email (or with Google using that address)."],
-                },
+              : claimed?.found
+                ? {
+                    label: "Admin account",
+                    state: "problem",
+                    detail: "The first admin account no longer exists.",
+                    steps: ["In Vercel → Settings → Environment Variables, add ADMIN_EMAILS with your email address, then redeploy.", "Then log in with that email (or with Google using that address)."],
+                  }
+                : {
+                    label: "Admin account",
+                    state: "problem",
+                    detail: "No admin yet. The first person to log in becomes the admin.",
+                    steps: [
+                      "Log in yourself now, before anyone else: open /login on this site.",
+                      "Your account becomes the admin. You will then add the site to an authenticator app (such as Google Authenticator) for two step verification.",
+                    ],
+                  },
         );
         const [job] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from settings where key = 'job:hourly') as found`));
         rowsOut.push({
@@ -147,7 +171,7 @@ export async function GET() {
   rowsOut.push(
     signIn
       ? { label: "Logging in", state: "problem", detail: signIn.title, steps: signIn.steps }
-      : { label: "Logging in", state: "ok", detail: env.demoMode ? "Demo mode: one-tap demo accounts on the login page." : "Login codes are sent by SMS or email." },
+      : { label: "Logging in", state: "ok", detail: env.demoMode ? "Demo mode: one-tap demo accounts on the login page." : loginMethods() },
   );
   rowsOut.push({ label: "Site address", state: "info", detail: env.appUrl });
 
