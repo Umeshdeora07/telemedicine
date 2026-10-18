@@ -66,6 +66,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     ...(env.demoMode || emailConfigured() ? (["email"] as const) : []),
   ];
   const passwords = passwordLoginEnabled();
+  const joiningAsDoctor = Boolean(sp.next?.startsWith("/for-doctors/"));
   return (
     <div className="mx-auto max-w-md space-y-6">
       <Card className="space-y-6 p-6 sm:p-8">
@@ -88,7 +89,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         {sp.reason === "idle" ? <Alert tone="info">{t("You were logged out after a period of inactivity, to keep your information safe.")}</Alert> : null}
         {sp.error && errors[sp.error] ? <Alert tone="danger">{errors[sp.error]}</Alert> : null}
         {sp.reset ? <Alert tone="success">{t("Your new password is set. Please log in with it.")}</Alert> : null}
-        {methods.length || passwords ? <LoginForm next={sp.next} defaultDial={defaultDial} methods={[...methods]} passwords={passwords} /> : null}
+        {joiningAsDoctor ? (
+          <Alert tone="info" title={t("Joining as a doctor")}>
+            {t("First create your account (or log in if you have one). Next you fill in the doctor form.")}
+          </Alert>
+        ) : null}
+        {methods.length || passwords ? <LoginForm next={sp.next} defaultDial={defaultDial} methods={[...methods]} passwords={passwords} startWith={joiningAsDoctor ? "signup" : "login"} /> : null}
         {google || apple ? (
           <div className="space-y-3">
             {methods.length || passwords ? (
@@ -121,6 +127,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </Link>
         </p>
       </Card>
+      {!joiningAsDoctor ? (
+        <p className="text-center">
+          {t("Are you a doctor?")}{" "}
+          <Link href="/for-doctors" className="font-semibold text-primary underline">
+            {t("Join as a doctor")}
+          </Link>
+        </p>
+      ) : null}
       <p className="flex items-center justify-center gap-2 text-center text-sm text-fg-muted">
         <Lock className="size-4 shrink-0 text-primary" aria-hidden />
         {t("Your details are encrypted and never sold.")}

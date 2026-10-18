@@ -9,6 +9,7 @@ import { PortalNav } from "./portal-nav";
 import { enabledLocales } from "@/i18n/config";
 import { getViewContext } from "@/server/context";
 import { InitialsAvatar } from "@/components/ui/avatar";
+import { maskPhone } from "@/lib/utils";
 
 export type NavItem = { href: string; label: string; icon: string; badge?: number };
 
@@ -26,9 +27,10 @@ export async function PortalShell({ title, nav, children, idleMinutes }: { title
           <div className="ms-auto flex items-center gap-1">
             <LanguageToggle locales={enabledLocales()} />
             <ThemeToggle initial={theme} />
-            <span className="hidden items-center gap-2 px-2 md:flex">
-              <InitialsAvatar name={user?.name ?? "?"} size={32} />
-              <span className="text-sm font-semibold">{user?.name}</span>
+            <span className="hidden min-w-0 items-center gap-2 px-2 md:flex">
+              <InitialsAvatar name={user?.name ?? ""} size={32} />
+              {/* An account made with a password may have no name yet: show how they log in instead. */}
+              <span className="max-w-[16rem] truncate text-sm font-semibold">{user?.name || user?.email || maskPhone(user?.phone)}</span>
             </span>
             <form action="/api/auth/logout" method="post">
               <button type="submit" className="tap rounded-xl px-3 text-sm font-semibold text-danger hover:bg-danger-soft">{t("Log out")}</button>

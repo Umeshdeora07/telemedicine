@@ -7,7 +7,7 @@ import { exchangeCode, type Provider } from "@/server/auth/oauth";
 import { createSession } from "@/server/auth/session";
 import { grantAdminOnLogin } from "@/server/auth/admin-emails";
 import { accountForProvenContact, grantPasswordReset, safeNext } from "@/server/auth/identity";
-import { homeFor, isStaff } from "@/server/auth/roles";
+import { homeFor, isStaff, needsTwoStep } from "@/server/auth/roles";
 import { audit } from "@/server/audit";
 
 async function handle(req: NextRequest, provider: Provider, code: string | null, state: string | null, appleUser?: string | null) {
@@ -59,7 +59,11 @@ async function handle(req: NextRequest, provider: Provider, code: string | null,
   await createSession(user.id);
   await grantPasswordReset(user.id);
   await audit({ actor: { id: user.id, role: user.role }, action: "auth.login", entityType: "user", entityId: user.id, metadata: { method: provider } });
-  const dest = isStaff(user.role) ? "/mfa" : !user.onboarded ? "/onboarding" : next || homeFor(user.role);
+  const dest = needsTwoStep(user.role)
+    ? "/mfa"
+    : !user.onboarded && !isStaff(user.role) && !next?.startsWith("/for-doctors/")
+      ? `/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`
+      : next || homeFor(user.role);
   return NextResponse.redirect(new URL(dest, req.url), 303);
 }
 

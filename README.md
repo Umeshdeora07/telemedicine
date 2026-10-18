@@ -268,8 +268,10 @@ temporary), so they survive redeploys. Each file can be up to 4 MB there.
      `GOOGLE_CLIENT_SECRET`.
 2. **The admin.** The first person to create an account on a site that has
    no admin becomes the admin, once. So right after deploying, open
-   `/login`, choose **Create account** and make yours, then set up the
-   authenticator app it asks for. To allow only your own address instead,
+   `/login`, choose **Create account** and make yours with a strong
+   password. The admin account needs no authenticator app; set
+   `ADMIN_TWO_STEP=true` to require one (doctors and coordinators always
+   use one). To allow only your own address instead,
    set `ADMIN_EMAILS` (several, separated by commas): then only those
    addresses become admins, when they log in with an email code or Google
    (not with a password, which proves nothing about the address).

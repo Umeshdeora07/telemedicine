@@ -108,6 +108,43 @@ export function UserStatusButton({ id, status }: { id: string; status: string })
   );
 }
 
+/**
+ * Admin: a link to send a new doctor. It opens the doctor sign up with their
+ * name and specialty filled in; the doctor then adds their own documents and
+ * the admin verifies them as usual.
+ */
+export function DoctorJoinLink({ baseUrl, specialties }: { baseUrl: string; specialties: { slug: string; name: string }[] }) {
+  const { t } = useI18n();
+  const [name, setName] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [copied, setCopied] = useState(false);
+  const query = new URLSearchParams({ ...(name.trim() ? { name: name.trim() } : {}), ...(specialty ? { specialty } : {}) }).toString();
+  const url = `${baseUrl}/for-doctors/apply${query ? `?${query}` : ""}`;
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t("Doctor's full name")} htmlFor="join-name" optional={t("optional")}>
+          <Input id="join-name" value={name} onChange={(e) => { setName(e.target.value); setCopied(false); }} placeholder={t("Dr. Asha Menon")} />
+        </Field>
+        <Field label={t("Specialty")} htmlFor="join-spec" optional={t("optional")}>
+          <Select id="join-spec" value={specialty} onChange={(e) => { setSpecialty(e.target.value); setCopied(false); }}>
+            <option value="">{t("The doctor chooses")}</option>
+            {specialties.map((s) => (
+              <option key={s.slug} value={s.slug}>{t(s.name)}</option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input readOnly value={url} aria-label={t("Link for the doctor")} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 font-mono text-sm" />
+        <Button variant="secondary" onClick={() => navigator.clipboard?.writeText(url).then(() => setCopied(true), () => setCopied(false))}>
+          {copied ? t("Copied") : t("Copy link")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** Makes a one time link for someone to choose a new password; the admin sends it to them. */
 export function ResetLinkButton({ id }: { id: string }) {
   const { t } = useI18n();

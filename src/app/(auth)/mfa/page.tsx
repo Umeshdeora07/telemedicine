@@ -5,7 +5,7 @@ import { brand } from "@/config/brand";
 import { env } from "@/config/env";
 import { Card } from "@/components/ui/card";
 import { requireSession } from "@/server/auth/session";
-import { homeFor, isStaff } from "@/server/auth/roles";
+import { homeFor, needsTwoStep } from "@/server/auth/roles";
 import { safeNext } from "@/server/auth/identity";
 import { MfaForm } from "./mfa-form";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Two step verification" };
 export default async function MfaPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const next = safeNext((await searchParams).next) ?? undefined;
   const session = await requireSession({ allowWithoutMfa: true });
-  if (!isStaff(session.user.role) || session.mfaVerified) redirect(next ?? homeFor(session.user.role));
+  if (!needsTwoStep(session.user.role) || session.mfaVerified) redirect(next ?? homeFor(session.user.role));
   const { t } = await getI18n();
   return (
     <Card className="mx-auto max-w-md space-y-6 p-6 sm:p-8">

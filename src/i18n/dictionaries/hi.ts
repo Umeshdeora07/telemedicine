@@ -15,6 +15,7 @@ import redesignC from "./hi-redesign-c";
 import redesignC2 from "./hi-redesign-c2";
 import realLogin from "./hi-real-login";
 import passwordLogin from "./hi-password";
+import doctorJoin from "./hi-doctor-join";
 
 // Hindi. Keys are the English strings used on screen. Plain, everyday Hindi
 // (not overly formal) so it is easy for older users to read.
@@ -144,4 +145,5 @@ export default {
   ...redesignC2,
   ...realLogin,
   ...passwordLogin,
+  ...doctorJoin,
 } as Dict;

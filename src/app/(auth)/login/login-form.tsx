@@ -184,7 +184,20 @@ type Contact = "phone" | "email";
  * site), and a one time code by text message or email where that service is
  * connected (`methods`).
  */
-export function LoginForm({ next, defaultDial, methods, passwords }: { next?: string; defaultDial: string; methods: Contact[]; passwords: boolean }) {
+export function LoginForm({
+  next,
+  defaultDial,
+  methods,
+  passwords,
+  startWith = "login",
+}: {
+  next?: string;
+  defaultDial: string;
+  methods: Contact[];
+  passwords: boolean;
+  /** "signup" opens the password form on Create account (for someone who came to join). */
+  startWith?: "login" | "signup";
+}) {
   const { t } = useI18n();
   // A code proves the email or number, so it comes first where codes can be sent.
   const [view, setView] = useState<"password" | "code">(methods.length || !passwords ? "code" : "password");
@@ -206,6 +219,7 @@ export function LoginForm({ next, defaultDial, methods, passwords }: { next?: st
   return (
     <PasswordForm
       next={next}
+      startWith={startWith}
       defaultDial={defaultDial}
       onUseCode={
         methods.length
@@ -245,9 +259,9 @@ function ContactTabs({ value, onChange }: { value: Contact; onChange: (c: Contac
   );
 }
 
-function PasswordForm({ next, defaultDial, onUseCode }: { next?: string; defaultDial: string; onUseCode?: (forgot: boolean) => void }) {
+function PasswordForm({ next, defaultDial, onUseCode, startWith = "login" }: { next?: string; defaultDial: string; onUseCode?: (forgot: boolean) => void; startWith?: "login" | "signup" }) {
   const { t } = useI18n();
-  const [intent, setIntent] = useState<"login" | "signup">("login");
+  const [intent, setIntent] = useState<"login" | "signup">(startWith);
   const [contact, setContact] = useState<Contact>("phone");
   const [show, setShow] = useState(false);
   const [forgot, setForgot] = useState(false);

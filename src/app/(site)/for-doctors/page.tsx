@@ -3,12 +3,12 @@ import Link from "next/link";
 import { BadgeCheck, CalendarClock, ClipboardList, Coins, FileSignature, Globe2, Plane, ShieldCheck, UserPlus, UserRoundCheck, Video } from "lucide-react";
 import { getI18n } from "@/i18n/server";
 import { getViewContext } from "@/server/context";
-import { env } from "@/config/env";
 import { brand } from "@/config/brand";
 import { PHOTOS } from "@/config/images";
 import { ButtonLink } from "@/components/ui/button";
 import { Photo } from "@/components/ui/photo";
 import { CheckList, CtaBand, FeatureGrid, SectionHeading, StepList } from "@/components/marketing/blocks";
+import { JoinRequirements } from "@/components/doctor/join-requirements";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -32,14 +32,14 @@ export default async function ForDoctors() {
     { Icon: Plane, title: t("Treatment in India requests"), text: t("Review reports from patients abroad who are planning treatment in India, and help them with a clear treatment plan.") },
     { Icon: FileSignature, title: t("Prescriptions done right"), text: t("Templates and quick buttons that follow the Telemedicine Practice Guidelines, 2020. Allergy and duplicate warnings are shown, and every prescription is digitally signed with a QR check.") },
     { Icon: Video, title: t("A calm consultation room"), text: t("The patient's health form, reports and history sit beside the video. Notes save automatically.") },
-    { Icon: Coins, title: t("Paid every week"), text: t("Fees are released after each consultation and paid every Monday, with a clear statement. Platform commission is {p}%.", { p: Math.round(env.commissionRate * 100) }) },
+    { Icon: Coins, title: t("Patients pay you directly"), text: t("You add your own UPI ID, QR code or bank account. Patients pay you directly and you confirm each payment in your dashboard.") },
   ];
   const steps = [
-    { Icon: UserPlus, title: t("Create your account"), text: t("Log in with your email or your Google account.") },
+    { Icon: UserPlus, title: t("Create your account"), text: t("Choose Join as a doctor and create an account with your email or mobile number and a password.") },
     {
       Icon: ClipboardList,
       title: t("Fill in your details"),
-      text: t("Add your qualifications, your Indian registration, a government photo ID, a photo of yourself, your fees and the times you are available."),
+      text: t("Add your qualifications, your Indian registration, a government photo ID, a photo of yourself, your fees, the times you are available and how patients pay you."),
     },
     { Icon: ShieldCheck, title: t("Our team verifies you"), text: t("We check your registration on the official register and look at your documents. We call you if anything is unclear.") },
     { Icon: UserRoundCheck, title: t("Your profile goes live"), text: t("Patients can now see your profile and book you. We check your registration again every 12 months.") },
@@ -122,6 +122,8 @@ export default async function ForDoctors() {
               t("Willing to follow the Telemedicine Practice Guidelines, 2020."),
             ]}
           />
+          <h3 className="pt-4 text-xl font-bold">{t("Keep these ready")}</h3>
+          <JoinRequirements t={t} />
           <p className="flex items-start gap-2 text-fg-muted">
             <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
             {t("Patient identity and consent are confirmed in every consultation. Records are encrypted and every access is logged.")}

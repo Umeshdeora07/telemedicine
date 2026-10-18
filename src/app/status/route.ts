@@ -147,7 +147,7 @@ export async function GET() {
                     detail: "No admin yet. The first person to log in becomes the admin.",
                     steps: [
                       "Create your account yourself now, before anyone else: open /login on this site and choose Create account.",
-                      "Your account becomes the admin. You will then add the site to an authenticator app (such as Google Authenticator) for two step verification.",
+                      "Your account becomes the admin. Choose a strong password: it is the only thing that protects the admin account.",
                     ],
                   },
         );

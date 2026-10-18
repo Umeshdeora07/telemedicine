@@ -7,7 +7,7 @@ import { getDb } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { env } from "@/config/env";
 import { randomToken, sha256 } from "@/lib/crypto";
-import { homeFor, isStaff, type Role } from "./roles";
+import { homeFor, isStaff, needsTwoStep, type Role } from "./roles";
 
 export const SESSION_COOKIE = "cm_session";
 const ABSOLUTE_DAYS = 30;
@@ -111,7 +111,7 @@ export async function requireSession(opts: { roles?: Role[]; allowWithoutMfa?: b
   const session = await getSession();
   if (!session) redirect(`/login?next=${encodeURIComponent(await currentPath())}`);
   const { user } = session;
-  if (isStaff(user.role) && !session.mfaVerified && !opts.allowWithoutMfa) redirect(`/mfa?next=${encodeURIComponent(await currentPath())}`);
+  if (needsTwoStep(user.role) && !session.mfaVerified && !opts.allowWithoutMfa) redirect(`/mfa?next=${encodeURIComponent(await currentPath())}`);
   if (!user.onboarded && !opts.allowNotOnboarded && !isStaff(user.role)) redirect("/onboarding");
   if (opts.roles && !opts.roles.includes(user.role as Role)) redirect(homeFor(user.role));
   return session;

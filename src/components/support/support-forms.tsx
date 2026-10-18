@@ -79,7 +79,7 @@ export function ComplaintForm({ defaults }: { defaults: { name: string; contact:
   );
 }
 
-export function DoctorApplyForm({ specialties, name }: { specialties: { slug: string; name: string }[]; name: string }) {
+export function DoctorApplyForm({ specialties, name, specialty }: { specialties: { slug: string; name: string }[]; name: string; specialty?: string }) {
   const { t } = useI18n();
   const [s, action] = useActionState(applyAsDoctorAction, {} as SupportState);
   return (
@@ -87,7 +87,7 @@ export function DoctorApplyForm({ specialties, name }: { specialties: { slug: st
       {s.error ? <Alert tone="danger" className="sm:col-span-2">{s.error}</Alert> : null}
       <Field label={t("Full name as registered")} htmlFor="a-n" required className="sm:col-span-2"><Input id="a-n" name="fullName" defaultValue={name} /></Field>
       <Field label={t("Gender")} htmlFor="a-g" required><Select id="a-g" name="gender"><option value="female">{t("Female")}</option><option value="male">{t("Male")}</option><option value="other">{t("Other")}</option></Select></Field>
-      <Field label={t("Main specialty")} htmlFor="a-s" required><Select id="a-s" name="specialty">{specialties.map((x) => <option key={x.slug} value={x.slug}>{t(x.name)}</option>)}</Select></Field>
+      <Field label={t("Main specialty")} htmlFor="a-s" required><Select id="a-s" name="specialty" defaultValue={specialty}>{specialties.map((x) => <option key={x.slug} value={x.slug}>{t(x.name)}</option>)}</Select></Field>
       <Checkbox name="agree" required className="sm:col-span-2" label={t("I agree to verification of my registration, degrees and ID, and to follow the Telemedicine Practice Guidelines, 2020.")} />
       <div className="sm:col-span-2"><SubmitButton>{t("Continue")}</SubmitButton></div>
     </form>

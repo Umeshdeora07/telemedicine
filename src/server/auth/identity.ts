@@ -13,7 +13,7 @@ import { decryptText, encryptText } from "@/lib/crypto";
 import { PREF_COOKIES } from "@/lib/prefs";
 import { isValidTimeZone } from "@/lib/time";
 import { audit } from "@/server/audit";
-import { homeFor, isStaff } from "./roles";
+import { homeFor, isStaff, needsTwoStep } from "./roles";
 
 export type ContactKind = "phone" | "email";
 export type User = typeof users.$inferSelect;
@@ -155,7 +155,8 @@ export async function afterLogin(db: DB, userId: string, next: string | null): P
   const year = 60 * 60 * 24 * 365;
   if (p.theme === "light" || p.theme === "dark") jar.set(PREF_COOKIES.theme, p.theme, { path: "/", maxAge: year });
   if (isLocale(user.language)) jar.set("lang", user.language, { path: "/", maxAge: year });
-  if (isStaff(user.role)) redirect(`/mfa${next ? `?next=${encodeURIComponent(next)}` : ""}`);
-  if (!user.onboarded) redirect(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+  if (needsTwoStep(user.role)) redirect(`/mfa${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+  // Someone joining as a doctor goes straight on: the patient questions are not for them.
+  if (!user.onboarded && !isStaff(user.role) && !next?.startsWith("/for-doctors/")) redirect(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   redirect(next ?? homeFor(user.role));
 }

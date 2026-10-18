@@ -1,3 +1,4 @@
+import { UserRound } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 
 /**
@@ -35,7 +36,7 @@ export function InitialsAvatar({ name, size = 40, className }: { name: string; s
       style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }}
       className={cn("inline-grid shrink-0 select-none place-items-center rounded-full bg-primary-soft font-heading font-bold tracking-wide text-primary-soft-fg", className)}
     >
-      {initials(name) || "?"}
+      {initials(name) || <UserRound className="size-[55%]" aria-hidden />}
     </span>
   );
 }
