@@ -14,6 +14,7 @@ import { Alert } from "@/components/ui/alert";
 import { DoctorAvatar } from "@/components/ui/avatar";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { PayPanel } from "@/components/booking/pay-panel";
+import { acceptsDirectPayment } from "@/lib/direct-payment";
 import { payAtClinicAction } from "@/server/actions/hybrid";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -53,7 +54,8 @@ export default async function ReviewPage({ params, searchParams }: { params: Pro
   const money = (m: number) => fmt.money(m, a.currency);
   const isClinic = a.mode === "in_clinic";
   const modeLabel = { video: t("Video consultation"), audio: t("Audio call"), chat: t("Chat consultation"), in_clinic: t("Clinic visit") }[a.mode];
-  const gateway = pickGateway(a.currency);
+  const direct = acceptsDirectPayment(d.paymentDetails);
+  const gateway = direct ? "direct" : pickGateway(a.currency);
   const covered = a.paymentMode === "plan";
 
   return (
@@ -164,7 +166,9 @@ export default async function ReviewPage({ params, searchParams }: { params: Pro
             <dd>{money(q.totalMinor)}</dd>
           </div>
         </dl>
-        {a.currency === "INR" ? (
+        {direct ? (
+          <p className="text-sm text-fg-muted">{t("You pay this fee directly to the doctor, by UPI or bank transfer.")}</p>
+        ) : a.currency === "INR" ? (
           <p className="text-sm text-fg-muted">{t("A doctor's consultation is exempt from GST. GST applies only to the platform fee. You will get a GST invoice.")}</p>
         ) : (
           <p className="text-sm text-fg-muted">
@@ -192,7 +196,9 @@ export default async function ReviewPage({ params, searchParams }: { params: Pro
           ) : null}
           <li className="flex gap-2">
             <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-            {t("Your payment is held safely. The doctor is paid only after the consultation.")}
+            {direct
+              ? t("You pay the doctor directly. Your booking is confirmed when the doctor receives the money.")
+              : t("Your payment is held safely. The doctor is paid only after the consultation.")}
           </li>
           <li className="flex gap-2">
             <BellRing className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
@@ -221,6 +227,7 @@ export default async function ReviewPage({ params, searchParams }: { params: Pro
           covered={q.totalMinor === 0}
           holdUntil={slot?.heldUntil?.toISOString() ?? null}
           testGateway={gateway === "demo"}
+          direct={direct}
         />
         {gateway === "demo" && q.totalMinor > 0 ? (
           <p className="mt-3 rounded-xl bg-surface-2 p-3 text-center text-sm text-fg-muted">{t("Online payment is not connected yet. The next page is a test payment that does not take any money.")}</p>

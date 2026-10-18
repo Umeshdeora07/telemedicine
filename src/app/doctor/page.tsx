@@ -6,6 +6,7 @@ import { getViewContext } from "@/server/context";
 import { doctorForUser } from "@/server/consult";
 import { doctorEarnings, doctorLicenceAlerts, doctorOpenChats, doctorQueue, doctorUpcoming } from "@/server/doctor-portal";
 import { PageHeader } from "@/components/ui/page-header";
+import { doctorPaymentQueue } from "@/server/direct-payments";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
@@ -23,7 +24,7 @@ export default async function DoctorToday() {
   const d = await doctorForUser(ctx.user!);
   if (!d) redirect("/login");
   if (d.verificationStatus !== "approved") redirect("/doctor/onboarding");
-  const [queue, upcoming, earnings, licences, chats] = await Promise.all([doctorQueue(d), doctorUpcoming(d, 3), doctorEarnings(d), doctorLicenceAlerts(d), doctorOpenChats(d)]);
+  const [queue, upcoming, earnings, licences, chats, payQueue] = await Promise.all([doctorQueue(d), doctorUpcoming(d, 3), doctorEarnings(d), doctorLicenceAlerts(d), doctorOpenChats(d), doctorPaymentQueue(d.id)]);
   const active = queue.filter((q) => ["confirmed", "checked_in", "in_progress"].includes(q.a.status));
   const done = queue.filter((q) => q.a.status === "completed").length;
   const expiring = licences.filter((l) => l.status === "verified" && l.daysLeft !== null && l.daysLeft <= 60);
@@ -33,6 +34,13 @@ export default async function DoctorToday() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("Good to see you, {name}", { name: d.fullName })} description={t("Today, {date} · times in {zone}", { date: fmt.date(new Date(), d.timeZone, { weekday: "long", day: "numeric", month: "long" }), zone: fmt.zone(d.timeZone) })} />
+      {payQueue.toConfirm.length || payQueue.toRefund.length ? (
+        <Alert tone="warning" title={t("Payments need your attention")}>
+          {payQueue.toConfirm.length ? t("{n} payment(s) to confirm.", { n: payQueue.toConfirm.length }) : null}{" "}
+          {payQueue.toRefund.length ? t("{n} refund(s) to send.", { n: payQueue.toRefund.length }) : null}{" "}
+          <Link href="/doctor/payments" className="font-semibold underline">{t("Open payments")}</Link>
+        </Alert>
+      ) : null}
       {expiring.map((l) => (
         <Alert key={l.id} tone={l.daysLeft! <= 15 ? "danger" : "warning"} title={t("Licence expires in {n} days", { n: l.daysLeft })}>
           {t("{body} registration {num}. Upload the renewed certificate so you stay visible to patients.", { body: l.issuingBody, num: l.number })} <Link href="/doctor/licences" className="font-semibold underline">{t("Update licence")}</Link>

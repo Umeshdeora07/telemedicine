@@ -12,8 +12,9 @@ const LOADED_ON = "demo:loaded_on";
  * up (new specialties, doctors, people). It is part of the marker, so the next
  * start reloads a demo database that was loaded with an older version.
  * v2: four specialties, doctors registered in India only, no patient location.
+ * v3: doctors' treatment fees and direct payment details.
  */
-export const DEMO_DATA_VERSION = "v2";
+export const DEMO_DATA_VERSION = "v3";
 
 /** What the marker holds for data loaded on this day: "<day in India>#<version>". */
 export function demoMarker(now = new Date()) {

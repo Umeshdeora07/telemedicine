@@ -18,7 +18,7 @@ export function statusBadge(status: string, t: ViewContext["t"]) {
     doctor_no_show: [t("Doctor did not join, refunded"), "warning"],
     patient_no_show: [t("Missed"), "warning"],
     expired: [t("Not paid"), "neutral"],
-    pending_payment: [t("Waiting for payment"), "warning"],
+    pending_payment: [t("Payment sent, waiting for the doctor"), "warning"],
   };
   const [label, tone] = map[status] ?? [status, "neutral"];
   return <Badge tone={tone}>{label}</Badge>;

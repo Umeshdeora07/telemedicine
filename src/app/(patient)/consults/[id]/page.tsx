@@ -83,7 +83,7 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      {a.status === "doctor_no_show" ? <Alert tone="warning" title={t("The doctor couldn't join")}>{t("We refunded you in full automatically. We are sorry for the trouble.")} <Link href="/doctors" className="font-semibold text-primary underline">{t("Book another doctor")}</Link></Alert> : null}
+      {a.status === "doctor_no_show" ? <Alert tone="warning" title={t("The doctor couldn't join")}>{t("You get a full refund. If you paid the doctor directly, the doctor sends the money back to you. We are sorry for the trouble.")} <Link href="/doctors" className="font-semibold text-primary underline">{t("Book another doctor")}</Link></Alert> : null}
 
       {journey.length > 1 ? (
         <section className="card space-y-3 p-5" aria-labelledby="journey">

@@ -127,6 +127,18 @@ test("a new doctor signs up, gets verified by an admin and then appears on the s
   await fees.getByRole("button", { name: "Save fees" }).click();
   await expect(fees.getByText("Fees saved.")).toBeVisible();
 
+  const treatmentFees = page.locator("form").filter({ has: page.getByRole("button", { name: "Save treatment fees" }) });
+  await treatmentFees.getByLabel("Treatment or charge 1", { exact: true }).fill("Acne scar treatment (one session)");
+  await treatmentFees.getByLabel("Price in rupees for row 1", { exact: true }).fill("2500");
+  await treatmentFees.getByRole("button", { name: "Save treatment fees" }).click();
+  await expect(treatmentFees.getByText("Fees saved.")).toBeVisible();
+
+  // Patients pay doctors directly, so payment details are required before verification.
+  const payment = page.locator("form").filter({ has: page.getByRole("button", { name: "Save payment details" }) });
+  await payment.getByLabel(/^UPI ID/).fill("newdoctor@okaxis");
+  await payment.getByRole("button", { name: "Save payment details" }).click();
+  await expect(payment.getByText("Payment details saved.")).toBeVisible();
+
   await page.goto("/doctor/schedule");
   await page.getByRole("group", { name: "Monday" }).getByRole("button", { name: "Add hours" }).click();
   await page.getByRole("group", { name: "Thursday" }).getByRole("button", { name: "Add hours" }).click();
@@ -136,7 +148,8 @@ test("a new doctor signs up, gets verified by an admin and then appears on the s
   await page.goto("/doctor/onboarding");
   const checklist = page.getByRole("list", { name: "Verification checklist" });
   await expect(checklist.getByText("Not done", { exact: true })).toHaveCount(0);
-  await expect(checklist.getByText("Done", { exact: true })).toHaveCount(8);
+  await expect(checklist.getByText("Done", { exact: true })).toHaveCount(9);
+  await expect(checklist.getByRole("listitem").last()).toContainText("Payment details (UPI or bank account)");
   await page.getByRole("button", { name: "Submit for verification" }).click();
   await expect(page.getByText(/^Submitted( on .+)?$/).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit for verification" })).toHaveCount(0);

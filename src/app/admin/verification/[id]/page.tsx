@@ -54,6 +54,36 @@ export default async function VerifyDoctor({ params }: { params: Promise<{ id: s
       </section>
 
       <section className="card space-y-3 p-5">
+        <h2 className="text-lg font-bold">{t("Payment details")}</h2>
+        {r.d.paymentDetails ? (
+          <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+            {(
+              [
+                [t("UPI ID"), r.d.paymentDetails.upiId],
+                [t("Account holder"), r.d.paymentDetails.accountName],
+                [t("Bank"), r.d.paymentDetails.bankName],
+                [t("Account number"), r.d.paymentDetails.accountNumber],
+                [t("IFSC code"), r.d.paymentDetails.ifsc],
+                [t("SWIFT code"), r.d.paymentDetails.swift],
+                [t("Other payment instructions"), r.d.paymentDetails.notes],
+              ] as [string, string | undefined][]
+            )
+              .filter(([, v]) => v)
+              .map(([k, v]) => (
+                <div key={k} className="contents">
+                  <dt className="text-fg-muted">{k}</dt>
+                  <dd className="break-all">{v}</dd>
+                </div>
+              ))}
+          </dl>
+        ) : (
+          <Badge tone="danger">{t("No payment details yet")}</Badge>
+        )}
+        {r.d.paymentDetails?.qrDocumentId ? docLink({ id: r.d.paymentDetails.qrDocumentId, title: t("UPI QR code") }) : null}
+        <p className="text-sm text-fg-muted">{t("Patients pay the doctor directly. Check that the account holder name matches the doctor's name.")}</p>
+      </section>
+
+      <section className="card space-y-3 p-5">
         <h2 className="text-lg font-bold">{t("Identity")}</h2>
         <div className="flex flex-wrap gap-4">
           <div><p className="text-sm text-fg-muted">{t("Government ID")}</p>{docsOf("government_id").map(docLink)}{!docsOf("government_id").length ? <Badge tone="danger">{t("Missing")}</Badge> : null}</div>

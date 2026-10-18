@@ -25,6 +25,7 @@ export function PayPanel({
   covered,
   holdUntil,
   testGateway = false,
+  direct = false,
 }: {
   apptId: string;
   methods: (keyof typeof METHOD_ICON)[];
@@ -34,6 +35,8 @@ export function PayPanel({
   holdUntil: string | null;
   /** No payment gateway is connected yet: the next page is a test payment that takes no money. */
   testGateway?: boolean;
+  /** Paid straight to the doctor by UPI or bank transfer: no method choice here. */
+  direct?: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -132,7 +135,7 @@ export function PayPanel({
         </div>
       ) : null}
 
-      {!covered ? (
+      {!covered && !direct ? (
         <fieldset>
           <legend className="mb-2 font-semibold text-heading">{t("Pay with")}</legend>
           <div className="grid grid-cols-2 gap-2">
@@ -153,9 +156,12 @@ export function PayPanel({
 
       <Button size="lg" className="w-full" onClick={pay} disabled={pending}>
         <Lock className="size-5" aria-hidden />
-        {covered ? t("Confirm booking") : t("Pay {amount} securely", { amount: totalLabel })}
+        {covered ? t("Confirm booking") : direct ? t("Pay {amount} to the doctor", { amount: totalLabel }) : t("Pay {amount} securely", { amount: totalLabel })}
       </Button>
-      {!covered && !testGateway ? (
+      {direct && !covered ? (
+        <p className="text-center text-sm text-fg-muted">{t("Next you see the doctor's UPI and bank details. You pay the doctor directly.")}</p>
+      ) : null}
+      {!covered && !testGateway && !direct ? (
         <p className="text-center text-sm text-fg-muted">{t("Payments are processed by a PCI DSS compliant payment gateway. We never see or store your card details.")}</p>
       ) : null}
     </div>

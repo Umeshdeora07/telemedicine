@@ -249,8 +249,18 @@ temporary), so they survive redeploys. Each file can be up to 4 MB there.
 3. `DEMO_MODE=false`.
 4. Redeploy, open `/status` to check, then log in with your admin email.
 
-Online payments need Razorpay (India) or Stripe (international cards)
-before patients can pay for consultations; see `.env.example`.
+**Payments go straight to each doctor.** Every doctor adds their own fees
+(consultation fees per call type, plus a list of treatment and other fees)
+and their own payment details (UPI ID, UPI QR code, bank account, SWIFT for
+patients abroad) under Doctor → Profile and fees. When a patient books, they
+see that doctor's details, pay the doctor directly, and enter the payment
+reference (UTR). The doctor confirms the payment under Doctor → Payments and
+the booking is confirmed; if the money did not arrive, the doctor says so
+and the time is freed. Refunds (for example when a doctor does not join) are
+listed for the doctor to send back and mark as sent. Bank details are never
+shown on public pages, only to the patient paying for a booking. Razorpay or
+Stripe (see `.env.example`) are only used for doctors who have not added
+payment details.
 
 ### Production: your own server in India
 

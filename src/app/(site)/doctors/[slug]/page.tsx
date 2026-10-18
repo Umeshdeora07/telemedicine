@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
-import { Award, BadgeCheck, BookOpen, Briefcase, Clock, GraduationCap, Languages, MessageSquare, Phone, ShieldCheck, Star, Video } from "lucide-react";
+import { Award, BadgeCheck, BookOpen, Briefcase, Clock, GraduationCap, Landmark, Languages, MessageSquare, Phone, ShieldCheck, Star, Video } from "lucide-react";
 import { getViewContext } from "@/server/context";
 import { getDoctorProfile, getOpenSlots } from "@/server/doctors";
 import { getDb } from "@/db";
@@ -200,6 +200,12 @@ export default async function DoctorProfilePage({ params }: { params: Promise<{ 
                   <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
                   {t("You see the full price before you pay.")}
                 </li>
+                {d.acceptsDirectPayment ? (
+                  <li className="flex items-start gap-2">
+                    <Landmark className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                    {t("You pay the doctor directly by UPI or bank transfer. You see the details after you choose a time.")}
+                  </li>
+                ) : null}
               </ul>
             </section>
           </aside>
@@ -232,6 +238,32 @@ export default async function DoctorProfilePage({ params }: { params: Promise<{ 
                 nextHref={`/book/${d.slug}/details?mode=${mode}`}
                 stickyAction={false}
               />
+            </section>
+          ) : null}
+
+          {/* Treatment and other fees, set by the doctor */}
+          {d.feeItems.length ? (
+            <section className="card space-y-4 p-5 sm:p-6" aria-labelledby="treatment-fees">
+              <h2 id="treatment-fees" className="text-xl font-bold">
+                {t("Treatment and other fees")}
+              </h2>
+              <ul className="divide-y divide-line">
+                {d.feeItems.map((f, i) => {
+                  const price = (minor: number) => ctx.priceFor([{ mode: "video", currency: "INR", amountMinor: minor }], "video")?.label ?? fmt.money(minor, "INR");
+                  return (
+                    <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
+                      <span className="min-w-0">
+                        <span className="font-medium text-heading">{f.name}</span>
+                        {f.note ? <span className="block text-sm text-fg-muted">{f.note}</span> : null}
+                      </span>
+                      <span className="font-semibold text-heading">
+                        {f.toMinor ? t("{from} to {to}", { from: price(f.fromMinor), to: price(f.toMinor) }) : price(f.fromMinor)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-sm text-fg-muted">{t("Prices are set by the doctor. The final cost of a treatment is confirmed with you before it starts.")}</p>
             </section>
           ) : null}
 

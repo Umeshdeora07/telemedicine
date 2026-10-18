@@ -60,9 +60,11 @@ export async function listAppointments(userId: string, filter: "upcoming" | "pas
   if (!ids.length) return [];
   const db = await getDb();
   const now = new Date();
+  // A booking paid straight to the doctor waits for the doctor's confirmation; the patient still sees it.
+  const awaitingDoctor = sql`(${appointments.status} = 'pending_payment' and exists (select 1 from ${payments} p where p.appointment_id = ${appointments.id} and p.gateway = 'direct' and p.status = 'created' and p.submitted_at is not null))`;
   const cond =
     filter === "upcoming"
-      ? and(inArray(appointments.status, ["confirmed", "checked_in", "in_progress"]), gte(appointments.endAt, new Date(now.getTime() - 60 * 60_000)))
+      ? and(or(inArray(appointments.status, ["confirmed", "checked_in", "in_progress"]), awaitingDoctor), gte(appointments.endAt, new Date(now.getTime() - 60 * 60_000)))
       : filter === "past"
         ? or(eq(appointments.status, "completed"), and(inArray(appointments.status, ["confirmed"]), lt(appointments.endAt, new Date(now.getTime() - 60 * 60_000))))
         : inArray(appointments.status, ["cancelled", "doctor_no_show", "patient_no_show", "expired"]);
@@ -73,7 +75,7 @@ export async function listAppointments(userId: string, filter: "upcoming" | "pas
     .innerJoin(specialties, eq(specialties.id, doctors.specialtyId))
     .innerJoin(patients, eq(patients.id, appointments.patientId))
     .leftJoin(clinics, eq(clinics.id, appointments.clinicId))
-    .where(and(inArray(appointments.patientId, ids), cond, filter === "cancelled" ? undefined : sql`${appointments.status} <> 'pending_payment'`))
+    .where(and(inArray(appointments.patientId, ids), cond, filter === "cancelled" ? undefined : sql`(${appointments.status} <> 'pending_payment' or ${awaitingDoctor})`))
     .orderBy(filter === "upcoming" ? asc(appointments.startAt) : desc(appointments.startAt))
     .limit(limit);
 }

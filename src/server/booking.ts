@@ -31,7 +31,8 @@ import { addMinutes } from "@/lib/time";
 import { getRates } from "./queries/reference";
 import { isDoctorVisible } from "./doctors";
 import { INDIA } from "./location";
-import { cancelAppointmentReminders, notifyAppointment, scheduleAppointmentReminders } from "./notify";
+import { cancelAppointmentReminders, notifyAppointment, notifyUser, scheduleAppointmentReminders } from "./notify";
+import { acceptsDirectPayment } from "@/lib/direct-payment";
 import { gatewayRefund, pickGateway, razorpayCreateOrder, stripeCreateCheckout } from "./payments/gateways";
 import { audit } from "./audit";
 
@@ -99,7 +100,14 @@ export async function expireStaleDrafts(db: Executor, now = new Date()) {
   const stale = await db
     .update(appointments)
     .set({ status: "expired" })
-    .where(and(eq(appointments.status, "pending_payment"), lt(appointments.createdAt, addMinutes(now, -HOLD_MINUTES))))
+    .where(
+      and(
+        eq(appointments.status, "pending_payment"),
+        lt(appointments.createdAt, addMinutes(now, -HOLD_MINUTES)),
+        // A direct payment the patient says they made waits for the doctor until the consult time.
+        sql`not (${appointments.startAt} > ${now} and exists (select 1 from ${payments} p where p.appointment_id = ${appointments.id} and p.status = 'created' and p.submitted_at is not null))`,
+      ),
+    )
     .returning({ id: appointments.id });
   if (stale.length)
     await db
@@ -237,12 +245,14 @@ export async function createDraftAppointment(input: DraftInput) {
     if (sub) subscriptionId = sub.s.id;
   }
 
+  // Paid straight to the doctor: the patient pays the doctor's fee only.
+  const direct = acceptsDirectPayment(doctor.paymentDetails);
   const quote = buildQuote({
     feeMinor: fee,
     currency: input.currency,
     rate,
-    platformFeeInrMinor: env.platformFeeInrMinor,
-    gstRate: env.gstRate,
+    platformFeeInrMinor: direct ? 0 : env.platformFeeInrMinor,
+    gstRate: direct ? 0 : env.gstRate,
     creditMinor: credit,
     covered: Boolean(subscriptionId),
     platformState: env.platformState,
@@ -309,12 +319,14 @@ export async function createDraftAppointment(input: DraftInput) {
 export async function quoteForAppointment(appt: typeof appointments.$inferSelect, coupon?: typeof coupons.$inferSelect | null) {
   const rates = await getRates();
   const cur = (isCurrency(appt.currency) ? appt.currency : "INR") as Currency;
+  const [doctor] = await (await getDb()).select({ paymentDetails: doctors.paymentDetails }).from(doctors).where(eq(doctors.id, appt.doctorId));
+  const direct = acceptsDirectPayment(doctor?.paymentDetails);
   return buildQuote({
     feeMinor: appt.feeMinor,
     currency: cur,
     rate: rates[cur]?.rate ?? 1,
-    platformFeeInrMinor: env.platformFeeInrMinor,
-    gstRate: env.gstRate,
+    platformFeeInrMinor: direct ? 0 : env.platformFeeInrMinor,
+    gstRate: direct ? 0 : env.gstRate,
     creditMinor: appt.creditMinor,
     covered: appt.paymentMode === "plan",
     coupon: coupon ? { code: coupon.code, kind: coupon.kind, value: coupon.value, maxDiscountMinor: coupon.maxDiscountMinor } : null,
@@ -372,7 +384,7 @@ export async function startAppointmentPayment(apptId: string, userId: string, me
   const [patient] = await db.select().from(patients).where(eq(patients.id, appt.patientId));
   const [doctor] = await db.select().from(doctors).where(eq(doctors.id, appt.doctorId));
   const rates = await getRates();
-  const gateway = appt.totalMinor === 0 ? "demo" : pickGateway(appt.currency);
+  const gateway = appt.totalMinor === 0 ? "demo" : acceptsDirectPayment(doctor?.paymentDetails) ? "direct" : pickGateway(appt.currency);
   if (gateway === "demo" && appt.totalMinor > 0 && !env.demoMode) {
     throw new BookingError("bad_state", "Online payments are not set up yet. Please contact support.");
   }
@@ -401,6 +413,8 @@ export async function startAppointmentPayment(apptId: string, userId: string, me
     await capturePayment(payment!.id, { gatewayPaymentId: `free_${payment!.id.slice(0, 8)}`, method: appt.paymentMode === "plan" ? "plan" : "free" });
     return { kind: "done" as const, appointmentId: appt.id };
   }
+  // The patient pays the doctor by UPI or bank transfer, then tells us the reference.
+  if (gateway === "direct") return { kind: "redirect" as const, url: `/pay/direct/${payment!.id}` };
   const description = `${brand.name}: ${appt.mode === "in_clinic" ? "Clinic visit" : "Consult"} with ${doctor?.fullName} (${appt.ref})`;
   if (gateway === "razorpay") {
     const order = await razorpayCreateOrder({ amountMinor: appt.totalMinor, currency: appt.currency, receipt: appt.ref, notes: { payment_id: payment!.id, appointment: appt.ref } });
@@ -437,10 +451,11 @@ export async function capturePayment(paymentId: string, info: { gatewayPaymentId
   const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId));
   if (!payment) throw new BookingError("not_found", "Payment not found");
   if (payment.status === "captured") return payment;
-  const invoiceNumber = await nextInvoiceNumber(db);
+  // Paid straight to the doctor: the platform received nothing, so it issues no invoice of its own.
+  const invoiceNumber = payment.gateway === "direct" ? null : await nextInvoiceNumber(db);
   const [updated] = await db
     .update(payments)
-    .set({ status: "captured", gatewayPaymentId: info.gatewayPaymentId, method: info.method ?? payment.method, capturedAt: new Date(), invoiceNumber, invoiceIssuedAt: new Date(), payoutState: "held" })
+    .set({ status: "captured", gatewayPaymentId: info.gatewayPaymentId, method: info.method ?? payment.method, capturedAt: new Date(), invoiceNumber, invoiceIssuedAt: invoiceNumber ? new Date() : null, payoutState: payment.gateway === "direct" ? "paid_out" : "held" })
     .where(and(eq(payments.id, paymentId), eq(payments.status, "created")))
     .returning();
   if (!updated) return payment;
@@ -500,11 +515,16 @@ export async function refundPayment(paymentId: string, amountMinor: number, reas
   if (amount <= 0) return null;
   let gatewayRefundId: string | null = null;
   let status = "processed";
-  try {
-    gatewayRefundId = await gatewayRefund(p.gateway, p.gatewayPaymentId, amount, { reason: reason.slice(0, 100) });
-  } catch (e) {
-    status = "failed";
-    console.error("[refund]", e);
+  if (p.gateway === "direct") {
+    // Paid straight to the doctor, so the doctor sends the money back and marks it done.
+    status = "pending";
+  } else {
+    try {
+      gatewayRefundId = await gatewayRefund(p.gateway, p.gatewayPaymentId, amount, { reason: reason.slice(0, 100) });
+    } catch (e) {
+      status = "failed";
+      console.error("[refund]", e);
+    }
   }
   const [r] = await db.insert(refunds).values({ paymentId: p.id, amountMinor: amount, currency: p.currency, reason, initiatedBy, initiatedByUserId: initiatedByUserId ?? null, status, gatewayRefundId }).returning();
   if (status === "processed") {
@@ -515,6 +535,16 @@ export async function refundPayment(paymentId: string, amountMinor: number, reas
       .where(eq(payments.id, p.id));
   }
   await audit({ actor: initiatedByUserId ? { id: initiatedByUserId, role: initiatedBy } : null, action: "payment.refund", entityType: "payment", entityId: p.id, patientId: p.patientId, metadata: { amount, reason, status } }, db);
+  if (status === "pending" && p.appointmentId) {
+    const [row] = await db.select({ userId: doctors.userId }).from(appointments).innerJoin(doctors, eq(doctors.id, appointments.doctorId)).where(eq(appointments.id, p.appointmentId));
+    if (row?.userId)
+      await notifyUser(db, row.userId, {
+        template: "direct_refund_due",
+        title: "Refund to send",
+        body: `Please send ${formatMoney(amount, p.currency, "en-IN")} back to the patient and mark it as sent.`,
+        link: "/doctor/payments",
+      });
+  }
   return r!;
 }
 
@@ -624,4 +654,86 @@ export async function handleDoctorNoShows(now = new Date()) {
 export async function paymentForAppointment(db: Executor, appointmentId: string) {
   const [p] = await db.select().from(payments).where(eq(payments.appointmentId, appointmentId)).orderBy(desc(payments.createdAt)).limit(1);
   return p ?? null;
+}
+
+/* --------------------------------------------------------- direct payments */
+
+/** The patient says they paid the doctor directly: record the reference and keep the time held for them. */
+export async function submitDirectPayment(paymentId: string, userId: string, input: { reference: string; method: "upi" | "bank" | "other"; proofDocumentId: string | null }) {
+  const db = await getDb();
+  const [p] = await db.select().from(payments).where(and(eq(payments.id, paymentId), eq(payments.userId, userId)));
+  if (!p || p.gateway !== "direct" || p.status !== "created") throw new BookingError("bad_state", "This payment can't be changed now.");
+  const [appt] = await db.select().from(appointments).where(eq(appointments.id, p.appointmentId!));
+  if (!appt || appt.status !== "pending_payment") throw new BookingError("bad_state", "This booking is no longer waiting for payment");
+  await db
+    .update(payments)
+    .set({ gatewayPaymentId: input.reference, method: input.method, proofDocumentId: input.proofDocumentId, submittedAt: new Date() })
+    .where(eq(payments.id, p.id));
+  if (appt.slotId) await db.update(availabilitySlots).set({ status: "held", heldUntil: appt.startAt, appointmentId: appt.id }).where(eq(availabilitySlots.id, appt.slotId));
+  const [doctor] = await db.select({ userId: doctors.userId }).from(doctors).where(eq(doctors.id, appt.doctorId));
+  if (doctor?.userId)
+    await notifyUser(db, doctor.userId, {
+      template: "direct_payment_submitted",
+      title: "Payment to confirm",
+      body: `A patient paid ${formatMoney(p.amountMinor, p.currency, "en-IN")} for booking ${appt.ref}. Please check your account and confirm.`,
+      link: "/doctor/payments",
+    });
+  await audit({ actor: { id: userId, role: "patient" }, action: "payment.direct_submitted", entityType: "payment", entityId: p.id, patientId: p.patientId, metadata: { method: input.method } }, db);
+  return appt;
+}
+
+async function directPaymentForDoctor(doctorUserId: string, paymentId: string) {
+  const db = await getDb();
+  const [row] = await db
+    .select({ p: payments, appt: appointments })
+    .from(payments)
+    .innerJoin(appointments, eq(appointments.id, payments.appointmentId))
+    .innerJoin(doctors, eq(doctors.id, appointments.doctorId))
+    .where(and(eq(payments.id, paymentId), eq(payments.gateway, "direct"), eq(doctors.userId, doctorUserId)));
+  if (!row) throw new BookingError("not_found", "Payment not found");
+  return { db, ...row };
+}
+
+/** The doctor has received the money: the booking is confirmed. */
+export async function confirmDirectPayment(doctorUserId: string, paymentId: string) {
+  const { db, p } = await directPaymentForDoctor(doctorUserId, paymentId);
+  if (p.status !== "created" || !p.submittedAt) throw new BookingError("bad_state", "This payment is not waiting for confirmation.");
+  await capturePayment(p.id, { gatewayPaymentId: p.gatewayPaymentId ?? `direct_${p.id.slice(0, 8)}`, method: p.method });
+  await audit({ actor: { id: doctorUserId, role: "doctor" }, action: "payment.direct_confirmed", entityType: "payment", entityId: p.id, patientId: p.patientId }, db);
+}
+
+/** The doctor did not receive the money: the booking is cancelled and the time is freed. */
+export async function rejectDirectPayment(doctorUserId: string, paymentId: string, reason: string) {
+  const { db, p, appt } = await directPaymentForDoctor(doctorUserId, paymentId);
+  if (p.status !== "created") throw new BookingError("bad_state", "This payment is not waiting for confirmation.");
+  await failPayment(p.id, reason || "Payment not received");
+  await db.update(appointments).set({ status: "cancelled", cancelledAt: new Date(), cancelReason: reason || "Payment not received" }).where(and(eq(appointments.id, appt.id), eq(appointments.status, "pending_payment")));
+  if (appt.slotId) await db.update(availabilitySlots).set({ status: "open", heldUntil: null, appointmentId: null }).where(eq(availabilitySlots.id, appt.slotId));
+  await notifyUser(db, appt.bookedByUserId, {
+    template: "direct_payment_rejected",
+    title: "Payment not received",
+    body: `The doctor could not find your payment for booking ${appt.ref}${reason ? `: ${reason}` : ""}. If you paid, reply to this message or contact us with your payment reference.`,
+    link: `/consults/${appt.id}`,
+  });
+  await audit({ actor: { id: doctorUserId, role: "doctor" }, action: "payment.direct_rejected", entityType: "payment", entityId: p.id, patientId: p.patientId, metadata: { reason } }, db);
+}
+
+/** The doctor has sent a refund back to the patient. */
+export async function markDirectRefundSent(doctorUserId: string, refundId: string) {
+  const db = await getDb();
+  const [row] = await db
+    .select({ r: refunds, p: payments })
+    .from(refunds)
+    .innerJoin(payments, eq(payments.id, refunds.paymentId))
+    .innerJoin(appointments, eq(appointments.id, payments.appointmentId))
+    .innerJoin(doctors, eq(doctors.id, appointments.doctorId))
+    .where(and(eq(refunds.id, refundId), eq(refunds.status, "pending"), eq(payments.gateway, "direct"), eq(doctors.userId, doctorUserId)));
+  if (!row) throw new BookingError("not_found", "Refund not found");
+  await db.update(refunds).set({ status: "processed" }).where(eq(refunds.id, refundId));
+  const refunded = row.p.refundedMinor + row.r.amountMinor;
+  await db
+    .update(payments)
+    .set({ refundedMinor: refunded, status: refunded >= row.p.amountMinor ? "refunded" : "partially_refunded", payoutState: refunded >= row.p.amountMinor ? "refunded" : row.p.payoutState })
+    .where(eq(payments.id, row.p.id));
+  await audit({ actor: { id: doctorUserId, role: "doctor" }, action: "payment.direct_refund_sent", entityType: "payment", entityId: row.p.id, patientId: row.p.patientId }, db);
 }

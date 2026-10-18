@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { CalendarPlus, MonitorCheck, QrCode } from "lucide-react";
 import { getViewContext } from "@/server/context";
 import { requireUser } from "@/server/auth/session";
 import { getDb } from "@/db";
-import { appointments, clinics, documents, doctors, patients } from "@/db/schema";
+import { appointments, clinics, documents, doctors, patients, payments } from "@/db/schema";
 import { canActForPatient } from "@/server/booking";
 import { sameClock } from "@/lib/time";
 import { Stepper } from "@/components/ui/stepper";
@@ -32,6 +32,25 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
   const ctx = await getViewContext();
   const { t, fmt } = ctx;
   if (a.status === "pending_payment") {
+    const [direct] = await db
+      .select({ submittedAt: payments.submittedAt, reference: payments.gatewayPaymentId })
+      .from(payments)
+      .where(and(eq(payments.appointmentId, a.id), eq(payments.gateway, "direct"), eq(payments.status, "created")))
+      .orderBy(desc(payments.createdAt))
+      .limit(1);
+    if (direct?.submittedAt) {
+      return (
+        <div className="space-y-4">
+          <h1 className="text-2xl font-extrabold sm:text-3xl">{t("Thank you. Your payment is with the doctor")}</h1>
+          <Alert tone="info" title={t("Waiting for {doctor} to confirm", { doctor: d.fullName })}>
+            {t("Your time on {date} is held for you. We will message you as soon as the doctor confirms the payment reference {ref}.", { date: fmt.dateTime(a.startAt), ref: direct.reference ?? "" })}
+          </Alert>
+          <Link href={`/consults/${a.id}`} className="font-semibold text-primary underline">
+            {t("See my booking")}
+          </Link>
+        </div>
+      );
+    }
     return (
       <Alert tone="info" title={t("Waiting for payment confirmation")}>
         {t("This can take a minute.")}{" "}

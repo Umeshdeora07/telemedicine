@@ -32,6 +32,7 @@ const TEST_ACCOUNTS = [
   { label: "Vikram Singh", note: "Needs a clinic visit", phone: "+919810000009" },
   { label: "Dr. Kavita Sharma", note: "Doctor (general physician)", email: "kavita-sharma@doctors.caremitra.example" },
   { label: "Dr. Harpreet Gill", note: "Doctor (orthopaedics, treatment in India cases)", email: "harpreet-gill@doctors.caremitra.example" },
+  { label: "Dr. Imran Qureshi", note: "Doctor (general physician, paid directly)", email: "imran-qureshi@doctors.caremitra.example" },
   { label: "Ira Banerjee", note: "Clinical psychologist", email: "ira-banerjee@doctors.caremitra.example" },
   { label: "Nisha Malhotra", note: "Hospital coordinator, Sunrise Valley", email: "coordinator@sunrisevalley.example" },
   { label: "Ravi Kumar", note: "Care coordinator", email: "care@caremitra.example" },

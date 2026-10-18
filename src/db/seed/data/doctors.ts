@@ -43,6 +43,10 @@ export type DoctorSeed = {
   consultMinutes?: number;
   verification?: "approved" | "submitted" | "suspended";
   timeZone?: string;
+  /** Treatment and other fees in rupees (shown on the profile). */
+  feeItems?: { name: string; from: number; to?: number; note?: string }[];
+  /** The doctor's own UPI and bank details; patients pay the doctor directly. */
+  paymentDetails?: { upiId?: string; accountName?: string; bankName?: string; accountNumber?: string; ifsc?: string; swift?: string; notes?: string };
 };
 
 const MON_SAT = [1, 2, 3, 4, 5, 6];
@@ -68,6 +72,11 @@ export const DOCTORS: DoctorSeed[] = [
   // ---------------------------------------------------------- Orthopaedics
   {
     slug: "dr-harpreet-gill",
+    feeItems: [
+      { name: "Knee replacement surgery (one knee)", from: 250000, to: 350000, note: "Hospital charges included; final cost confirmed after tests" },
+      { name: "Arthroscopy for a ligament tear", from: 120000, to: 180000 },
+      { name: "Second review of MRI or X-ray", from: 500 },
+    ],
     fullName: "Dr. Harpreet Gill",
     gender: "male",
     specialty: "orthopaedics",
@@ -198,6 +207,10 @@ export const DOCTORS: DoctorSeed[] = [
   },
   {
     slug: "dr-sana-mirza",
+    feeItems: [
+      { name: "Acne treatment plan (3 months)", from: 3000, to: 6000 },
+      { name: "Chemical peel (one session)", from: 2500 },
+    ],
     fullName: "Dr. Sana Mirza",
     gender: "female",
     specialty: "dermatology",
@@ -329,6 +342,12 @@ export const DOCTORS: DoctorSeed[] = [
   },
   {
     slug: "dr-imran-qureshi",
+    // Sample details for trying direct payment (not a real account).
+    paymentDetails: { upiId: "imran.qureshi.demo@upi", accountName: "Imran Qureshi", bankName: "Sample Bank", accountNumber: "000123456789", ifsc: "SMPL0001234", swift: "SMPLINBB" },
+    feeItems: [
+      { name: "Follow up consultation within 7 days", from: 150 },
+      { name: "Full health check up review", from: 800, note: "Reports reviewed and a written plan" },
+    ],
     fullName: "Dr. Imran Qureshi",
     gender: "male",
     specialty: "general-physician",

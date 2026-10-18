@@ -7,6 +7,7 @@ import { getViewContext } from "@/server/context";
 import { doctorForUser } from "@/server/consult";
 import { getSpecialties } from "@/server/queries/reference";
 import { missingForVerification } from "@/server/doctor-verification";
+import { acceptsDirectPayment } from "@/lib/direct-payment";
 import { PageHeader } from "@/components/ui/page-header";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ export default async function DoctorOnboarding() {
     { label: t("Video consultation fee"), done: fees.some((f) => f.mode === "video" && f.amountMinor > 0) },
     { label: t("Available times"), done: rules.length > 0 },
     { label: t("Signature for prescriptions"), done: Boolean(d.signatureDocumentId) },
+    { label: t("Payment details (UPI or bank account)"), done: acceptsDirectPayment(d.paymentDetails) },
   ];
   const ready = missing.length === 0;
   const status = d.verificationStatus;
@@ -124,8 +126,8 @@ export default async function DoctorOnboarding() {
       </section>
 
       <section className="card space-y-3 p-5" aria-labelledby="profile">
-        <h2 id="profile" className="text-xl font-bold">{t("5. Profile photo, about you, fees and signature")}</h2>
-        <p className="text-fg-muted">{t("Upload a clear photo, write a few lines about yourself in plain words, choose your languages, set your video consultation fee and upload your signature. Your prescriptions carry this signature and your registration number.")}</p>
+        <h2 id="profile" className="text-xl font-bold">{t("5. Profile photo, about you, fees, payment details and signature")}</h2>
+        <p className="text-fg-muted">{t("Upload a clear photo, write a few lines about yourself in plain words, choose your languages, set your consultation and treatment fees, add your UPI or bank details so patients can pay you, and upload your signature. Your prescriptions carry this signature and your registration number.")}</p>
         <ButtonLink href="/doctor/profile" variant="secondary">{t("Open profile and fees")}</ButtonLink>
       </section>
 

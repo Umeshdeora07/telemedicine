@@ -62,7 +62,7 @@ ${operator} We run a platform that connects patients anywhere in the world with 
 - We can arrange a medical visa invitation letter, airport pickup, a place to stay, an interpreter and online follow up after you return home. The decision to grant a visa rests with the Government of India.
 
 ## Payments
-You pay when you book, and you see the full price before you pay. We hold the payment and release it to the doctor after the consultation. See the Cancellation and refund policy for cancellations and refunds.
+You pay when you book, and you see the full price before you pay. Each doctor sets their own consultation and treatment fees. Most doctors are paid directly: you pay the doctor's own UPI or bank account shown when you book, enter the payment reference, and the booking is confirmed when the doctor receives the money. Where online card payment is offered, we hold the payment and release it to the doctor after the consultation. See the Cancellation and refund policy for cancellations and refunds.
 
 ## Your content
 You own the reports and messages you upload. You allow us to store them and to share them only as needed to provide your care, and as you choose.
@@ -135,7 +135,7 @@ You can withdraw this consent at any time by ending the consultation.`,
     summary: "When you get your money back, and how fast.",
     updated: "2026-10-17",
     body: `## If the doctor does not join
-If your doctor does not join within 10 minutes of the start time, the consultation is cancelled and you get a **full refund automatically**. You can book another doctor straight away.
+If your doctor does not join within 10 minutes of the start time, the consultation is cancelled and you get a **full refund**. You can book another doctor straight away.
 
 ## If you cancel
 - If you cancel before the cancellation deadline shown when you book, you get a full refund.
@@ -147,6 +147,10 @@ If the call fails because of a problem on our side, or the doctor ends the consu
 
 ## How refunds are paid
 Refunds go back to the same card, UPI or bank account, usually within 5 to 7 working days. Clinic visits paid at the clinic are refunded at the clinic.
+
+If you paid the doctor directly by UPI or bank transfer, the doctor sends the refund back to you the same way. We record every refund that is due and follow up with the doctor until it reaches you. If it does not arrive within 7 working days, contact us or our grievance officer.
+
+If you paid a doctor directly and the doctor says the money did not arrive, the booking is cancelled and the time is freed. If you did pay, contact us with your payment reference and we will help you sort it out with the doctor.
 
 ## Treatment in India
 If you accept a plan and pay a deposit, the deposit and any refund of it follow the terms shown in your treatment plan before you pay.

@@ -25,6 +25,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { FeeItem, PaymentDetails } from "@/lib/direct-payment";
 
 const id = () => uuid().primaryKey().defaultRandom();
 const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
@@ -390,6 +391,10 @@ export const doctors = pgTable(
     offersSecondOpinion: boolean().notNull().default(false),
     creditOnlineFeeToClinic: boolean().notNull().default(true),
     signatureDocumentId: uuid(),
+    /** Treatment and other fees shown on the profile (consultation fees live in doctor_fees). */
+    feeItems: jsonb().$type<FeeItem[]>().notNull().default([]),
+    /** The doctor's own UPI and bank details; patients pay the doctor directly. */
+    paymentDetails: jsonb().$type<PaymentDetails>(),
     verificationStatus: verificationStatusEnum().notNull().default("draft"),
     submittedAt: ts(),
     lastVerifiedAt: ts(),
@@ -977,6 +982,9 @@ export const payments = pgTable(
     billing: jsonb().$type<{ name: string; email?: string; phone?: string; gstin?: string; state?: string; country: string }>(),
     capturedAt: ts(),
     failureReason: text(),
+    /** Direct payments: the patient's screenshot of the transfer, and when they said they paid. */
+    proofDocumentId: uuid(),
+    submittedAt: ts(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

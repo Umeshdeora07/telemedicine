@@ -143,6 +143,8 @@ export async function seedDemo(db: DB, now = new Date()) {
         memberships: d.memberships ?? [],
         publications: d.publications ?? [],
         videoIntroUrl: null,
+        feeItems: (d.feeItems ?? []).map((f) => ({ name: f.name, fromMinor: f.from * 100, toMinor: f.to ? f.to * 100 : null, note: f.note })),
+        paymentDetails: d.paymentDetails ?? null,
         about: d.about,
         headline: d.headline,
         timeZone: d.timeZone ?? IST,

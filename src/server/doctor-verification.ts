@@ -3,6 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { DB } from "@/db";
 import { availabilityRules, documents, doctorFees, doctorLicences, doctorQualifications, type doctors } from "@/db/schema";
 import type { getT } from "@/i18n/server";
+import { acceptsDirectPayment } from "@/lib/direct-payment";
 
 /** What a doctor must still provide before asking to be verified (empty when ready). */
 export async function missingForVerification(db: DB, d: typeof doctors.$inferSelect, t: Awaited<ReturnType<typeof getT>>) {
@@ -27,6 +28,7 @@ export async function missingForVerification(db: DB, d: typeof doctors.$inferSel
     !fees.some((f) => f.mode === "video" && f.amountMinor > 0) && t("your video consultation fee"),
     !rules.length && t("your available times"),
     !d.signatureDocumentId && t("your signature"),
+    !acceptsDirectPayment(d.paymentDetails) && t("your payment details (UPI or bank account)"),
   ].filter((x): x is string => Boolean(x));
 }
 

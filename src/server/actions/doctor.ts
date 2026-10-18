@@ -14,6 +14,9 @@ import { audit } from "@/server/audit";
 import { CURRENCY_CODES } from "@/config/currencies";
 import { isRegistrationCouncil } from "@/config/councils";
 import { missingForVerification } from "@/server/doctor-verification";
+import { notifyUser } from "@/server/notify";
+import { confirmDirectPayment, markDirectRefundSent, rejectDirectPayment } from "@/server/booking";
+import type { FeeItem, PaymentDetails } from "@/lib/direct-payment";
 
 async function me() {
   const user = await requireUser({ roles: ["doctor"] });
@@ -225,5 +228,116 @@ export async function submitForVerificationAction(): Promise<FormState> {
   await db.update(doctors).set({ verificationStatus: "submitted", submittedAt: new Date() }).where(eq(doctors.id, d.id));
   await audit({ actor: { id: user.id, role: user.role }, action: "doctor.submitted", entityType: "doctor", entityId: d.id });
   revalidatePath("/doctor/onboarding");
+  return { ok: true };
+}
+
+/* ------------------------------------------------- fees and payment details */
+
+const money = (v: FormDataEntryValue | null) => {
+  const n = Number(String(v ?? "").replace(/[,\s]/g, ""));
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+};
+
+/** Treatment and other fees shown on the doctor's profile (rows with a name and a price). */
+export async function saveFeeItemsAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const t = await getT();
+  const { user, d } = await me();
+  const items: FeeItem[] = [];
+  for (let i = 0; i < 20; i++) {
+    const name = String(form.get(`item-name-${i}`) ?? "").trim().slice(0, 120);
+    if (!name) continue;
+    const fromMinor = money(form.get(`item-from-${i}`));
+    if (!fromMinor) return { error: t("Please enter a price for {name}.", { name }) };
+    const toMinor = money(form.get(`item-to-${i}`));
+    if (toMinor && toMinor < fromMinor) return { error: t("The highest price for {name} is lower than the lowest price.", { name }) };
+    items.push({ name, fromMinor, toMinor, note: String(form.get(`item-note-${i}`) ?? "").trim().slice(0, 200) || undefined });
+  }
+  const db = await getDb();
+  await db.update(doctors).set({ feeItems: items }).where(eq(doctors.id, d.id));
+  await audit({ actor: { id: user.id, role: user.role }, action: "doctor.fee_items_update", entityType: "doctor", entityId: d.id, metadata: { count: items.length } });
+  revalidatePath("/doctor/profile");
+  revalidatePath(`/doctors/${d.slug}`);
+  return { ok: true };
+}
+
+/** The doctor's own UPI and bank details. Patients pay the doctor directly. */
+export async function savePaymentDetailsAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const t = await getT();
+  const { user, d } = await me();
+  const text = (k: string, max = 80) => String(form.get(k) ?? "").trim().slice(0, max) || undefined;
+  const next: PaymentDetails = {
+    upiId: text("upiId"),
+    accountName: text("accountName", 120),
+    bankName: text("bankName", 120),
+    accountNumber: text("accountNumber", 34)?.replace(/\s/g, ""),
+    ifsc: text("ifsc", 11)?.toUpperCase(),
+    swift: text("swift", 11)?.toUpperCase(),
+    notes: text("notes", 400),
+    qrDocumentId: d.paymentDetails?.qrDocumentId,
+  };
+  if (next.upiId && !/^[\w.\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,63}$/.test(next.upiId)) return { error: t("Please check your UPI ID. It looks like name@bank.") };
+  if (next.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(next.ifsc)) return { error: t("Please check the IFSC code. It has 11 characters, like SBIN0001234.") };
+  if (next.swift && !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(next.swift)) return { error: t("Please check the SWIFT code. It has 8 or 11 characters.") };
+  if (next.accountNumber && !/^\d{6,20}$/.test(next.accountNumber)) return { error: t("Please check the account number.") };
+  if ((next.accountNumber || next.ifsc) && !(next.accountName && next.accountNumber && next.ifsc)) return { error: t("For bank transfer, please fill in the account holder name, account number and IFSC code.") };
+  const db = await getDb();
+  const qr = form.get("qrDocumentId");
+  if (typeof qr === "string" && /^[0-9a-f-]{36}$/.test(qr)) {
+    const [doc] = await db.select().from(documents).where(and(eq(documents.id, qr), eq(documents.doctorId, d.id)));
+    if (!doc || !["image/jpeg", "image/png", "image/webp"].includes(doc.mimeType)) return { error: t("Please upload the QR code as a JPG or PNG image.") };
+    next.qrDocumentId = doc.id;
+  }
+  if (form.get("removeQr") === "1") next.qrDocumentId = undefined;
+  if (!next.upiId && !next.qrDocumentId && !next.accountNumber) return { error: t("Please add a UPI ID, a UPI QR code or bank account details, so patients can pay you.") };
+  await db.update(doctors).set({ paymentDetails: next }).where(eq(doctors.id, d.id));
+  await audit({ actor: { id: user.id, role: user.role }, action: "doctor.payment_details_update", entityType: "doctor", entityId: d.id });
+  // A change of where money goes is worth a heads up, in case someone else is using the account.
+  if (d.paymentDetails && d.userId)
+    await notifyUser(db, d.userId, {
+      template: "payment_details_changed",
+      title: "Your payment details were changed",
+      body: "Patients will now pay to the new details. If you did not make this change, contact us at once.",
+      link: "/doctor/profile",
+    });
+  revalidatePath("/doctor/profile");
+  revalidatePath("/doctor/onboarding");
+  return { ok: true };
+}
+
+export async function confirmPaymentAction(paymentId: string): Promise<FormState> {
+  const t = await getT();
+  const { user } = await me();
+  try {
+    await confirmDirectPayment(user.id, paymentId);
+  } catch (e) {
+    return { error: t((e as Error).message) };
+  }
+  revalidatePath("/doctor/payments");
+  revalidatePath("/doctor");
+  return { ok: true };
+}
+
+export async function rejectPaymentAction(paymentId: string, reason: string): Promise<FormState> {
+  const t = await getT();
+  const { user } = await me();
+  try {
+    await rejectDirectPayment(user.id, paymentId, reason.trim().slice(0, 300));
+  } catch (e) {
+    return { error: t((e as Error).message) };
+  }
+  revalidatePath("/doctor/payments");
+  revalidatePath("/doctor");
+  return { ok: true };
+}
+
+export async function markRefundSentAction(refundId: string): Promise<FormState> {
+  const t = await getT();
+  const { user } = await me();
+  try {
+    await markDirectRefundSent(user.id, refundId);
+  } catch (e) {
+    return { error: t((e as Error).message) };
+  }
+  revalidatePath("/doctor/payments");
   return { ok: true };
 }

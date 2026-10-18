@@ -1,4 +1,5 @@
 import "server-only";
+import { acceptsDirectPayment } from "@/lib/direct-payment";
 import { and, asc, desc, eq, gt, inArray, sql, type SQL } from "drizzle-orm";
 import { getDb, type Executor } from "@/db";
 import {
@@ -203,7 +204,9 @@ export async function getDoctorProfile(slug: string) {
       .orderBy(desc(reviews.createdAt))
       .limit(20),
   ]);
-  return { ...d, quals, licences, fees, clinics: clinicLinks, reviews: reviewRows };
+  // The doctor's bank and UPI details are shown only to a patient paying for a booking, never on public pages.
+  const { paymentDetails, ...doctor } = d.doctor;
+  return { ...d, doctor: { ...doctor, acceptsDirectPayment: acceptsDirectPayment(paymentDetails) }, quals, licences, fees, clinics: clinicLinks, reviews: reviewRows };
 }
 
 export async function getOpenSlots(db: Executor, doctorId: string, group: "online" | "in_clinic", opts: { from?: Date; days?: number; clinicId?: string | null } = {}) {
