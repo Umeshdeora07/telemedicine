@@ -100,11 +100,13 @@ export default async function SpecialtyPage({ params }: { params: Promise<{ slug
               </li>
             </ul>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href={doctorsHref} size="lg">
-                <Video className="size-5" aria-hidden />
-                {t("Book a consultation")}
-              </ButtonLink>
-              <ButtonLink href="/online-consultation" size="lg" variant="outline">
+              {docs.length ? (
+                <ButtonLink href={doctorsHref} size="lg">
+                  <Video className="size-5" aria-hidden />
+                  {t("Book a consultation")}
+                </ButtonLink>
+              ) : null}
+              <ButtonLink href="/online-consultation" size="lg" variant={docs.length ? "outline" : "primary"}>
                 {t("How online consultation works")}
               </ButtonLink>
             </div>
@@ -167,7 +169,7 @@ export default async function SpecialtyPage({ params }: { params: Promise<{ slug
             </div>
           ) : (
             <div className="card space-y-4 p-6">
-              <p className="text-lg">{t("There are no doctors to book in this specialty right now. Ask us to call you back and we will help you.")}</p>
+              <p className="text-lg">{t("Our {specialty} doctors are joining soon. Meanwhile, ask us to call you back and we will help you.", { specialty: name })}</p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <ContactButtons t={t} />
               </div>
@@ -198,11 +200,11 @@ export default async function SpecialtyPage({ params }: { params: Promise<{ slug
               {t("Planning treatment in India?")}
             </h2>
             <p className="text-fg-muted">
-              {t("Send us your reports for a free review by a specialist. You get a written treatment plan and a cost estimate in your currency, and help with your visa, travel and stay.")}
+              {t("Send us your reports and a specialist reviews them. You get a written treatment plan and a cost estimate in your currency, and help with your visa, travel and stay.")}
             </p>
             <CheckList items={copy.inIndia} />
             <ButtonLink href="/treatment-in-india" variant="secondary" className="whitespace-normal">
-              {t("Get a free treatment plan")}
+              {t("Get a treatment plan")}
             </ButtonLink>
           </div>
           <div className="relative hidden md:block">
@@ -219,14 +221,25 @@ export default async function SpecialtyPage({ params }: { params: Promise<{ slug
         </section>
       ) : null}
 
-      <CtaBand id="cta" title={t("Talk to a doctor in {specialty}", { specialty: name })} text={t("Book a video consultation at a time that suits you. You see the full price before you pay.")}>
-        <ButtonLink href={doctorsHref} size="lg" className="bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
-          {t("Book a consultation")}
-        </ButtonLink>
-        <ButtonLink href="/help/callback" size="lg" variant="outline" className="border-on-primary/70 bg-transparent text-on-primary hover:bg-on-primary/10">
-          {t("Request a call back")}
-        </ButtonLink>
-      </CtaBand>
+      {docs.length ? (
+        <CtaBand id="cta" title={t("Talk to a doctor in {specialty}", { specialty: name })} text={t("Book a video consultation at a time that suits you. You see the full price before you pay.")}>
+          <ButtonLink href={doctorsHref} size="lg" className="bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
+            {t("Book a consultation")}
+          </ButtonLink>
+          <ButtonLink href="/help/callback" size="lg" variant="outline" className="border-on-primary/70 bg-transparent text-on-primary hover:bg-on-primary/10">
+            {t("Request a call back")}
+          </ButtonLink>
+        </CtaBand>
+      ) : (
+        <CtaBand id="cta" title={t("Questions about {specialty}?", { specialty: name })} text={t("Ask us to call you back and we will help you.")}>
+          <ButtonLink href="/help/callback" size="lg" className="bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
+            {t("Request a call back")}
+          </ButtonLink>
+          <ButtonLink href="/contact" size="lg" variant="outline" className="border-on-primary/70 bg-transparent text-on-primary hover:bg-on-primary/10">
+            {t("Contact us")}
+          </ButtonLink>
+        </CtaBand>
+      )}
     </>
   );
 }

@@ -19,6 +19,7 @@ import { createSession, getSession, markMfaVerified, requireSession } from "@/se
 import { parseIdentifier, requestOtp, verifyOtp } from "@/server/auth/otp";
 import { homeFor, isStaff } from "@/server/auth/roles";
 import { audit } from "@/server/audit";
+import { promoteIfAdminEmail } from "@/server/auth/admin-emails";
 import { ACCOUNTS } from "@/db/seed/data/people";
 import { DIAL_CODES } from "@/config/dial-codes";
 
@@ -113,6 +114,7 @@ async function verifyLoginCode(prev: LoginState, form: FormData): Promise<LoginS
   const res = await verifyOtp(id, String(form.get("code") ?? ""), "login");
   if (!res.ok) return { ...prev, error: t(res.error), info: undefined };
   const { user, created } = await findOrCreateUser(id.kind, id.value);
+  if (id.kind === "email") user.role = (await promoteIfAdminEmail(await getDb(), user, id.value)) as typeof user.role;
   await createSession(user.id);
   await audit({ actor: { id: user.id, role: user.role }, action: created ? "auth.signup" : "auth.login", entityType: "user", entityId: user.id, metadata: { method: id.kind } });
   await afterLogin(user.id, safeNext(form.get("next")));

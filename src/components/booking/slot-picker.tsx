@@ -30,7 +30,7 @@ export function SlotPicker({
   initialSlot?: string;
   stickyAction?: boolean;
 }) {
-  const { t, intl } = useI18n();
+  const { t, tp, intl } = useI18n();
   const router = useRouter();
   const dayKey = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
   const days = useMemo(() => {
@@ -56,7 +56,7 @@ export function SlotPicker({
   ];
 
   if (!slots.length) {
-    return <p className="rounded-xl bg-surface-2 p-4 text-fg-muted">{t("This doctor has no free times in the next 2 weeks. Please choose another doctor, or look again in a few days.")}</p>;
+    return <p className="rounded-xl bg-surface-2 p-4 text-fg-muted">{t("This doctor has no available times in the next 2 weeks. Please choose another doctor, or look again in a few days.")}</p>;
   }
 
   return (
@@ -76,7 +76,7 @@ export function SlotPicker({
             className={cn("tap flex min-w-20 shrink-0 flex-col items-center rounded-xl border px-3 py-2", k === day ? "border-primary bg-primary text-on-primary" : "border-field bg-surface hover:border-primary")}
           >
             <span className="text-sm font-semibold">{fmtDay(list[0]!.startAt)}</span>
-            <span className={cn("text-xs", k === day ? "text-on-primary" : "text-fg-muted")}>{t("{n} free", { n: list.length })}</span>
+            <span className={cn("text-xs", k === day ? "text-on-primary" : "text-fg-muted")}>{tp("{count} slot", "{count} slots", list.length)}</span>
           </button>
         ))}
       </div>

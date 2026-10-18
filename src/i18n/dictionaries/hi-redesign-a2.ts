@@ -100,8 +100,8 @@ const dict: Dict = {
     "हां। परामर्श से पहले रिपोर्ट और तस्वीरें अपलोड करें, या वीडियो कॉल के दौरान दिखाएं।",
   "I have been advised a knee or hip replacement. Can I have it done in India?":
     "मुझे घुटना या कूल्हा बदलवाने की सलाह दी गई है। क्या यह भारत में करवाया जा सकता है?",
-  "Yes. Send us your reports and a specialist will review them free of charge, usually within 2 working days. You will receive a written treatment plan and a cost estimate in your currency, and our team can help with the medical visa, travel and stay.":
-    "हां। अपनी रिपोर्ट हमें भेजें। एक विशेषज्ञ उन्हें मुफ़्त में देखेंगे, आम तौर पर 2 कामकाजी दिनों के अंदर। आपको लिखित इलाज योजना और आपकी मुद्रा में खर्च का अनुमान मिलेगा, और हमारी टीम मेडिकल वीज़ा, यात्रा और रहने की व्यवस्था में मदद कर सकती है।",
+  "Yes. Send us your reports and a specialist will review them, usually within 2 working days. You will receive a written treatment plan and a cost estimate in your currency, and our team can help with the medical visa, travel and stay.":
+    "हां। अपनी रिपोर्ट हमें भेजें। एक विशेषज्ञ उन्हें देखेंगे, आम तौर पर 2 कामकाजी दिनों के अंदर। आपको लिखित इलाज योजना और आपकी मुद्रा में खर्च का अनुमान मिलेगा, और हमारी टीम मेडिकल वीज़ा, यात्रा और रहने की व्यवस्था में मदद कर सकती है।",
   "Should I send photos?": "क्या मुझे फ़ोटो भेजनी चाहिए?",
   "Yes, please. Take clear photos in daylight, one close up and one from a little further away, and add them to the health form before your consultation.":
     "हां, ज़रूर। दिन की रोशनी में साफ़ फ़ोटो लें, एक पास से और एक थोड़ी दूर से, और उन्हें परामर्श से पहले भरे जाने वाले हेल्थ फ़ॉर्म में जोड़ दें।",

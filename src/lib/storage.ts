@@ -1,18 +1,25 @@
 /**
- * File storage for reports, scans and generated PDFs. Every file is
- * encrypted with AES-256-GCM before it touches disk. The local driver writes
- * to .data/uploads; set STORAGE_DIR to a mounted encrypted volume, or swap in
- * an S3-compatible driver (keep the bucket in an Indian region for Indian
- * patients' data).
+ * File storage for reports, scans, doctors' documents and generated PDFs.
+ * Every file is encrypted with AES-256-GCM before it is stored. Two drivers:
+ *  - disk: .data/uploads, or STORAGE_DIR (a mounted encrypted volume)
+ *  - database: the stored_files table, for hosts without a lasting disk.
+ *    Used on Vercel unless STORAGE_DIR is set, or with STORAGE_DRIVER=database.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { decryptBuffer, encryptBuffer, sha256 } from "./crypto";
 
-// On Vercel only /tmp is writable, and it is per instance and temporary: fine
-// for a demo; real records need durable storage (see README "Deploying").
-const root = () => process.env.STORAGE_DIR || (process.env.VERCEL ? "/tmp/uploads" : path.join(process.cwd(), ".data", "uploads"));
+const root = () => process.env.STORAGE_DIR || path.join(process.cwd(), ".data", "uploads");
+
+// Vercel's disk is temporary (only /tmp, per instance), so files go into the database there.
+const inDatabase = () =>
+  process.env.STORAGE_DRIVER === "database" || (process.env.STORAGE_DRIVER !== "disk" && Boolean(process.env.VERCEL) && !process.env.STORAGE_DIR);
+
+async function database() {
+  const [{ getDb }, { storedFiles }, { eq }] = await Promise.all([import("@/db"), import("@/db/schema"), import("drizzle-orm")]);
+  return { db: await getDb(), storedFiles, eq };
+}
 
 export const ALLOWED_UPLOAD_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
@@ -24,7 +31,9 @@ export const ALLOWED_UPLOAD_TYPES: Record<string, string> = {
   "video/webm": "webm",
   "text/plain": "txt",
 };
-export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+// Vercel refuses request bodies over 4.5 MB before they reach the app.
+export const MAX_UPLOAD_MB = process.env.VERCEL ? 4 : 15;
+export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
 /** Check magic bytes so a renamed file can't pretend to be a PDF or image. */
 export function sniffMime(buf: Buffer, claimed: string): string | null {
@@ -46,14 +55,25 @@ export async function saveFile(data: Buffer) {
     String(now.getUTCMonth() + 1).padStart(2, "0"),
     `${crypto.randomUUID()}.bin`,
   );
-  const file = path.join(/*turbopackIgnore: true*/ root(), key);
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, encryptBuffer(data), { mode: 0o600 });
+  if (inDatabase()) {
+    const { db, storedFiles } = await database();
+    await db.insert(storedFiles).values({ key, data: encryptBuffer(data) });
+  } else {
+    const file = path.join(/*turbopackIgnore: true*/ root(), key);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, encryptBuffer(data), { mode: 0o600 });
+  }
   return { storageKey: key, sha256: sha256(data), sizeBytes: data.length };
 }
 
 export async function readFile(storageKey: string) {
   if (storageKey.includes("..")) throw new Error("Invalid key");
+  if (inDatabase()) {
+    const { db, storedFiles, eq } = await database();
+    const [row] = await db.select({ data: storedFiles.data }).from(storedFiles).where(eq(storedFiles.key, storageKey));
+    if (!row) throw Object.assign(new Error("File not found"), { code: "ENOENT" });
+    return decryptBuffer(row.data);
+  }
   // Uploaded files live outside the app bundle; tell the bundler not to trace this path.
   const blob = await fs.readFile(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ root(), storageKey));
   return decryptBuffer(blob);
@@ -71,5 +91,10 @@ export async function readFileIfPresent(storageKey: string) {
 
 export async function deleteFile(storageKey: string) {
   if (storageKey.includes("..")) return;
+  if (inDatabase()) {
+    const { db, storedFiles, eq } = await database();
+    await db.delete(storedFiles).where(eq(storedFiles.key, storageKey));
+    return;
+  }
   await fs.rm(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ root(), storageKey), { force: true });
 }

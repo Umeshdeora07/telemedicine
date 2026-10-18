@@ -202,10 +202,10 @@ export default async function ConsultDetailPage({ params }: { params: Promise<{ 
           <FollowUpChat
             apptId={a.id}
             open={chatOpen}
-            closedText={a.followUpChatUntil ? t("The free follow up chat closed on {date}. Book a follow up consultation to ask more.", { date: fmt.date(a.followUpChatUntil) }) : t("Chat is closed.")}
+            closedText={a.followUpChatUntil ? t("The follow up chat closed on {date}. Book a follow up consultation to ask more.", { date: fmt.date(a.followUpChatUntil) }) : t("Chat is closed.")}
             initial={chat.map((m) => ({ id: m.id, senderRole: m.senderRole, senderName: m.senderName, body: m.body, documentId: m.documentId, kind: m.kind, createdAt: m.createdAt.toISOString(), mine: m.senderUserId === user!.id }))}
           />
-          {chatOpen ? <p className="text-sm text-fg-muted">{t("Free until {date}.", { date: fmt.dateTime(a.followUpChatUntil!) })}</p> : null}
+          {chatOpen ? <p className="text-sm text-fg-muted">{t("Open until {date}.", { date: fmt.dateTime(a.followUpChatUntil!) })}</p> : null}
         </section>
       ) : null}
 

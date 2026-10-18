@@ -129,11 +129,16 @@ async function init(): Promise<State> {
       if (process.env.DB_AUTO_MIGRATE !== "false") await migrate(db, { migrationsFolder: MIGRATIONS });
       // Demo mode loads demo data into an empty database and reloads it each
       // new day, in one transaction so a failure leaves nothing half-done.
-      // A database with users that this didn't load is never touched.
-      if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") {
-        const { loadOrRefreshDemoData } = await import("./seed/ensure");
-        await db.transaction((tx) => loadOrRefreshDemoData(tx as unknown as DB));
-      }
+      // A database with users that this didn't load is never touched. Out of
+      // demo mode, demo data loaded earlier is removed. Either way the
+      // reference data (the four specialties, countries) is added if missing.
+      const { loadOrRefreshDemoData, removeDemoData } = await import("./seed/ensure");
+      const { ensureReferenceData } = await import("./seed/reference");
+      await db.transaction(async (tx) => {
+        if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") await loadOrRefreshDemoData(tx as unknown as DB);
+        else if (!env.demoMode) await removeDemoData(tx as unknown as DB);
+        await ensureReferenceData(tx as unknown as DB);
+      });
     }).then(() => undefined);
     return { db, ready, kind: "postgres", close: () => client.end(), lock };
   }
@@ -152,10 +157,11 @@ async function init(): Promise<State> {
   const ready = (async () => {
     await client.waitReady;
     await migrate(db as never, { migrationsFolder: MIGRATIONS });
-    if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") {
-      const { ensureDemoData } = await import("./seed/ensure");
-      await ensureDemoData(db);
-    }
+    const { ensureDemoData, removeDemoData } = await import("./seed/ensure");
+    const { ensureReferenceData } = await import("./seed/reference");
+    if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") await ensureDemoData(db);
+    else if (!env.demoMode) await removeDemoData(db);
+    await ensureReferenceData(db);
   })();
   return {
     db,

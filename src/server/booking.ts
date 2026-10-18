@@ -46,7 +46,7 @@ export async function getPolicy(db?: Executor): Promise<RefundPolicy> {
 export function policyText(p: RefundPolicy) {
   return {
     refund: `Full refund if the doctor does not join within ${p.doctorNoShowMinutes} minutes, or if you cancel ${p.patientCancelFullRefundHours}+ hours before. ${p.patientCancelPartialRefundPercent}% refund if you cancel later. No refund after the consult starts.`,
-    reschedule: `Free reschedule up to ${p.rescheduleFreeHours} hours before the start time.`,
+    reschedule: `You can change the time up to ${p.rescheduleFreeHours} hours before the start time.`,
   };
 }
 

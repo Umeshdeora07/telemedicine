@@ -37,14 +37,14 @@ export function ManageBooking({ apptId, refundLabel, canReschedule, slots }: { a
         <div className="space-y-4">
           {slots.length ? (
             <>
-              <label htmlFor="new-slot" className="font-medium">{t("Free times with the same doctor")}</label>
+              <label htmlFor="new-slot" className="font-medium">{t("Available times with the same doctor")}</label>
               <Select id="new-slot" value={slot} onChange={(e) => setSlot(e.target.value)}>
                 {slots.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
               </Select>
               {msg ? <p role="status" className={msg.ok ? "text-success" : "text-danger"}>{msg.text}</p> : null}
               <Button disabled={pending || !slot} onClick={() => start(async () => { const r = await rescheduleAction(apptId, slot); if (r.ok) { setOpen(null); router.refresh(); } else setMsg({ ok: false, text: r.error }); })}>{t("Move my booking")}</Button>
             </>
-          ) : <p>{t("No free times in the next 2 weeks.")}</p>}
+          ) : <p>{t("No available times in the next 2 weeks.")}</p>}
         </div>
       </Dialog>
     </div>

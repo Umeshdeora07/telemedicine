@@ -54,7 +54,7 @@ export default async function HelpPage() {
       items: [
         {
           q: t("How do I get a treatment plan?"),
-          a: t("Send your medical reports from the Treatment in India page. A specialist reviews them for free and usually replies within 2 working days with a written treatment plan and a cost estimate in your currency."),
+          a: t("Send your medical reports from the Treatment in India page. A specialist reviews them and usually replies within 2 working days with a written treatment plan and a cost estimate in your currency."),
         },
         {
           q: t("Do I have to choose a hospital myself?"),
@@ -84,7 +84,7 @@ export default async function HelpPage() {
         },
         {
           q: t("Can I cancel or change my booking?"),
-          a: t("Yes, from My consultations. You see the exact rules before you pay. If you cancel before the free cancellation time shown when you book, you get a full refund."),
+          a: t("Yes, from My consultations. You see the exact rules before you pay. If you cancel before the cancellation deadline shown when you book, you get a full refund."),
         },
         {
           q: t("Do I get an invoice?"),

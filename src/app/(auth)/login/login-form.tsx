@@ -10,9 +10,10 @@ import { Alert } from "@/components/ui/alert";
 import { DIAL_CODES } from "@/config/dial-codes";
 import { cn } from "@/lib/utils";
 
-export function LoginForm({ next, defaultDial }: { next?: string; defaultDial: string }) {
+/** `methods`: the ways a code can be sent on this site (text message, email or both). */
+export function LoginForm({ next, defaultDial, methods = ["phone", "email"] }: { next?: string; defaultDial: string; methods?: ("phone" | "email")[] }) {
   const { t } = useI18n();
-  const [mode, setMode] = useState<"phone" | "email">("phone");
+  const [mode, setMode] = useState<"phone" | "email">(methods[0] ?? "phone");
   const [state, action] = useActionState(loginAction, { step: "start" } as LoginState);
   const [cooldown, setCooldown] = useState(0);
   const codeRef = useRef<HTMLInputElement>(null);
@@ -93,6 +94,7 @@ export function LoginForm({ next, defaultDial }: { next?: string; defaultDial: s
 
   return (
     <div className="space-y-5">
+      {methods.length > 1 ? (
       <div role="tablist" aria-label={t("Log in with")} className="grid grid-cols-2 gap-1 rounded-xl bg-surface-2 p-1">
         {(
           [
@@ -113,6 +115,7 @@ export function LoginForm({ next, defaultDial }: { next?: string; defaultDial: s
           </button>
         ))}
       </div>
+      ) : null}
       <form action={action} className="space-y-4">
         <input type="hidden" name="intent" value="request" />
         {mode === "phone" ? (

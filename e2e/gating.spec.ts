@@ -56,3 +56,15 @@ test("a patient living outside India books a video consultation", async ({ page 
   await page.getByRole("button", { name: /Simulate successful payment/ }).click();
   await page.waitForURL(/done/);
 });
+
+test("each kind of account opens its own dashboard after login", async ({ page }) => {
+  for (const [name, path] of [
+    ["Rahul Mehta", "/dashboard"],
+    ["Dr. Kavita Sharma", "/doctor"],
+    ["Aditi Rao", "/admin"],
+  ] as const) {
+    await page.context().clearCookies();
+    await demoLogin(page, name);
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+  }
+});

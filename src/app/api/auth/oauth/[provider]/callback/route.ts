@@ -5,6 +5,7 @@ import { getDb } from "@/db";
 import { oauthAccounts, users } from "@/db/schema";
 import { exchangeCode, type Provider } from "@/server/auth/oauth";
 import { createSession } from "@/server/auth/session";
+import { promoteIfAdminEmail } from "@/server/auth/admin-emails";
 import { homeFor, isStaff } from "@/server/auth/roles";
 import { audit } from "@/server/audit";
 
@@ -47,6 +48,7 @@ async function handle(req: NextRequest, provider: Provider, code: string | null,
   }
   const [user] = await db.select().from(users).where(eq(users.id, userId!));
   if (!user || user.status !== "active") return NextResponse.redirect(new URL("/login?error=suspended", req.url), 303);
+  if (info.emailVerified) user.role = (await promoteIfAdminEmail(db, user, info.email)) as typeof user.role;
   await createSession(user.id);
   await audit({ actor: { id: user.id, role: user.role }, action: "auth.login", entityType: "user", entityId: user.id, metadata: { method: provider } });
   const dest = isStaff(user.role) ? "/mfa" : !user.onboarded ? "/onboarding" : next || homeFor(user.role);

@@ -86,7 +86,7 @@ export default async function About() {
             </span>
             <h3 className="text-xl font-bold">{t("Treatment in India")}</h3>
             <p className="text-fg-muted">
-              {t("Send your reports and a specialist reviews them for free. You get a written treatment plan and cost estimate, help choosing a hospital, a medical visa letter, and a coordinator by your side until you are back home.")}
+              {t("Send your reports and a specialist reviews them. You get a written treatment plan and cost estimate, help choosing a hospital, a medical visa letter, and a coordinator by your side until you are back home.")}
             </p>
             <Link href="/treatment-in-india" className="tap mt-auto inline-flex items-center font-semibold text-primary">
               {t("How treatment in India works")}
@@ -149,12 +149,12 @@ export default async function About() {
         </section>
       ) : null}
 
-      <CtaBand id="start" title={t("Ready when you are")} text={t("Book an online consultation, or send your reports for a free treatment plan in India.")}>
+      <CtaBand id="start" title={t("Ready when you are")} text={t("Book an online consultation, or send your reports for a treatment plan in India.")}>
         <ButtonLink href="/doctors" size="lg" className="bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
           {t("Book a consultation")}
         </ButtonLink>
         <ButtonLink href="/treatment-in-india" size="lg" variant="outline" className="border border-on-primary/70 bg-transparent text-on-primary hover:bg-on-primary/10">
-          {t("Get a free treatment plan")}
+          {t("Get a treatment plan")}
         </ButtonLink>
       </CtaBand>
     </>

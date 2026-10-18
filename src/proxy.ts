@@ -34,7 +34,8 @@ function basicPassword(request: NextRequest) {
  */
 export function proxy(request: NextRequest) {
   // /status runs its own checks (including the database), so it stays reachable.
-  const problems = request.nextUrl.pathname === "/status" ? [] : setupProblems();
+  // Logging in not being set up yet doesn't block visitors; /status and the login page say so.
+  const problems = request.nextUrl.pathname === "/status" ? [] : setupProblems().filter((p) => p.id !== "no-sign-in");
   if (problems.length) {
     const html = statusPage({
       heading: "Almost there: the site needs setting up",

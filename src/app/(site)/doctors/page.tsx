@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarSearch, ShieldCheck } from "lucide-react";
+import { ShieldCheck, UserRoundCheck } from "lucide-react";
 import { getViewContext } from "@/server/context";
 import { listDoctors } from "@/server/doctors";
 import { getSpecialties } from "@/server/queries/reference";
 import { DoctorCard, loadQualificationLines } from "@/components/doctor/doctor-card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +32,7 @@ export default async function DoctorsPage({ searchParams }: Props) {
   const requested = typeof sp.specialty === "string" ? sp.specialty : undefined;
   const spec = specs.find((s) => s.slug === requested);
 
-  // Only doctors who consult online, soonest free time first.
+  // Only doctors who consult online, soonest available time first.
   const results = await listDoctors(null, { specialty: spec?.slug, mode: "online", sort: "soonest" });
   const quals = await loadQualificationLines(results.map((d) => d.id));
 
@@ -72,41 +71,41 @@ export default async function DoctorsPage({ searchParams }: Props) {
         </ul>
       </nav>
 
-      <section aria-labelledby="results-heading" className="mt-6 space-y-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 id="results-heading" className="text-lg font-bold">
-            {results.length ? tp("{count} doctor", "{count} doctors", results.length) : t("No doctors to show")}
-          </h2>
-          {results.length > 1 ? <p className="text-sm text-fg-muted">{t("Doctors with the soonest free time are shown first.")}</p> : null}
-        </div>
-        {results.length ? (
+      {results.length ? (
+        <section aria-labelledby="results-heading" className="mt-6 space-y-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="results-heading" className="text-lg font-bold">
+              {tp("{count} doctor", "{count} doctors", results.length)}
+            </h2>
+            {results.length > 1 ? <p className="text-sm text-fg-muted">{t("Doctors with the soonest available time are shown first.")}</p> : null}
+          </div>
           <div className="grid gap-4">
             {results.map((d) => (
               <DoctorCard key={d.id} d={d} ctx={ctx} qualifications={quals.get(d.id) ?? ""} />
             ))}
           </div>
-        ) : (
-          <EmptyState
-            icon={<CalendarSearch className="size-7" aria-hidden />}
-            title={spec ? t("No {specialty} doctors are available right now", { specialty: t(spec.name) }) : t("Our doctors will be listed here soon")}
-            action={
-              spec ? (
-                <ButtonLink href="/doctors" variant="secondary">
-                  {t("See all doctors")}
-                </ButtonLink>
-              ) : (
-                <ButtonLink href="/help" variant="secondary">
-                  {t("Ask us for help")}
-                </ButtonLink>
-              )
-            }
-          >
-            {spec
-              ? t("New times are added every week. Please look again soon, or choose a doctor from another specialty.")
-              : t("Please look again soon. If you need a consultation now, our team will help you find a doctor.")}
-          </EmptyState>
-        )}
-      </section>
+        </section>
+      ) : (
+        <section aria-labelledby="results-heading" className="card mt-6 flex flex-col items-center gap-4 px-6 py-12 text-center">
+          <span aria-hidden className="grid size-14 place-items-center rounded-full bg-primary-soft text-primary">
+            <UserRoundCheck className="size-7" />
+          </span>
+          <h2 id="results-heading" className="text-2xl font-extrabold">
+            {t("Our doctors are joining soon")}
+          </h2>
+          <p className="max-w-lg text-lg text-fg-muted">
+            {t("Every doctor is checked by our team before they appear here. Meanwhile, you can ask us about treatment in India.")}
+          </p>
+          <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+            <ButtonLink href="/treatment-in-india" size="lg">
+              {t("Treatment in India")}
+            </ButtonLink>
+            <ButtonLink href="/contact" size="lg" variant="outline">
+              {t("Contact us")}
+            </ButtonLink>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

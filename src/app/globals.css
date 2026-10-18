@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* Scan only src/ for class names. Without a base, Tailwind watches the whole
+   project, so files written under .data/ (uploads, the embedded database) or
+   test-results/ (Playwright) make the dev server reload open pages. */
+@import "tailwindcss" source("../");
 
 /* Dark mode follows the .dark class on <html>. The server sets it from the
    pref_theme cookie; light is the default and dark is only used when the

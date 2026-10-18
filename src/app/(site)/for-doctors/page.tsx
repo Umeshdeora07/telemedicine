@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BadgeCheck, CalendarClock, Coins, FileSignature, Globe2, Plane, ShieldCheck, Video } from "lucide-react";
+import { BadgeCheck, CalendarClock, ClipboardList, Coins, FileSignature, Globe2, Plane, ShieldCheck, UserPlus, UserRoundCheck, Video } from "lucide-react";
 import { getI18n } from "@/i18n/server";
 import { getViewContext } from "@/server/context";
 import { env } from "@/config/env";
@@ -35,10 +35,14 @@ export default async function ForDoctors() {
     { Icon: Coins, title: t("Paid every week"), text: t("Fees are released after each consultation and paid every Monday, with a clear statement. Platform commission is {p}%.", { p: Math.round(env.commissionRate * 100) }) },
   ];
   const steps = [
-    { title: t("Apply"), text: t("Sign in with your work email, choose your specialty and set up two step verification.") },
-    { title: t("Send your documents"), text: t("Upload your registration certificate, degree certificates, a government photo ID and a photo of yourself.") },
-    { title: t("We verify you"), text: t("We check your registration on the official register and call you if anything is unclear. This usually takes 1 or 2 working days.") },
-    { title: t("Start consulting"), text: t("Set up your profile, fees and signature, and start seeing patients. We check your registration again every 12 months.") },
+    { Icon: UserPlus, title: t("Create your account"), text: t("Log in with your email or your Google account.") },
+    {
+      Icon: ClipboardList,
+      title: t("Fill in your details"),
+      text: t("Add your qualifications, your Indian registration, a government photo ID, a photo of yourself, your fees and the times you are available."),
+    },
+    { Icon: ShieldCheck, title: t("Our team verifies you"), text: t("We check your registration on the official register and look at your documents. We call you if anything is unclear.") },
+    { Icon: UserRoundCheck, title: t("Your profile goes live"), text: t("Patients can now see your profile and book you. We check your registration again every 12 months.") },
   ];
   return (
     <>
@@ -60,7 +64,7 @@ export default async function ForDoctors() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <ButtonLink href="/for-doctors/apply" size="lg">
                 <BadgeCheck className="size-5" aria-hidden />
-                {t("Apply to join")}
+                {t("Join as a doctor")}
               </ButtonLink>
             </div>
           </div>
@@ -70,7 +74,19 @@ export default async function ForDoctors() {
         </div>
       </section>
 
-      <section aria-labelledby="specs" className="container-page space-y-6 py-12">
+      <section aria-labelledby="how" className="container-page space-y-6 py-12">
+        <SectionHeading
+          id="how"
+          title={t("How to join, in 4 steps")}
+          description={t("Your profile appears on the website only after our team has verified you.")}
+        />
+        <StepList steps={steps} />
+        <ButtonLink href="/for-doctors/apply" size="lg">
+          {t("Join as a doctor")}
+        </ButtonLink>
+      </section>
+
+      <section aria-labelledby="specs" className="container-page space-y-6 pb-12">
         <SectionHeading id="specs" title={t("Specialties we are looking for")} />
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {specialties.map((s) => (
@@ -94,8 +110,8 @@ export default async function ForDoctors() {
         </div>
       </section>
 
-      <section aria-labelledby="who" className="container-page grid gap-8 py-12 lg:grid-cols-[0.8fr_1.2fr]">
-        <div className="space-y-4">
+      <section aria-labelledby="who" className="container-page py-12">
+        <div className="max-w-3xl space-y-4">
           <SectionHeading id="who" title={t("Who can apply")} />
           <CheckList
             className="text-lg"
@@ -111,15 +127,11 @@ export default async function ForDoctors() {
             {t("Patient identity and consent are confirmed in every consultation. Records are encrypted and every access is logged.")}
           </p>
         </div>
-        <div className="space-y-4">
-          <h2 className="text-2xl font-extrabold sm:text-3xl">{t("How verification works")}</h2>
-          <StepList steps={steps} layout="column" />
-        </div>
       </section>
 
-      <CtaBand id="apply" title={t("Ready to join?")} text={t("Keep your registration certificate and degree certificates ready before you start.")}>
+      <CtaBand id="apply" title={t("Ready to join?")} text={t("Keep your registration certificate, degree certificates and a government photo ID ready before you start.")}>
         <ButtonLink href="/for-doctors/apply" size="lg" className="bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
-          {t("Apply to join")}
+          {t("Join as a doctor")}
         </ButtonLink>
       </CtaBand>
     </>

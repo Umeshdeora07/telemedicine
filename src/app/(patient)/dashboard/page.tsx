@@ -69,8 +69,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             href: "/international/new",
             photo: "hospitalCorridor" as const,
             Icon: Plane,
-            title: t("Get a free treatment plan in India"),
-            text: t("Send your reports. A specialist reviews them for free and sends you a written plan and cost estimate."),
+            title: t("Get a treatment plan in India"),
+            text: t("Send your reports. A specialist reviews them and sends you a written plan and cost estimate."),
             cta: t("Send your reports"),
           },
         ].map(({ href, photo, Icon, title, text, cta }) => (
@@ -208,10 +208,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               ))}
             </ul>
           ) : (
-            <p className="text-fg-muted">{t("You have not asked for a treatment plan yet. Send your reports and a specialist will review them for free.")}</p>
+            <p className="text-fg-muted">{t("You have not asked for a treatment plan yet. Send your reports and a specialist will review them.")}</p>
           )}
           <Link href={cases.length ? "/international/cases" : "/international/new"} className="tap inline-flex items-center font-semibold text-primary">
-            {cases.length ? t("My treatment plans") : t("Get a free treatment plan")}
+            {cases.length ? t("My treatment plans") : t("Get a treatment plan")}
           </Link>
         </section>
       </div>

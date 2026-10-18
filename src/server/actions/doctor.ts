@@ -12,6 +12,8 @@ import { clearOpenSlotsForRules, materializeSlots } from "@/lib/slots";
 import { isValidTimeZone } from "@/lib/time";
 import { audit } from "@/server/audit";
 import { CURRENCY_CODES } from "@/config/currencies";
+import { isRegistrationCouncil } from "@/config/councils";
+import { missingForVerification } from "@/server/doctor-verification";
 
 async function me() {
   const user = await requireUser({ roles: ["doctor"] });
@@ -54,8 +56,8 @@ export async function saveProfileAction(_prev: FormState, form: FormData): Promi
       chatResponseMinutes: form.get("chatResponseMinutes"),
       followUpChatDays: form.get("followUpChatDays"),
       timeZone: form.get("timeZone"),
-      creditOnlineFeeToClinic: form.get("creditOnlineFeeToClinic") === "on",
-      videoIntroUrl: form.get("videoIntroUrl") ?? "",
+      creditOnlineFeeToClinic: false,
+      videoIntroUrl: "",
     });
   if (!v.success) return { error: t("Please check the highlighted fields.") };
   const db = await getDb();
@@ -71,6 +73,11 @@ export async function saveProfileAction(_prev: FormState, form: FormData): Promi
       publications: csv(form.get("publications")),
     })
     .where(eq(doctors.id, d.id));
+  const photo = form.get("photoDocumentId");
+  if (typeof photo === "string" && /^[0-9a-f-]{36}$/.test(photo)) {
+    const [doc] = await db.select().from(documents).where(and(eq(documents.id, photo), eq(documents.doctorId, d.id), eq(documents.category, "photo")));
+    if (doc && ["image/jpeg", "image/png", "image/webp"].includes(doc.mimeType)) await db.update(doctors).set({ photoUrl: `/api/doctor-photos/${doc.id}` }).where(eq(doctors.id, d.id));
+  }
   const sig = form.get("signatureDocumentId");
   if (typeof sig === "string" && /^[0-9a-f-]{36}$/.test(sig)) {
     const [doc] = await db.select().from(documents).where(and(eq(documents.id, sig), eq(documents.doctorId, d.id)));
@@ -182,27 +189,28 @@ export async function addLicenceAction(_prev: FormState, form: FormData): Promis
   const { user, d } = await me();
   const v = z
     .object({
-      country: z.string().regex(/^[A-Z]{2}$/),
-      region: z.string().optional(),
-      number: z.string().min(3).max(60),
-      issuingBody: z.string().min(3).max(160),
+      number: z.string().trim().min(3).max(60),
+      issuingBody: z.string().refine(isRegistrationCouncil),
       expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
-      certificateDocumentId: z.string().uuid().optional().or(z.literal("")),
+      certificateDocumentId: z.string().uuid(),
     })
     .safeParse(Object.fromEntries(form));
-  if (!v.success) return { error: t("Please enter the country, registration number and the council or board.") };
+  if (!v.success) return { error: t("Please choose your council, enter the registration number and upload the registration certificate.") };
   const db = await getDb();
+  const [cert] = await db.select({ id: documents.id }).from(documents).where(and(eq(documents.id, v.data.certificateDocumentId), eq(documents.doctorId, d.id)));
+  if (!cert) return { error: t("Please upload the registration certificate.") };
+  // Every doctor on the platform is registered in India.
   await db.insert(doctorLicences).values({
     doctorId: d.id,
-    country: v.data.country,
-    region: v.data.region || null,
-    number: v.data.number.trim(),
-    issuingBody: v.data.issuingBody.trim(),
+    country: "IN",
+    region: null,
+    number: v.data.number,
+    issuingBody: v.data.issuingBody,
     expiresAt: v.data.expiresAt || null,
-    certificateDocumentId: v.data.certificateDocumentId || null,
+    certificateDocumentId: cert.id,
     status: "pending",
   });
-  await audit({ actor: { id: user.id, role: user.role }, action: "doctor.licence_added", entityType: "doctor", entityId: d.id, metadata: { country: v.data.country } });
+  await audit({ actor: { id: user.id, role: user.role }, action: "doctor.licence_added", entityType: "doctor", entityId: d.id, metadata: { country: "IN" } });
   revalidatePath("/doctor/onboarding");
   revalidatePath("/doctor/licences");
   return { ok: true };
@@ -212,20 +220,7 @@ export async function submitForVerificationAction(): Promise<FormState> {
   const t = await getT();
   const { user, d } = await me();
   const db = await getDb();
-  const [lic, quals, docs] = await Promise.all([
-    db.select().from(doctorLicences).where(eq(doctorLicences.doctorId, d.id)),
-    db.select().from(doctorQualifications).where(eq(doctorQualifications.doctorId, d.id)),
-    db.select().from(documents).where(eq(documents.doctorId, d.id)),
-  ]);
-  const has = (c: string) => docs.some((x) => x.category === c && !x.deletedAt);
-  const missing = [
-    !lic.length && t("a licence"),
-    !quals.length && t("a qualification"),
-    !has("registration_certificate") && t("registration certificate"),
-    !has("degree_certificate") && t("degree certificate"),
-    !has("government_id") && t("government ID"),
-    !has("selfie") && t("selfie"),
-  ].filter(Boolean);
+  const missing = await missingForVerification(db, d, t);
   if (missing.length) return { error: t("Still needed: {items}.", { items: missing.join(", ") }) };
   await db.update(doctors).set({ verificationStatus: "submitted", submittedAt: new Date() }).where(eq(doctors.id, d.id));
   await audit({ actor: { id: user.id, role: user.role }, action: "doctor.submitted", entityType: "doctor", entityId: d.id });

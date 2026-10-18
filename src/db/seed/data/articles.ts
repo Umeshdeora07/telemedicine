@@ -65,7 +65,7 @@ Paracetamol is the safest choice for most people. Avoid ibuprofen and aspirin du
     body: `## 1. Send your enquiry and reports
 Tell us what treatment you are looking for and upload your reports and scans. A coordinator checks that we have everything.
 
-## 2. Free review by a specialist
+## 2. Review by a specialist
 A specialist reviews your reports, usually within 2 working days, and you receive a written treatment plan: the recommended treatment, how many days you will spend in hospital and in India, a cost estimate in your currency, what is included, and the documents you need.
 
 ## 3. Talk to the doctor before you decide

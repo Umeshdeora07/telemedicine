@@ -42,9 +42,9 @@ const TREATMENT_PHOTO: Record<SpecialtySlug, PhotoName> = {
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return {
-    title: t("Treatment in India: free treatment plan and cost estimate"),
+    title: t("Treatment in India: treatment plan and cost estimate"),
     description: t(
-      "Send your reports for a free review by a specialist in India. Get a written treatment plan and a cost estimate in your currency, and help with your medical visa letter, travel, stay and follow up from home.",
+      "Send your reports to a specialist in India for review. Get a written treatment plan and a cost estimate in your currency, and help with your medical visa letter, travel, stay and follow up from home.",
     ),
   };
 }
@@ -61,7 +61,7 @@ export default async function TreatmentInIndiaPage() {
   const help = [
     {
       Icon: FileSearch,
-      title: t("Free review of your reports"),
+      title: t("Review of your reports"),
       text: t("A specialist reads your reports and replies, usually within 2 working days."),
     },
     {
@@ -109,11 +109,7 @@ export default async function TreatmentInIndiaPage() {
   const faqs = [
     {
       q: t("How do I start?"),
-      a: t("Select \"Get a free treatment plan\", tell us about the health problem and upload your reports. You need to sign in first, so that your reports stay private in your account."),
-    },
-    {
-      q: t("Is the treatment plan really free?"),
-      a: t("Yes. The review of your reports, the treatment plan and the cost estimate are free. You decide afterwards whether you want to go ahead."),
+      a: t("Select \"Get a treatment plan\", tell us about the health problem and upload your reports. You need to sign in first, so that your reports stay private in your account."),
     },
     {
       q: t("How long does the review take?"),
@@ -143,7 +139,7 @@ export default async function TreatmentInIndiaPage() {
 
   const startButton = (
     <ButtonLink href={startHref} size="lg" className="whitespace-normal">
-      {t("Get a free treatment plan")}
+      {t("Get a treatment plan")}
       <ArrowRight className="size-5" aria-hidden />
     </ButtonLink>
   );
@@ -164,11 +160,11 @@ export default async function TreatmentInIndiaPage() {
               {t("Plan your treatment in India, with a team by your side")}
             </h1>
             <p className="max-w-xl text-lg text-fg sm:text-xl">
-              {t("Send your reports for a free review by a specialist. You get a written treatment plan and a cost estimate in your currency, and help with your visa, travel and stay.")}
+              {t("Send your reports and a specialist reviews them. You get a written treatment plan and a cost estimate in your currency, and help with your visa, travel and stay.")}
             </p>
             <ul className="flex flex-wrap gap-2 text-sm font-semibold">
               {[
-                { Icon: FileSearch, text: t("Free review of your reports") },
+                { Icon: FileSearch, text: t("A specialist reviews your reports") },
                 { Icon: Wallet, text: t("Cost estimate in your currency") },
                 { Icon: Stamp, text: t("Medical visa letter") },
               ].map(({ Icon, text }) => (
@@ -291,7 +287,6 @@ export default async function TreatmentInIndiaPage() {
           <p className="text-fg">{t("You know what to expect before you travel.")}</p>
           <CheckList
             items={[
-              t("The review of your reports and your treatment plan are free."),
               t("You receive a cost estimate in your currency before you travel."),
               t("The estimate shows what is included, so there are no hidden fees."),
               t("You pay the hospital directly, or as agreed in your treatment plan."),
@@ -335,11 +330,11 @@ export default async function TreatmentInIndiaPage() {
 
       <CtaBand
         id="cta"
-        title={t("Get your free treatment plan")}
+        title={t("Get your treatment plan")}
         text={t("Send your reports today. A specialist usually replies within 2 working days.")}
       >
         <ButtonLink href={startHref} size="lg" className="whitespace-normal bg-on-primary text-primary shadow-sm hover:bg-on-primary/90">
-          {t("Get a free treatment plan")}
+          {t("Get a treatment plan")}
         </ButtonLink>
         <ButtonLink href={callbackHref} size="lg" variant="outline" className="border-on-primary/70 bg-transparent text-on-primary hover:bg-on-primary/10">
           <PhoneCall className="size-5" aria-hidden />

@@ -195,7 +195,7 @@ export function PolicyForm({ p }: { p: { doctorNoShowMinutes: number; patientCan
       <Field label={t("Doctor no-show after (min)")} htmlFor="dns"><Input id="dns" name="doctorNoShowMinutes" type="number" defaultValue={p.doctorNoShowMinutes} /></Field>
       <Field label={t("Full refund if cancelled (hours before)")} htmlFor="fr"><Input id="fr" name="patientCancelFullRefundHours" type="number" defaultValue={p.patientCancelFullRefundHours} /></Field>
       <Field label={t("Late cancel refund (%)")} htmlFor="pr"><Input id="pr" name="patientCancelPartialRefundPercent" type="number" defaultValue={p.patientCancelPartialRefundPercent} /></Field>
-      <Field label={t("Free reschedule (hours before)")} htmlFor="rs"><Input id="rs" name="rescheduleFreeHours" type="number" defaultValue={p.rescheduleFreeHours} /></Field>
+      <Field label={t("Patients can change the time until (hours before)")} htmlFor="rs"><Input id="rs" name="rescheduleFreeHours" type="number" defaultValue={p.rescheduleFreeHours} /></Field>
       <div className="sm:col-span-4"><SubmitButton size="sm" variant="secondary">{t("Save policy")}</SubmitButton></div>
     </form>
   );

@@ -207,6 +207,51 @@ uploaded files are temporary. Keep `DEMO_MODE=true` and no real patients.
 `vercel.json` pins functions to Singapore (`sin1`), next to the database.
 The public address comes from Vercel; set `APP_URL` only for a custom domain.
 
+### Go live without sample data (doctors join themselves)
+
+With `DEMO_MODE=false` the site has no sample doctors or patients. On the
+next start after switching it off, the demo data that demo mode loaded is
+removed automatically (only from a database that demo mode filled), and the
+four specialties are kept. Doctors then join like this:
+
+1. A doctor opens **For doctors → Join as a doctor**, logs in and applies in
+   one of the four specialties.
+2. They set up two step verification (an authenticator app such as Google
+   Authenticator), then fill in every required detail: qualifications and
+   degree certificate, Indian registration (NMC, a State Medical Council, or
+   RCI for psychologists) and its certificate, government ID and selfie,
+   profile photo, a few lines about themselves, languages, video fee,
+   available times and signature. Only then can they submit.
+3. The admin opens **Admin → Verification**, checks the documents and the
+   registration with the council, marks the registration verified and
+   approves the doctor. Patients see only approved doctors, and only the
+   public details (photo, name, specialty, qualifications, experience,
+   languages, registration number, about, fee, available times, reviews).
+   ID, selfie and certificates stay private.
+
+Uploaded files are stored encrypted in the database on Vercel (its disk is
+temporary), so they survive redeploys. Each file can be up to 4 MB there.
+
+**Steps in Vercel** (Settings → Environment Variables, then Redeploy):
+
+1. `ADMIN_EMAILS`: your email address (several, separated by commas). The
+   first time you log in with that address, the account becomes the admin.
+2. A way to log in. Without one, the site works but nobody can log in.
+   - **Log in with Google** (free, recommended): go to
+     console.cloud.google.com → create a project → "APIs & Services" →
+     "OAuth consent screen" (External, add your app name and email, then
+     publish it) → "Credentials" → "Create credentials" → "OAuth client
+     ID" → Web application. Under "Authorised redirect URIs" add
+     `https://<your-site>/api/auth/oauth/google/callback`. Copy the client
+     ID and secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+   - Or email codes with Resend: `RESEND_API_KEY` and `EMAIL_FROM` (needs
+     your own domain verified in Resend).
+3. `DEMO_MODE=false`.
+4. Redeploy, open `/status` to check, then log in with your admin email.
+
+Online payments need Razorpay (India) or Stripe (international cards)
+before patients can pay for consultations; see `.env.example`.
+
 ### Production: your own server in India
 
 For real patients, use a host in India with durable storage, e.g. a

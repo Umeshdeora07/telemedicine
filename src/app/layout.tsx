@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(env.appUrl),
     title: { default: `${brand.name} | ${t("Online consultation with Indian specialists and treatment in India")}`, template: `%s | ${brand.name}` },
     description: t(
-      "See a doctor registered in India by video, wherever you live. Or plan your treatment in India with a free review of your reports, a written cost estimate and help with your visa, travel and stay.",
+      "See a doctor registered in India by video, wherever you live. Or plan your treatment in India with a review of your reports by a specialist, a written cost estimate and help with your visa, travel and stay.",
     ),
     applicationName: brand.name,
     manifest: "/manifest.webmanifest",

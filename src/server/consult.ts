@@ -307,7 +307,7 @@ export async function endConsult(user: SessionUser, apptId: string, outcome: "co
   await notifyAppointment(db, appt.id, ({ t }) => ({
     template: "consult_summary",
     title: t("Your consult summary is ready"),
-    body: t("Read {doctor}'s advice in simple words, and message them free for {days} days.", { doctor: doctor.fullName, days: doctor.followUpChatDays }),
+    body: t("Read {doctor}'s advice in simple words, and message them for {days} days.", { doctor: doctor.fullName, days: doctor.followUpChatDays }),
     link: `/consults/${appt.id}`,
   }));
   return updated!;

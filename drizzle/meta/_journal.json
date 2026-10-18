@@ -15,6 +15,13 @@
       "when": 1791952311562,
       "tag": "0001_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792292543641,
+      "tag": "0002_stored_files",
+      "breakpoints": true
     }
   ]
 }

@@ -531,6 +531,78 @@ const dict: Dict = {
   "{patient} has a clinic visit with {doctor} at {when}. Show the visit pass QR at reception.": "{patient} की {doctor} के साथ {when} पर क्लिनिक विज़िट है। रिसेप्शन पर विज़िट पास का QR दिखाएँ।",
   "{patient} has a consult with {doctor} at {when}. Do the tech check before joining.": "{patient} का {doctor} के साथ {when} पर परामर्श है। जुड़ने से पहले कैमरा और माइक जाँच लें।",
   "Consultant psychiatrist": "कंसल्टेंट मनोचिकित्सक",
+  // Owner's changes: no "free", plain home heading, empty states, doctor join steps.
+  "Online consultation and treatment in India": "ऑनलाइन परामर्श और भारत में इलाज",
+  "Talk to a verified specialist by video from your home, wherever you live. Or come to India for treatment, with a team that helps you at every step.":
+    "आप कहीं भी रहते हों, घर बैठे वीडियो पर जांचे गए विशेषज्ञ से बात करें। या इलाज के लिए भारत आएं, एक ऐसी टीम के साथ जो हर कदम पर आपकी मदद करती है।",
+  "Video consultations with verified doctors registered in India, wherever you live. Or plan your treatment in India with a treatment plan, a cost estimate in your currency and help with your visa, travel and stay.":
+    "आप कहीं भी रहते हों, भारत में पंजीकृत और जांचे गए डॉक्टरों से वीडियो परामर्श लें। या भारत में अपने इलाज की योजना बनाएं: इलाज योजना, आपकी मुद्रा में खर्च का अनुमान और वीज़ा, यात्रा व ठहरने में मदद।",
+  "Send us your reports through the treatment plan form. A specialist reviews them, usually within 2 working days, and you receive a written treatment plan with a cost estimate in your currency. If you decide to travel, we help with your visa letter, travel and stay.":
+    "इलाज योजना वाले फ़ॉर्म से अपनी रिपोर्ट हमें भेजें। एक विशेषज्ञ उन्हें आम तौर पर 2 कामकाजी दिनों के अंदर देखते हैं, और आपको आपकी मुद्रा में खर्च के अनुमान के साथ लिखित इलाज योजना मिलती है। अगर आप यात्रा करने का फ़ैसला करते हैं, तो हम वीज़ा पत्र, यात्रा और ठहरने में मदद करते हैं।",
+  "Send your reports and get a treatment plan and cost estimate. We help with your visa letter, travel and stay.":
+    "अपनी रिपोर्ट भेजें और इलाज योजना और खर्च का अनुमान पाएं। हम वीज़ा पत्र, यात्रा और ठहरने में मदद करते हैं।",
+  "A specialist reviews your reports": "विशेषज्ञ आपकी रिपोर्ट देखते हैं",
+  "Get a treatment plan": "इलाज योजना पाएं",
+  "Get your treatment plan": "अपनी इलाज योजना पाएं",
+  "Get a treatment plan in India": "भारत में इलाज की योजना पाएं",
+  "Choose the care you need.": "जिस इलाज की ज़रूरत है, उसे चुनें।",
+  "Treatment in India: treatment plan and cost estimate": "भारत में इलाज: इलाज योजना और खर्च का अनुमान",
+  "Send your reports to a specialist in India for review. Get a written treatment plan and a cost estimate in your currency, and help with your medical visa letter, travel, stay and follow up from home.":
+    "जांच के लिए अपनी रिपोर्ट भारत के विशेषज्ञ को भेजें। लिखित इलाज योजना और आपकी मुद्रा में खर्च का अनुमान पाएं, और मेडिकल वीज़ा पत्र, यात्रा, ठहरने और घर लौटकर फ़ॉलो अप में मदद पाएं।",
+  "Review of your reports": "आपकी रिपोर्ट की जांच",
+  'Select "Get a treatment plan", tell us about the health problem and upload your reports. You need to sign in first, so that your reports stay private in your account.':
+    "\"इलाज योजना पाएं\" चुनें, अपनी स्वास्थ्य समस्या के बारे में बताएं और अपनी रिपोर्ट अपलोड करें। पहले आपको साइन इन करना होगा, ताकि आपकी रिपोर्ट आपके खाते में निजी रहें।",
+  "Send your reports and a specialist reviews them. You get a written treatment plan and a cost estimate in your currency, and help with your visa, travel and stay.":
+    "अपनी रिपोर्ट भेजें, विशेषज्ञ उन्हें देखते हैं। आपको लिखित इलाज योजना और आपकी मुद्रा में खर्च का अनुमान मिलता है, और वीज़ा, यात्रा व ठहरने में मदद मिलती है।",
+  "Send us your reports and a specialist reviews them. You get a written treatment plan and a cost estimate in your currency, and help with your visa, travel and stay.":
+    "अपनी रिपोर्ट हमें भेजें, विशेषज्ञ उन्हें देखते हैं। आपको लिखित इलाज योजना और आपकी मुद्रा में खर्च का अनुमान मिलता है, और वीज़ा, यात्रा व ठहरने में मदद मिलती है।",
+  "Send your reports and a specialist reviews them. You get a written treatment plan and cost estimate, help choosing a hospital, a medical visa letter, and a coordinator by your side until you are back home.":
+    "अपनी रिपोर्ट भेजें, विशेषज्ञ उन्हें देखते हैं। आपको लिखित इलाज योजना और खर्च का अनुमान, अस्पताल चुनने में मदद, मेडिकल वीज़ा पत्र, और घर लौटने तक साथ रहने वाले एक कोऑर्डिनेटर मिलते हैं।",
+  "Book an online consultation, or send your reports for a treatment plan in India.": "ऑनलाइन परामर्श बुक करें, या भारत में इलाज की योजना के लिए अपनी रिपोर्ट भेजें।",
+  "Send your medical reports from the Treatment in India page. A specialist reviews them and usually replies within 2 working days with a written treatment plan and a cost estimate in your currency.":
+    "भारत में इलाज वाले पेज से अपनी मेडिकल रिपोर्ट भेजें। विशेषज्ञ उन्हें देखते हैं और आम तौर पर 2 कामकाजी दिनों में आपकी मुद्रा में लिखित इलाज योजना और खर्च के अनुमान के साथ जवाब देते हैं।",
+  "Yes, from My consultations. You see the exact rules before you pay. If you cancel before the cancellation deadline shown when you book, you get a full refund.":
+    "हां, मेरे परामर्श पेज से। भुगतान से पहले आपको सारे नियम दिखते हैं। बुकिंग के समय बताई गई आख़िरी समय सीमा से पहले रद्द करने पर आपको पूरा पैसा वापस मिलता है।",
+  "Yes. You can change the time or cancel from your account. If you cancel before the cancellation deadline shown when you book, you get a full refund.":
+    "हां। आप अपने खाते से समय बदल सकते हैं या बुकिंग रद्द कर सकते हैं। अगर आप बुकिंग के समय बताई गई आख़िरी समय सीमा से पहले रद्द करते हैं, तो आपको पूरा पैसा वापस मिलता है।",
+  "If you cancel before the cancellation deadline shown when you book, you get a full refund.":
+    "अगर आप बुकिंग के समय बताई गई आख़िरी समय सीमा से पहले रद्द करते हैं, तो आपको पूरा पैसा वापस मिलता है।",
+  "Your doctor sends a digital prescription or a written treatment plan. A follow up chat with your doctor for a few days is included, for any questions.":
+    "आपके डॉक्टर डिजिटल पर्चा या लिखित इलाज योजना भेजते हैं। इसके बाद कुछ दिनों तक अपने सवालों के लिए डॉक्टर से फ़ॉलो अप चैट शामिल है।",
+  "Each doctor sets their own fee, and you see the full price in your currency before you pay.":
+    "हर डॉक्टर अपनी फ़ीस खुद तय करते हैं, और भुगतान से पहले आपको अपनी मुद्रा में पूरी कीमत दिखती है।",
+  "Send your reports. A specialist reviews them and sends you a written plan and cost estimate.":
+    "अपनी रिपोर्ट भेजें। विशेषज्ञ उन्हें देखते हैं और आपको लिखित योजना और खर्च का अनुमान भेजते हैं।",
+  "You have not asked for a treatment plan yet. Send your reports and a specialist will review them.":
+    "आपने अभी तक इलाज योजना नहीं मांगी है। अपनी रिपोर्ट भेजें, विशेषज्ञ उन्हें देखेंगे।",
+  "This doctor has no available times in the next 2 weeks. Please choose another doctor, or look again in a few days.":
+    "अगले 2 हफ़्तों में इन डॉक्टर के पास कोई समय खाली नहीं है। कृपया कोई दूसरे डॉक्टर चुनें, या कुछ दिनों बाद फिर देखें।",
+  "{count} slot": "{count} समय",
+  "{count} slots": "{count} समय",
+  "Doctors with the soonest available time are shown first.": "जिन डॉक्टरों के पास सबसे जल्दी समय है, वे पहले दिखते हैं।",
+  "Our doctors are joining soon": "हमारे डॉक्टर जल्द ही जुड़ रहे हैं",
+  "Every doctor is checked by our team before they appear here. Meanwhile, you can ask us about treatment in India.":
+    "यहां दिखने से पहले हर डॉक्टर की जांच हमारी टीम करती है। तब तक आप हमसे भारत में इलाज के बारे में पूछ सकते हैं।",
+  "Our {specialty} doctors are joining soon. Meanwhile, ask us to call you back and we will help you.":
+    "{specialty} के हमारे डॉक्टर जल्द ही जुड़ रहे हैं। तब तक हमें कॉल बैक के लिए कहें, हम आपकी मदद करेंगे।",
+  "Questions about {specialty}?": "{specialty} के बारे में सवाल हैं?",
+  "Ask us to call you back and we will help you.": "हमें कॉल बैक के लिए कहें, हम आपकी मदद करेंगे।",
+  "Join as a doctor": "डॉक्टर के रूप में जुड़ें",
+  "How to join, in 4 steps": "4 चरणों में कैसे जुड़ें",
+  "Your profile appears on the website only after our team has verified you.": "हमारी टीम की जांच पूरी होने के बाद ही आपकी प्रोफ़ाइल वेबसाइट पर दिखती है।",
+  "Create your account": "अपना खाता बनाएं",
+  "Log in with your email or your Google account.": "अपने ईमेल या अपने Google खाते से लॉग इन करें।",
+  "Fill in your details": "अपनी जानकारी भरें",
+  "Add your qualifications, your Indian registration, a government photo ID, a photo of yourself, your fees and the times you are available.":
+    "अपनी योग्यताएं, अपना भारतीय पंजीकरण, सरकारी फ़ोटो पहचान पत्र, अपनी एक फ़ोटो, अपनी फ़ीस और वह समय जोड़ें जब आप उपलब्ध हैं।",
+  "Our team verifies you": "हमारी टीम आपकी जांच करती है",
+  "We check your registration on the official register and look at your documents. We call you if anything is unclear.":
+    "हम आधिकारिक रजिस्टर में आपका पंजीकरण जांचते हैं और आपके दस्तावेज़ देखते हैं। कुछ साफ़ न हो तो हम आपको कॉल करते हैं।",
+  "Your profile goes live": "आपकी प्रोफ़ाइल वेबसाइट पर आ जाती है",
+  "Patients can now see your profile and book you. We check your registration again every 12 months.":
+    "अब मरीज़ आपकी प्रोफ़ाइल देखकर आपके साथ परामर्श बुक कर सकते हैं। हम हर 12 महीने में आपका पंजीकरण फिर से जांचते हैं।",
+  "Keep your registration certificate, degree certificates and a government photo ID ready before you start.":
+    "शुरू करने से पहले अपना पंजीकरण प्रमाणपत्र, डिग्री प्रमाणपत्र और सरकारी फ़ोटो पहचान पत्र तैयार रखें।",
 };
 
 export default dict;

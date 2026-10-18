@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { and, eq, isNull } from "drizzle-orm";
 import { CheckCircle2, Circle, Clock, FileText, ShieldCheck } from "lucide-react";
 import { getDb } from "@/db";
-import { doctorLicences, doctorQualifications, documents, specialties } from "@/db/schema";
+import { availabilityRules, doctorFees, doctorLicences, doctorQualifications, documents, specialties } from "@/db/schema";
 import { getViewContext } from "@/server/context";
 import { doctorForUser } from "@/server/consult";
-import { getCountries, getSpecialties } from "@/server/queries/reference";
+import { getSpecialties } from "@/server/queries/reference";
+import { missingForVerification } from "@/server/doctor-verification";
 import { PageHeader } from "@/components/ui/page-header";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -23,24 +24,29 @@ export default async function DoctorOnboarding() {
   const { t, fmt } = ctx;
   const d = (await doctorForUser(ctx.user!))!;
   const db = await getDb();
-  const [quals, lic, docs, [spec], specs, countries] = await Promise.all([
+  const [quals, lic, docs, [spec], specs, fees, rules, missing] = await Promise.all([
     db.select().from(doctorQualifications).where(eq(doctorQualifications.doctorId, d.id)),
     db.select().from(doctorLicences).where(eq(doctorLicences.doctorId, d.id)),
     db.select().from(documents).where(and(eq(documents.doctorId, d.id), isNull(documents.deletedAt))),
     db.select({ slug: specialties.slug }).from(specialties).where(eq(specialties.id, d.specialtyId)),
     getSpecialties(),
-    getCountries(),
+    db.select().from(doctorFees).where(eq(doctorFees.doctorId, d.id)),
+    db.select({ id: availabilityRules.id }).from(availabilityRules).where(eq(availabilityRules.doctorId, d.id)),
+    missingForVerification(db, d, t),
   ]);
   const byCat = (c: string): Uploaded[] => docs.filter((x) => x.category === c).map((x) => ({ id: x.id, title: x.title, mimeType: x.mimeType, sizeBytes: x.sizeBytes }));
   const has = (c: string) => docs.some((x) => x.category === c);
   const steps = [
-    { label: t("Basic details"), done: Boolean(d.fullName && d.experienceYears >= 0) },
+    { label: t("Basic details"), done: Boolean(d.fullName && spec) },
     { label: t("Qualification with degree certificate"), done: quals.length > 0 && has("degree_certificate") },
-    { label: t("Licence with registration certificate"), done: lic.length > 0 && has("registration_certificate") },
+    { label: t("Indian registration with certificate"), done: lic.length > 0 && has("registration_certificate") },
     { label: t("Government ID and selfie"), done: has("government_id") && has("selfie") },
-    { label: t("Profile, fees and signature"), done: Boolean(d.about && d.signatureDocumentId), optional: true },
+    { label: t("Profile photo, about you and languages"), done: Boolean(d.photoUrl && d.about.trim().length >= 80 && d.languages.length) },
+    { label: t("Video consultation fee"), done: fees.some((f) => f.mode === "video" && f.amountMinor > 0) },
+    { label: t("Available times"), done: rules.length > 0 },
+    { label: t("Signature for prescriptions"), done: Boolean(d.signatureDocumentId) },
   ];
-  const ready = steps.filter((s) => !s.optional).every((s) => s.done);
+  const ready = missing.length === 0;
   const status = d.verificationStatus;
   const locked = status === "submitted" || status === "approved";
 
@@ -49,7 +55,7 @@ export default async function DoctorOnboarding() {
       <PageHeader
         eyebrow={t("Doctor verification")}
         title={t("Get verified to start consulting")}
-        description={t("We check every doctor's registration with the medical council before patients can see them. This usually takes 1 or 2 working days.")}
+        description={t("We check every doctor's registration with the medical council before patients can see them.")}
       />
 
       {status === "submitted" ? (
@@ -69,7 +75,7 @@ export default async function DoctorOnboarding() {
           <li key={s.label} className="flex items-center gap-3 p-4">
             {s.done ? <CheckCircle2 className="size-6 shrink-0 text-success" aria-hidden /> : <Circle className="size-6 shrink-0 text-fg-muted" aria-hidden />}
             <span className="font-medium">{s.label}</span>
-            {s.optional ? <Badge className="ms-auto">{t("Before going live")}</Badge> : <span className="sr-only">{s.done ? t("Done") : t("Not done")}</span>}
+            <span className="sr-only">{s.done ? t("Done") : t("Not done")}</span>
           </li>
         ))}
       </ol>
@@ -102,14 +108,14 @@ export default async function DoctorOnboarding() {
             {lic.map((l) => (
               <li key={l.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-2 p-3">
                 <ShieldCheck className="size-5 text-primary" aria-hidden />
-                <strong>{[l.region, l.country].filter(Boolean).join(", ")}</strong> · {l.issuingBody} · {l.number}
+                <strong>{l.issuingBody}</strong> · {l.number}
                 {l.expiresAt ? <span className="text-sm text-fg-muted">{t("valid until {date}", { date: fmt.date(l.expiresAt) })}</span> : null}
                 <Badge tone={LIC_TONE[l.status]} className="ms-auto">{t(humanize(l.status))}</Badge>
               </li>
             ))}
           </ul>
         ) : null}
-        <LicenceForm countries={countries.map((c) => ({ code: c.code, name: c.name, licenceScope: c.licenceScope, regions: c.regions }))} />
+        {!locked ? <LicenceForm /> : null}
       </section>
 
       <section className="card space-y-4 p-5" aria-labelledby="id">
@@ -118,16 +124,22 @@ export default async function DoctorOnboarding() {
       </section>
 
       <section className="card space-y-3 p-5" aria-labelledby="profile">
-        <h2 id="profile" className="text-xl font-bold">{t("5. Profile, fees and signature")}</h2>
-        <p className="text-fg-muted">{t("Write a short profile in plain words, set your fees and upload your signature. Your prescriptions carry this signature and your registration number.")}</p>
+        <h2 id="profile" className="text-xl font-bold">{t("5. Profile photo, about you, fees and signature")}</h2>
+        <p className="text-fg-muted">{t("Upload a clear photo, write a few lines about yourself in plain words, choose your languages, set your video consultation fee and upload your signature. Your prescriptions carry this signature and your registration number.")}</p>
         <ButtonLink href="/doctor/profile" variant="secondary">{t("Open profile and fees")}</ButtonLink>
+      </section>
+
+      <section className="card space-y-3 p-5" aria-labelledby="times">
+        <h2 id="times" className="text-xl font-bold">{t("6. Available times")}</h2>
+        <p className="text-fg-muted">{t("Set the days and hours when patients can book a video consultation with you.")}</p>
+        <ButtonLink href="/doctor/schedule" variant="secondary">{t("Set available times")}</ButtonLink>
       </section>
 
       {status === "draft" || status === "rejected" ? (
         <section className="card space-y-3 border-primary p-5" aria-labelledby="submit">
           <h2 id="submit" className="text-xl font-bold">{t("Ready?")}</h2>
           <p className="text-fg-muted">{t("By submitting, you confirm the documents are genuine and you will follow the Telemedicine Practice Guidelines, 2020.")}</p>
-          {!ready ? <p className="flex items-center gap-2 text-sm text-warning"><Clock className="size-4" aria-hidden />{t("Finish steps 1 to 4 to submit.")}</p> : null}
+          {!ready ? <p className="flex items-start gap-2 text-sm text-warning"><Clock className="mt-0.5 size-4 shrink-0" aria-hidden />{t("Still needed: {items}.", { items: missing.join(", ") })}</p> : null}
           <SubmitForVerification disabled={!ready} />
         </section>
       ) : status === "approved" ? (

@@ -34,15 +34,15 @@ import { DoctorCard, loadQualificationLines } from "@/components/doctor/doctor-c
 import { CheckList, FaqList, SectionHeading, StepList } from "@/components/marketing/blocks";
 import { ContactStrip, companyDetailsShown } from "@/components/marketing/contact";
 import { TreatmentJourney } from "@/components/marketing/journeys";
-import { siteSpecialties } from "@/components/marketing/specialty-content";
+import { siteSpecialties, startingPrice } from "@/components/marketing/specialty-content";
 import { SpecialtyTiles } from "@/components/marketing/specialty-tiles";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return {
-    title: { absolute: `${brand.name} | ${t("Trusted Indian doctors, for patients anywhere in the world")}` },
+    title: { absolute: `${brand.name} | ${t("Online consultation and treatment in India")}` },
     description: t(
-      "Video consultations with verified doctors registered in India, wherever you live. Or plan your treatment in India with a free treatment plan, a cost estimate in your currency and help with your visa, travel and stay.",
+      "Video consultations with verified doctors registered in India, wherever you live. Or plan your treatment in India with a treatment plan, a cost estimate in your currency and help with your visa, travel and stay.",
     ),
   };
 }
@@ -124,6 +124,7 @@ export default async function HomePage() {
   // One doctor per specialty, the highest rated first.
   const team = specs.flatMap((s) => rated.filter((d) => d.specialtySlug === s.slug).slice(0, 1));
   const quals = await loadQualificationLines(team.map((d) => d.id));
+  const hasPrices = specs.some((s) => startingPrice(ctx, s.startingFeeMinor));
 
   const trust = [
     { Icon: BadgeCheck, title: t("Registration checked"), text: t("We check every doctor's registration with the National Medical Commission or a State Medical Council before they are listed, and again every 12 months. Psychologists are checked with the Rehabilitation Council of India.") },
@@ -166,7 +167,7 @@ export default async function HomePage() {
     },
     {
       q: t("How do I start planning treatment in India?"),
-      a: t("Send us your reports through the free treatment plan form. A specialist reviews them, usually within 2 working days, and you receive a written treatment plan with a cost estimate in your currency. If you decide to travel, we help with your visa letter, travel and stay."),
+      a: t("Send us your reports through the treatment plan form. A specialist reviews them, usually within 2 working days, and you receive a written treatment plan with a cost estimate in your currency. If you decide to travel, we help with your visa letter, travel and stay."),
     },
     {
       q: t("Which languages do the doctors speak?"),
@@ -195,10 +196,10 @@ export default async function HomePage() {
               {t("Doctors registered in India")}
             </p>
             <h1 id="hero" className="text-[2rem] font-extrabold leading-tight sm:text-5xl">
-              {t("Trusted Indian doctors, for patients anywhere in the world")}
+              {t("Online consultation and treatment in India")}
             </h1>
             <p className="max-w-xl text-lg text-fg sm:text-xl">
-              {t("Talk to a verified specialist by video from your home, or plan your treatment in India with a team that helps you at every step.")}
+              {t("Talk to a verified specialist by video from your home, wherever you live. Or come to India for treatment, with a team that helps you at every step.")}
             </p>
           </div>
           <div className="relative hidden lg:block">
@@ -238,11 +239,11 @@ export default async function HomePage() {
           photoAlt={t(PHOTOS.medicalTeam.alt)}
           Icon={Plane}
           title={t("Treatment in India")}
-          text={t("Send your reports and get a free treatment plan and cost estimate. We help with your visa letter, travel and stay.")}
-          points={[t("Free review of your reports by a specialist"), t("Cost estimate in your currency"), t("Visa letter, airport pickup and a stay near the hospital")]}
+          text={t("Send your reports and get a treatment plan and cost estimate. We help with your visa letter, travel and stay.")}
+          points={[t("A specialist reviews your reports"), t("Cost estimate in your currency"), t("Visa letter, airport pickup and a stay near the hospital")]}
         >
           <ButtonLink href="/treatment-in-india" size="lg" className="w-full whitespace-normal sm:w-auto">
-            {t("Get a free treatment plan")}
+            {t("Get a treatment plan")}
           </ButtonLink>
         </ServiceCard>
       </div>
@@ -269,7 +270,7 @@ export default async function HomePage() {
         <SectionHeading
           id="specs"
           title={t("Our specialties")}
-          description={t("Choose the care you need. Prices are shown in your currency.")}
+          description={hasPrices ? t("Choose the care you need. Prices are shown in your currency.") : t("Choose the care you need.")}
           action={
             <Link href="/specialties" className="tap inline-flex items-center gap-1 font-semibold text-primary hover:underline">
               {t("About our specialties")} <ArrowRight className="size-4" aria-hidden />
@@ -315,7 +316,7 @@ export default async function HomePage() {
           actions={
             <>
               <ButtonLink href="/treatment-in-india" size="lg" className="whitespace-normal">
-                {t("Get a free treatment plan")}
+                {t("Get a treatment plan")}
               </ButtonLink>
               <ButtonLink href="/help/callback?reason=international" size="lg" variant="outline">
                 {t("Talk to us")}

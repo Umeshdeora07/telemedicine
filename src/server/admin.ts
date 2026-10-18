@@ -9,6 +9,7 @@ import {
   countries,
   coupons,
   dataRequests,
+  doctorFees,
   doctorLicences,
   doctorQualifications,
   doctors,
@@ -29,6 +30,8 @@ import { audit } from "@/server/audit";
 import { notifyUser } from "@/server/notify";
 import { refundPayment } from "@/server/booking";
 import { UserError } from "@/lib/errors";
+import { getT } from "@/i18n/server";
+import { missingForVerification } from "@/server/doctor-verification";
 
 const actor = (u: SessionUser) => ({ id: u.id, role: u.role });
 
@@ -100,13 +103,15 @@ export async function doctorForReview(id: string) {
   const db = await getDb();
   const [row] = await db.select({ d: doctors, specialty: specialties.name, email: users.email, phone: users.phone }).from(doctors).innerJoin(specialties, eq(specialties.id, doctors.specialtyId)).leftJoin(users, eq(users.id, doctors.userId)).where(eq(doctors.id, id));
   if (!row) return null;
-  const [lic, quals, docs, history] = await Promise.all([
+  const [lic, quals, docs, history, fees, missing] = await Promise.all([
     db.select().from(doctorLicences).where(eq(doctorLicences.doctorId, id)).orderBy(asc(doctorLicences.country)),
     db.select().from(doctorQualifications).where(eq(doctorQualifications.doctorId, id)),
     db.select().from(documents).where(and(eq(documents.doctorId, id), isNull(documents.deletedAt))),
     db.select({ l: auditLogs, name: users.name }).from(auditLogs).leftJoin(users, eq(users.id, auditLogs.actorUserId)).where(and(eq(auditLogs.entityType, "doctor"), eq(auditLogs.entityId, id))).orderBy(desc(auditLogs.createdAt)).limit(30),
+    db.select().from(doctorFees).where(eq(doctorFees.doctorId, id)),
+    missingForVerification(db, row.d, await getT()),
   ]);
-  return { ...row, lic, quals, docs, history };
+  return { ...row, lic, quals, docs, history, fees, missing };
 }
 
 export async function verifyLicence(admin: SessionUser, licenceId: string, input: { status: "verified" | "rejected" | "suspended"; reference: string; notes: string; evidenceDocumentId?: string | null }) {
@@ -127,7 +132,9 @@ export async function decideDoctor(admin: SessionUser, doctorId: string, decisio
   if (!d) throw new UserError("Doctor not found");
   if (decision === "approve" || decision === "reinstate") {
     const lic = await db.select().from(doctorLicences).where(and(eq(doctorLicences.doctorId, doctorId), eq(doctorLicences.status, "verified")));
-    if (!lic.length) throw new UserError("Verify at least one licence before approving.");
+    if (!lic.length) throw new UserError("Verify the doctor's registration before approving.");
+    const missing = await missingForVerification(db, d, await getT());
+    if (missing.length) throw new UserError(`The doctor still needs to add: ${missing.join(", ")}.`);
   }
   if (decision !== "approve" && decision !== "reinstate" && reason.trim().length < 5) throw new UserError("Write the reason the doctor will see.");
   const now = new Date();

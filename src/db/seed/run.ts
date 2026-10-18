@@ -17,7 +17,8 @@ import { FREQUENCIES } from "@/lib/tpg";
 import { saveFile } from "@/lib/storage";
 import { simplePdf } from "@/lib/pdf/simple";
 import { ageFrom } from "@/lib/utils";
-import { COUNTRIES, DEMO_FX } from "./data/countries";
+import { DEMO_FX } from "./data/countries";
+import { ensureReferenceData, setStartingFee, specialtyIds } from "./reference";
 import { SPECIALTIES } from "./data/specialties";
 import { CLINICS } from "./data/clinics";
 import { DOCTORS, isVisibleSeed, type DoctorSeed } from "./data/doctors";
@@ -51,31 +52,14 @@ export async function seedDemo(db: DB, now = new Date()) {
   const today = dayInZone(now, IST);
   const daysAgo = (n: number, time = "11:00") => zonedTimeToUtc(addDays(today, -n), time, IST);
 
-  /* ------------------------------------------------------------ reference */
-  await db.insert(s.countries).values(
-    COUNTRIES.map((c) => ({ ...c, consentText: null })),
-  );
+  /* ------------------------------------------------- reference and specialties */
   const asOf = today;
-  await db.insert(s.exchangeRates).values(
-    Object.entries(DEMO_FX)
-      .filter(([q]) => q !== "INR")
-      .map(([quote, rate]) => ({ base: "INR", quote, rate, asOf, source: "demo" })),
-  );
-  await db.insert(s.settings).values([
-    { key: "refund_policy", value: { doctorNoShowMinutes: 10, patientCancelFullRefundHours: 4, patientCancelPartialRefundPercent: 50, rescheduleFreeHours: 2 } },
-    { key: "platform_fee", value: { inrMinor: PLATFORM_FEE, gstRate: 0.18 } },
-    { key: "consent_versions", value: { terms: "1.0", privacy: "1.0", telemedicine: "1.0" } },
-  ]);
-
-  /* ---------------------------------------------------------- specialties */
-  const specIds: Record<string, string> = {};
+  await ensureReferenceData(db, asOf);
+  const specIds = await specialtyIds(db);
   for (const sp of SPECIALTIES) {
-    const { reviewer: _r, ...rest } = sp;
     // "Starting at": the lowest online fee among the specialty's visible doctors.
     const fees = DOCTORS.filter((d) => d.specialty === sp.slug && isVisibleSeed(d)).flatMap((d) => [d.feesInr.video, d.feesInr.audio, d.feesInr.chat].filter((f): f is number => f !== undefined));
-    const startingFeeMinor = fees.length ? Math.min(...fees) * 100 : 0;
-    const [row] = await db.insert(s.specialties).values({ ...rest, startingFeeMinor }).returning({ id: s.specialties.id });
-    specIds[sp.slug] = row!.id;
+    await setStartingFee(db, sp.slug, fees.length ? Math.min(...fees) * 100 : 0);
   }
 
   /* ---------------------------------------------------------------- staff */
@@ -432,7 +416,7 @@ export async function seedDemo(db: DB, now = new Date()) {
         paymentMode: o.paymentMode ?? "online",
         policySnapshot: {
           refund: "Full refund if the doctor does not join within 10 minutes, or if you cancel 4+ hours before. 50% refund for later cancellations.",
-          reschedule: "Free reschedule up to 2 hours before.",
+          reschedule: "You can change the time up to 2 hours before.",
           consultMinutes: minutes,
         },
         patientJoinedAt: ended ? addMinutes(o.startAt, -3) : null,

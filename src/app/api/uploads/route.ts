@@ -3,7 +3,7 @@ import { getDb } from "@/db";
 import { documents } from "@/db/schema";
 import { getSession } from "@/server/auth/session";
 import { canUpload, type DocCategory } from "@/server/documents";
-import { ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_BYTES, saveFile, sniffMime } from "@/lib/storage";
+import { ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, saveFile, sniffMime } from "@/lib/storage";
 import { audit } from "@/server/audit";
 
 /** Upload a report, scan, photo or certificate. Stored encrypted. */
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "No file received." }, { status: 400 });
-  if (file.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "This file is larger than 15 MB. Please upload a smaller file or a photo of each page." }, { status: 413 });
+  if (file.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: `This file is larger than ${MAX_UPLOAD_MB} MB. Please upload a smaller file or a photo of each page.` }, { status: 413 });
   const buf = Buffer.from(await file.arrayBuffer());
   const mime = sniffMime(buf, file.type);
   if (!mime || !ALLOWED_UPLOAD_TYPES[mime]) return NextResponse.json({ error: "Please upload a PDF or a photo (JPG, PNG, WebP or HEIC)." }, { status: 415 });

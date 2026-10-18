@@ -9,7 +9,7 @@ import { audit } from "./audit";
 export type DocCategory = (typeof documents.$inferInsert)["category"];
 
 const PATIENT_CATEGORIES: DocCategory[] = ["report", "scan", "photo", "prescription", "discharge", "other", "recording"];
-const DOCTOR_CATEGORIES: DocCategory[] = ["registration_certificate", "degree_certificate", "government_id", "selfie", "signature"];
+const DOCTOR_CATEGORIES: DocCategory[] = ["registration_certificate", "degree_certificate", "government_id", "selfie", "signature", "photo"];
 
 /** Decide whether this user may attach a file to the given owner. */
 export async function canUpload(db: Executor, user: SessionUser, target: { patientId?: string | null; appointmentId?: string | null; caseId?: string | null; category: DocCategory; forDoctor?: boolean }) {

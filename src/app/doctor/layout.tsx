@@ -20,7 +20,7 @@ export default async function DoctorLayout({ children }: { children: React.React
           { href: "/doctor/earnings", label: t("Earnings"), icon: "coins" },
           { href: "/doctor/reviews", label: t("Reviews"), icon: "star" },
           { href: "/doctor/profile", label: t("Profile and fees"), icon: "user" },
-          { href: "/doctor/licences", label: t("Licences"), icon: "badge" },
+          { href: "/doctor/licences", label: t("Registration"), icon: "badge" },
         ]
       : [
           { href: "/doctor/onboarding", label: t("Get verified"), icon: "badge" },

@@ -4,6 +4,7 @@ import { connectionUrl, getDb, rows } from "@/db";
 import { env } from "@/config/env";
 import { databaseUrl, setupProblems } from "@/lib/setup-check";
 import { statusPage, type StatusRow } from "@/lib/setup-page";
+import { adminEmails } from "@/server/auth/admin-emails";
 
 export const dynamic = "force-dynamic";
 // The first request after a deploy may create the tables and load demo data.
@@ -107,6 +108,19 @@ export async function GET() {
                   steps: ["Open Vercel → your project → Logs and look for lines starting with [db].", "Then redeploy."],
                 }
               : { label: "Accounts", state: "info", detail: seedingOff ? "No accounts yet (loading demo data is turned off)." : "No accounts yet." },
+        );
+        const [admin] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from users where role = 'super_admin') as found`));
+        rowsOut.push(
+          admin?.found
+            ? { label: "Admin account", state: "ok", detail: "An admin account exists." }
+            : adminEmails().length
+              ? { label: "Admin account", state: "info", detail: "Not yet. Log in with your admin email (the one in ADMIN_EMAILS) and the account becomes the admin." }
+              : {
+                  label: "Admin account",
+                  state: "problem",
+                  detail: "No admin yet.",
+                  steps: ["In Vercel → Settings → Environment Variables, add ADMIN_EMAILS with your email address, then redeploy.", "Then log in with that email (or with Google using that address)."],
+                },
         );
         const [job] = rows<{ found: boolean }>(await conn.execute(sql`select exists (select 1 from settings where key = 'job:hourly') as found`));
         rowsOut.push({

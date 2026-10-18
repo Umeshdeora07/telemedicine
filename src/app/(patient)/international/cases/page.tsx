@@ -12,7 +12,7 @@ export default async function MyCases() {
   const cases = await listCasesForPatientUser(ctx.user!.id);
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader title={ctx.t("My treatment plans")} description={ctx.t("Follow your treatment in India in one place: your plan and cost estimate, visa letter, travel and follow up.")} actions={<ButtonLink href="/international/new">{ctx.t("Get a free treatment plan")}</ButtonLink>} />
+      <PageHeader title={ctx.t("My treatment plans")} description={ctx.t("Follow your treatment in India in one place: your plan and cost estimate, visa letter, travel and follow up.")} actions={<ButtonLink href="/international/new">{ctx.t("Get a treatment plan")}</ButtonLink>} />
       <CaseList cases={cases} base="/international/cases" ctx={ctx} />
     </div>
   );

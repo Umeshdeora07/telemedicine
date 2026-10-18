@@ -57,23 +57,40 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const nextQuery = sp.next ? `?next=${encodeURIComponent(sp.next)}` : "";
   const google = oauthConfigured("google");
   const apple = oauthConfigured("apple");
+  // Codes go out by text message or email only when that service is connected (demo mode shows them on screen).
+  const methods = [
+    ...(env.demoMode || (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) ? (["phone"] as const) : []),
+    ...(env.demoMode || (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) ? (["email"] as const) : []),
+  ];
   return (
     <div className="mx-auto max-w-md space-y-6">
       <Card className="space-y-6 p-6 sm:p-8">
         <div className="space-y-2">
           <h1 className="text-2xl font-extrabold sm:text-3xl">{t("Log in or create an account")}</h1>
-          <p className="text-fg-muted">{t("Use your mobile number or email. We will send you a one time code, so you do not need a password.")}</p>
+          <p className="text-fg-muted">
+            {methods.length === 2
+              ? t("Use your mobile number or email. We will send you a one time code, so you do not need a password.")
+              : methods[0] === "email"
+                ? t("Use your email. We will send you a one time code, so you do not need a password.")
+                : methods[0] === "phone"
+                  ? t("Use your mobile number. We will send you a one time code, so you do not need a password.")
+                  : google || apple
+                    ? t("Continue with your Google or Apple account. You do not need a password.")
+                    : t("Logging in is not available yet. Please contact us if you need help.")}
+          </p>
         </div>
         {sp.reason === "idle" ? <Alert tone="info">{t("You were logged out after a period of inactivity, to keep your information safe.")}</Alert> : null}
         {sp.error && errors[sp.error] ? <Alert tone="danger">{errors[sp.error]}</Alert> : null}
-        <LoginForm next={sp.next} defaultDial={defaultDial} />
+        {methods.length ? <LoginForm next={sp.next} defaultDial={defaultDial} methods={[...methods]} /> : null}
         {google || apple ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm text-fg-muted" aria-hidden>
-              <span className="h-px flex-1 bg-line" />
-              {t("or")}
-              <span className="h-px flex-1 bg-line" />
-            </div>
+            {methods.length ? (
+              <div className="flex items-center gap-3 text-sm text-fg-muted" aria-hidden>
+                <span className="h-px flex-1 bg-line" />
+                {t("or")}
+                <span className="h-px flex-1 bg-line" />
+              </div>
+            ) : null}
             {google ? (
               <a href={`/api/auth/oauth/google${nextQuery}`} className={buttonClass("outline", "lg", "w-full")}>
                 {t("Continue with Google")}

@@ -56,7 +56,7 @@ ${operator} We run a platform that connects patients anywhere in the world with 
 - Consultations are not recorded unless both you and the doctor agree during the consultation.
 
 ## Treatment in India
-- We review your reports with a specialist and send you a written treatment plan and cost estimate. This review is free and you are under no obligation.
+- We review your reports with a specialist and send you a written treatment plan and cost estimate. You are under no obligation.
 - A cost estimate is a guide, not a final bill. The hospital bills in Indian rupees, and the final cost depends on your condition and the treatment you receive.
 - We help you choose a hospital that suits your treatment and budget. You can check its accreditation, such as NABH or JCI, yourself before you decide. The hospital is responsible for your treatment.
 - We can arrange a medical visa invitation letter, airport pickup, a place to stay, an interpreter and online follow up after you return home. The decision to grant a visa rests with the Government of India.
@@ -138,9 +138,9 @@ You can withdraw this consent at any time by ending the consultation.`,
 If your doctor does not join within 10 minutes of the start time, the consultation is cancelled and you get a **full refund automatically**. You can book another doctor straight away.
 
 ## If you cancel
-- If you cancel before the free cancellation time shown when you book, you get a full refund.
+- If you cancel before the cancellation deadline shown when you book, you get a full refund.
 - If you cancel after that time, you get a partial refund, as shown when you book.
-- You can change the time for free until the time shown when you book.
+- You can change the time until the deadline shown when you book.
 
 ## If something goes wrong
 If the call fails because of a problem on our side, or the doctor ends the consultation early without good reason, contact us and we will refund you or book you again.
@@ -149,7 +149,7 @@ If the call fails because of a problem on our side, or the doctor ends the consu
 Refunds go back to the same card, UPI or bank account, usually within 5 to 7 working days. Clinic visits paid at the clinic are refunded at the clinic.
 
 ## Treatment in India
-The review of your reports and the treatment plan are free. If you accept a plan and pay a deposit, the deposit and any refund of it follow the terms shown in your treatment plan before you pay.
+If you accept a plan and pay a deposit, the deposit and any refund of it follow the terms shown in your treatment plan before you pay.
 
 ## Not refundable
 Consultations that took place as booked.`,

@@ -43,7 +43,7 @@ export const SPECIALTIES: SpecialtySeed[] = [
       },
       {
         q: "I have been advised a knee or hip replacement. Can I have it done in India?",
-        a: "Yes. Send us your reports and a specialist will review them free of charge, usually within 2 working days. You will receive a written treatment plan and a cost estimate in your currency, and our team can help with the medical visa, travel and stay.",
+        a: "Yes. Send us your reports and a specialist will review them, usually within 2 working days. You will receive a written treatment plan and a cost estimate in your currency, and our team can help with the medical visa, travel and stay.",
       },
     ],
     featured: true,

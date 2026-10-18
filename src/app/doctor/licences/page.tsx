@@ -10,7 +10,7 @@ import { Alert } from "@/components/ui/alert";
 import { LicenceForm } from "@/components/doctor/onboarding-forms";
 import { humanize } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Licences" };
+export const metadata: Metadata = { title: "Registration" };
 
 const TONE = { pending: "warning", verified: "success", rejected: "danger", expired: "danger", suspended: "danger" } as const;
 
@@ -23,7 +23,7 @@ export default async function DoctorLicences() {
   return (
     <div className="max-w-3xl space-y-6">
       <PageHeader
-        title={t("Licences")}
+        title={t("Registration")}
         description={t("Patients can book you only while your Indian registration is verified and valid. We remind you 60 and 15 days before it expires, and hide your profile on the day it expires.")}
       />
       {d.reverifyDueAt ? <Alert tone="info">{t("Next yearly registration check: {date}", { date: fmt.date(d.reverifyDueAt) })}</Alert> : null}
@@ -49,7 +49,7 @@ export default async function DoctorLicences() {
       </ul>
       <section className="card space-y-4 p-5" aria-labelledby="add">
         <h2 id="add" className="text-xl font-bold">{t("Add or renew a licence")}</h2>
-        <LicenceForm countries={countries.map((c) => ({ code: c.code, name: c.name, licenceScope: c.licenceScope, regions: c.regions }))} />
+        <LicenceForm />
       </section>
     </div>
   );

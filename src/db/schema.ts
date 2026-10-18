@@ -9,6 +9,7 @@
 import {
   bigserial,
   boolean,
+  customType,
   date,
   doublePrecision,
   index,
@@ -247,6 +248,21 @@ export const settings = pgTable("settings", {
   key: text().primaryKey(),
   value: jsonb().notNull(),
   updatedAt: updatedAt(),
+});
+
+const bytea = customType<{ data: Buffer; driverData: Buffer | Uint8Array }>({
+  dataType: () => "bytea",
+  fromDriver: (v) => Buffer.from(v),
+});
+
+/**
+ * Uploaded files (already encrypted) on hosts without a lasting disk, such as
+ * Vercel. See src/lib/storage.ts.
+ */
+export const storedFiles = pgTable("stored_files", {
+  key: text().primaryKey(),
+  data: bytea().notNull(),
+  createdAt: createdAt(),
 });
 
 /* ---------------------------------------------------------- catalogue */

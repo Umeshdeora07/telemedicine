@@ -110,9 +110,9 @@ export function setupProblems(): SetupProblem[] {
       id: "no-sign-in",
       title: "Nobody can log in yet",
       steps: [
+        "The easiest way is Google sign in (free): see README, section \"Log in with Google\". It needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+        "Or connect an email service (Resend: RESEND_API_KEY and EMAIL_FROM) or a text message service (Twilio) so login codes can be sent.",
         settingsPlace,
-        "For a demo with sample patients and doctors, add DEMO_MODE with the value true.",
-        "For real use instead, connect an SMS service (Twilio) or an email service (Resend) so login codes can be sent, or Google or Apple sign-in.",
         redeploy,
       ],
     });

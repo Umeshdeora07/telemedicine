@@ -27,7 +27,7 @@ export default async function DoctorMessages({ searchParams }: { searchParams: P
     : [];
   return (
     <div className="space-y-6">
-      <PageHeader title={t("Follow up messages")} description={t("Patients can message you free for {n} days after a consult. Reply within {h} hours where you can; ask them to book a consult if a new problem needs assessment.", { n: d.followUpChatDays, h: Math.round(d.chatResponseMinutes / 60) || 1 })} />
+      <PageHeader title={t("Follow up messages")} description={t("Patients can message you for {n} days after a consult. Reply within {h} hours where you can; ask them to book a consult if a new problem needs assessment.", { n: d.followUpChatDays, h: Math.round(d.chatResponseMinutes / 60) || 1 })} />
       {chats.length ? (
         <div className="grid gap-4 lg:grid-cols-[20rem_1fr]">
           <ul className={cn("card divide-y divide-line self-start", current && "hidden lg:block")} aria-label={t("Open chats")}>

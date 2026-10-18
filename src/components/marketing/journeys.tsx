@@ -12,7 +12,7 @@ export function treatmentSteps(t: T): Step[] {
       text: t("Tell us about the health problem and upload your recent reports, scans and current prescriptions."),
     },
     {
-      title: t("Get your free treatment plan"),
+      title: t("Get your treatment plan"),
       text: t("A specialist reviews your reports, usually within 2 working days. You receive a written treatment plan and a cost estimate in your currency."),
     },
     {

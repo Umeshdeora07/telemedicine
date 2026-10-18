@@ -32,6 +32,28 @@ export default async function VerifyDoctor({ params }: { params: Promise<{ id: s
       {r.d.lastVerifiedAt ? <p className="text-fg-muted">{r.d.reverifyDueAt ? t("Last verified {date}. Next check due {due}.", { date: fmt.date(r.d.lastVerifiedAt), due: fmt.date(r.d.reverifyDueAt) }) : t("Last verified {date}.", { date: fmt.date(r.d.lastVerifiedAt) })}</p> : null}
 
       <section className="card space-y-3 p-5">
+        <h2 className="text-lg font-bold">{t("What patients will see")}</h2>
+        {r.missing.length ? <p className="rounded-xl bg-warning-soft p-3 text-sm text-warning">{t("Still needed: {items}.", { items: r.missing.join(", ") })}</p> : null}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          {r.d.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={r.d.photoUrl} alt={t("Profile photo")} width={120} height={120} className="size-30 shrink-0 rounded-2xl object-cover" />
+          ) : (
+            <Badge tone="danger">{t("No profile photo")}</Badge>
+          )}
+          <div className="min-w-0 space-y-2">
+            {r.d.headline ? <p className="font-semibold text-heading">{r.d.headline}</p> : null}
+            <p className="whitespace-pre-line text-fg-muted">{r.d.about || t("No profile text yet.")}</p>
+            <p className="text-sm"><strong>{t("Languages")}:</strong> {r.d.languages.join(", ") || t("None")}</p>
+            <p className="text-sm">
+              <strong>{t("Fees")}:</strong>{" "}
+              {r.fees.length ? r.fees.map((f) => `${t(humanize(f.mode))} ${fmt.money(f.amountMinor, f.currency)}`).join(", ") : t("None")}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="card space-y-3 p-5">
         <h2 className="text-lg font-bold">{t("Identity")}</h2>
         <div className="flex flex-wrap gap-4">
           <div><p className="text-sm text-fg-muted">{t("Government ID")}</p>{docsOf("government_id").map(docLink)}{!docsOf("government_id").length ? <Badge tone="danger">{t("Missing")}</Badge> : null}</div>
@@ -49,7 +71,7 @@ export default async function VerifyDoctor({ params }: { params: Promise<{ id: s
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-bold">{t("Licences")}</h2>
+        <h2 className="text-lg font-bold">{t("Registration")}</h2>
         {r.lic.map((l) => (
           <div key={l.id} className="card space-y-3 p-5">
             <div className="flex flex-wrap items-center gap-2">

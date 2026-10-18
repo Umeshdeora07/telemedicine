@@ -50,13 +50,31 @@ export async function loadOrRefreshDemoData(db: DB, now = new Date()) {
   if (hasData && !marker) return "not a demo database";
   if (hasData) {
     console.log(`[db] Demo data is from ${marker!.value}: reloading it as ${current}…`);
-    // Only this app's own tables, never anything else sharing the database.
-    const tables = Object.values(schema)
-      .filter((t) => is(t, PgTable))
-      .map((t) => `"${getTableName(t as PgTable).replace(/"/g, '""')}"`);
-    await db.execute(sql.raw(`truncate table ${tables.join(", ")} restart identity cascade`));
+    await wipeAppTables(db);
   }
   await ensureDemoData(db);
   await db.execute(sql`insert into settings (key, value) values (${LOADED_ON}, to_jsonb(${current}::text)) on conflict (key) do update set value = excluded.value, updated_at = now()`);
   return hasData ? "reloaded" : "loaded";
+}
+
+/** Empty this app's own tables, never anything else sharing the database. */
+async function wipeAppTables(db: DB) {
+  const tables = Object.values(schema)
+    .filter((t) => is(t, PgTable))
+    .map((t) => `"${getTableName(t as PgTable).replace(/"/g, '""')}"`);
+  await db.execute(sql.raw(`truncate table ${tables.join(", ")} restart identity cascade`));
+}
+
+/**
+ * When demo mode is switched off, the sample doctors, patients and bookings
+ * that demo mode loaded are removed, so the live site starts empty. Only a
+ * database this code loaded as a demo (it has the marker) is wiped. Call
+ * inside a transaction, before ensureReferenceData.
+ */
+export async function removeDemoData(db: DB) {
+  const [marker] = rows<{ value: string }>(await db.execute(sql`select value #>> '{}' as value from settings where key = ${LOADED_ON}`));
+  if (!marker) return false;
+  console.log("[db] Demo mode is off: removing the demo data so the site starts empty…");
+  await wipeAppTables(db);
+  return true;
 }

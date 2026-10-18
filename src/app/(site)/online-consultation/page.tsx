@@ -23,7 +23,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Photo } from "@/components/ui/photo";
 import { CheckList, CtaBand, FaqList, FeatureGrid, SectionHeading, StepList } from "@/components/marketing/blocks";
 import { ContactButtons } from "@/components/marketing/contact";
-import { siteSpecialties } from "@/components/marketing/specialty-content";
+import { siteSpecialties, startingPrice } from "@/components/marketing/specialty-content";
 import { SpecialtyTiles } from "@/components/marketing/specialty-tiles";
 
 const OUTSIDE_INDIA_NOTE =
@@ -43,6 +43,8 @@ export default async function OnlineConsultationPage() {
   const ctx = await getViewContext();
   const { t } = ctx;
   const specs = siteSpecialties(await getSpecialties());
+  // Starting prices appear only once doctors with fees are listed.
+  const hasPrices = specs.some((s) => startingPrice(ctx, s.startingFeeMinor));
 
   const faqs = [
     {
@@ -59,7 +61,9 @@ export default async function OnlineConsultationPage() {
     },
     {
       q: t("How much does a consultation cost?"),
-      a: t("Each doctor sets their own fee. The starting price for each specialty is shown on this page, and you see the full price in your currency before you pay."),
+      a: hasPrices
+        ? t("Each doctor sets their own fee. The starting price for each specialty is shown on this page, and you see the full price in your currency before you pay.")
+        : t("Each doctor sets their own fee, and you see the full price in your currency before you pay."),
     },
     {
       q: t("How do I pay?"),
@@ -71,7 +75,7 @@ export default async function OnlineConsultationPage() {
     },
     {
       q: t("Can I cancel or change my booking?"),
-      a: t("Yes. You can change the time or cancel from your account. If you cancel before the free cancellation time shown when you book, you get a full refund."),
+      a: t("Yes. You can change the time or cancel from your account. If you cancel before the cancellation deadline shown when you book, you get a full refund."),
     },
     {
       q: t("Is the video call private?"),
@@ -134,7 +138,11 @@ export default async function OnlineConsultationPage() {
         <SectionHeading
           id="specs"
           title={t("Choose a specialty")}
-          description={t("Each doctor sets their own fee. These are the starting prices, shown in your currency.")}
+          description={
+            hasPrices
+              ? t("Each doctor sets their own fee. These are the starting prices, shown in your currency.")
+              : t("Each doctor sets their own fee, and you see the full price in your currency before you pay.")
+          }
         />
         <SpecialtyTiles specs={specs} ctx={ctx} />
       </section>
@@ -163,7 +171,7 @@ export default async function OnlineConsultationPage() {
               {
                 Icon: FileText,
                 title: t("Get your prescription and follow up"),
-                text: t("Your doctor sends a digital prescription or a written treatment plan. You can then message your doctor free for a few days with any questions."),
+                text: t("Your doctor sends a digital prescription or a written treatment plan. A follow up chat with your doctor for a few days is included, for any questions."),
               },
             ]}
           />
@@ -180,7 +188,7 @@ export default async function OnlineConsultationPage() {
             items={[
               t("You see the full price in your currency before you pay. Nothing is added later."),
               t("If your doctor does not join within 10 minutes of the start time, you get a full refund."),
-              t("If you cancel before the free cancellation time shown when you book, you get a full refund."),
+              t("If you cancel before the cancellation deadline shown when you book, you get a full refund."),
               t("You receive an invoice for every payment in your account."),
             ]}
           />

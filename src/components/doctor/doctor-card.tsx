@@ -90,7 +90,7 @@ export async function DoctorCard({ d, ctx, qualifications }: { d: DoctorListItem
                     <strong className="font-semibold">{today ? fmt.time(d.nextOnline) : fmt.dateTime(d.nextOnline)}</strong>
                   </span>
                 ) : (
-                  <span className="text-fg-muted">{t("No free times at the moment")}</span>
+                  <span className="text-fg-muted">{t("No available times at the moment")}</span>
                 )}
               </li>
             </ul>
