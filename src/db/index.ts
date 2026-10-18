@@ -83,6 +83,10 @@ function lockRunner(client: Sql): LockRunner {
   return async (key, wait, fn) => {
     let out: Awaited<ReturnType<typeof fn>> | null = null;
     await client.begin(async (tx) => {
+      // If this process is frozen or killed mid way (serverless functions are),
+      // the database ends the transaction after 2 idle minutes and frees the
+      // lock; and nobody waits more than 90 seconds for a lock someone holds.
+      await tx`select set_config('idle_in_transaction_session_timeout', '120s', true), set_config('lock_timeout', '90s', true)`;
       if (wait) await tx`select pg_advisory_xact_lock(${key})`;
       else {
         const [row] = await tx<{ ok: boolean }[]>`select pg_try_advisory_xact_lock(${key}) as ok`;

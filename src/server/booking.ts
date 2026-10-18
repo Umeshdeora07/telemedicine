@@ -105,7 +105,7 @@ export async function expireStaleDrafts(db: Executor, now = new Date()) {
         eq(appointments.status, "pending_payment"),
         lt(appointments.createdAt, addMinutes(now, -HOLD_MINUTES)),
         // A direct payment the patient says they made waits for the doctor until the consult time.
-        sql`not (${appointments.startAt} > ${now} and exists (select 1 from ${payments} p where p.appointment_id = ${appointments.id} and p.status = 'created' and p.submitted_at is not null))`,
+        sql`not (${appointments.startAt} > ${now.toISOString()}::timestamptz and exists (select 1 from ${payments} p where p.appointment_id = ${appointments.id} and p.status = 'created' and p.submitted_at is not null))`,
       ),
     )
     .returning({ id: appointments.id });
