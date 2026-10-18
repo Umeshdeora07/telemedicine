@@ -7,7 +7,7 @@ import { getT, getLocale } from "@/i18n/server";
 import { getUser, requireSession } from "@/server/auth/session";
 import { createCallback, createComplaint } from "@/server/support";
 import { getDb } from "@/db";
-import { appointments, doctors, specialties, users } from "@/db/schema";
+import { appointments, consents, doctors, specialties, users } from "@/db/schema";
 import { audit } from "@/server/audit";
 import { slugify } from "@/lib/utils";
 
@@ -50,8 +50,14 @@ export async function applyAsDoctorAction(_p: SupportState, f: FormData): Promis
   const [spec] = await db.select().from(specialties).where(eq(specialties.slug, v.data.specialty));
   if (!spec) return { error: t("Choose a specialty.") };
   const base = slugify(v.data.fullName.startsWith("Dr") ? v.data.fullName : `Dr ${v.data.fullName}`);
-  await db.insert(doctors).values({ userId: user.id, slug: `${base}-${user.id.slice(0, 6)}`, fullName: v.data.fullName.startsWith("Dr") ? v.data.fullName : `Dr. ${v.data.fullName}`, gender: v.data.gender === "other" ? "female" : v.data.gender, specialtyId: spec.id, verificationStatus: "draft", avatarSeed: Math.floor(Math.random() * 1000) });
-  await db.update(users).set({ role: "doctor", name: v.data.fullName, onboarded: true }).where(eq(users.id, user.id));
+  await db.transaction(async (tx) => {
+    await tx.insert(doctors).values({ userId: user.id, slug: `${base}-${user.id.slice(0, 6)}`, fullName: v.data.fullName.startsWith("Dr") ? v.data.fullName : `Dr. ${v.data.fullName}`, gender: v.data.gender === "other" ? "female" : v.data.gender, specialtyId: spec.id, verificationStatus: "draft", avatarSeed: Math.floor(Math.random() * 1000) });
+    await tx.update(users).set({ role: "doctor", name: v.data.fullName, onboarded: true }).where(eq(users.id, user.id));
+    // What they ticked: the Terms of use, the Privacy policy and the checks on their documents.
+    await tx.insert(consents).values(
+      (["terms", "privacy", "doctor_verification"] as const).map((type) => ({ userId: user.id, type, version: "1.0", granted: true, method: "checkbox" })),
+    );
+  });
   await audit({ actor: { id: user.id, role: "doctor" }, action: "doctor.apply", entityType: "user", entityId: user.id });
   // Doctors must set up two-step sign-in before they see the portal.
   redirect("/mfa?next=/doctor/onboarding");

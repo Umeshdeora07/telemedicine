@@ -29,6 +29,13 @@ const dict: Dict = {
   "The doctor chooses": "डॉक्टर ख़ुद चुनेंगे",
   "Link for the doctor": "डॉक्टर के लिए लिंक",
   "No doctors have joined yet. Send a doctor the link above.": "अभी तक कोई डॉक्टर नहीं जुड़ा है। किसी डॉक्टर को ऊपर वाला लिंक भेजें।",
+  "I agree to verification of my registration, degrees and ID, to follow the Telemedicine Practice Guidelines, 2020, and to the Terms of use and Privacy policy.":
+    "मैं अपने पंजीकरण, डिग्रियों और पहचान पत्र के सत्यापन, टेलीमेडिसिन प्रैक्टिस दिशानिर्देश, 2020 का पालन करने, और उपयोग की शर्तों व गोपनीयता नीति से सहमत हूँ।",
+  "You are logged in with a staff account": "आप स्टाफ़ खाते से लॉग इन हैं",
+  "A doctor needs their own account. To see what the doctor sees, open this link in a private window or on another phone, or log out first.":
+    "डॉक्टर को अपना अलग खाता चाहिए। डॉक्टर को जो दिखता है वह देखने के लिए यह लिंक प्राइवेट विंडो या दूसरे फ़ोन में खोलें, या पहले लॉग आउट करें।",
+  "To try it yourself, open it in a private window, because you are logged in as the admin here.":
+    "ख़ुद आज़माने के लिए इसे प्राइवेट विंडो में खोलें, क्योंकि यहाँ आप एडमिन के रूप में लॉग इन हैं।",
 };
 
 export default dict;

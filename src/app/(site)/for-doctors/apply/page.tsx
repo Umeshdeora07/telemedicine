@@ -4,6 +4,7 @@ import { getSession } from "@/server/auth/session";
 import { getI18n } from "@/i18n/server";
 import { getSpecialties } from "@/server/queries/reference";
 import { PageHeader } from "@/components/ui/page-header";
+import { Alert } from "@/components/ui/alert";
 import { DoctorApplyForm } from "@/components/support/support-forms";
 import { JoinRequirements } from "@/components/doctor/join-requirements";
 
@@ -24,6 +25,16 @@ export default async function ApplyAsDoctor({ searchParams }: { searchParams: Pr
   }
   if (session.user.role === "doctor") redirect("/doctor/onboarding");
   const { t } = await getI18n();
+  if (session.user.role !== "patient") {
+    return (
+      <div className="container-page max-w-xl space-y-6 py-8">
+        <PageHeader title={t("Apply as a doctor")} />
+        <Alert tone="info" title={t("You are logged in with a staff account")}>
+          {t("A doctor needs their own account. To see what the doctor sees, open this link in a private window or on another phone, or log out first.")}
+        </Alert>
+      </div>
+    );
+  }
   const specs = await getSpecialties();
   return (
     <div className="container-page max-w-xl space-y-6 py-8">

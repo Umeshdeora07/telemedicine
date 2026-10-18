@@ -141,6 +141,7 @@ export function DoctorJoinLink({ baseUrl, specialties }: { baseUrl: string; spec
           {copied ? t("Copied") : t("Copy link")}
         </Button>
       </div>
+      <p className="text-sm text-fg-muted">{t("To try it yourself, open it in a private window, because you are logged in as the admin here.")}</p>
     </div>
   );
 }

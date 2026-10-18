@@ -5,6 +5,7 @@ import { enabledLocales } from "@/i18n/config";
 import { getSession } from "@/server/auth/session";
 import { homeFor, isStaff, ROLE_LABELS, type Role } from "@/server/auth/roles";
 import { getPrefs } from "@/lib/prefs";
+import { maskPhone } from "@/lib/utils";
 import { getDb } from "@/db";
 import { unreadCount } from "@/server/notify";
 import { LanguageToggle } from "./language-toggle";
@@ -66,7 +67,7 @@ export async function SiteHeader({ minimal = false }: { minimal?: boolean }) {
           <LanguageToggle locales={locales} />
           <ThemeToggle initial={theme} className={minimal ? undefined : "hidden sm:inline-grid"} />
           {user ? (
-            <UserMenu name={user.name || t("You")} role={t(ROLE_LABELS[user.role as Role])} links={userLinks} unread={unread} />
+            <UserMenu name={user.name || user.email || maskPhone(user.phone) || t("You")} avatarName={user.name} role={t(ROLE_LABELS[user.role as Role])} links={userLinks} unread={unread} />
           ) : minimal ? null : (
             <>
               <ButtonLink href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">

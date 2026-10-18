@@ -1157,7 +1157,8 @@ export const consents = pgTable(
     patientId: uuid(),
     appointmentId: uuid(),
     // terms | privacy | telemedicine | records_sharing | whatsapp | marketing |
-    // research | recording | caregiver_booking | abha | international_data_transfer
+    // research | recording | caregiver_booking | abha | international_data_transfer |
+    // doctor_verification (a doctor agrees to checks on their registration and documents)
     type: text().notNull(),
     version: text().notNull(),
     granted: boolean().notNull(),

@@ -88,7 +88,23 @@ export function DoctorApplyForm({ specialties, name, specialty }: { specialties:
       <Field label={t("Full name as registered")} htmlFor="a-n" required className="sm:col-span-2"><Input id="a-n" name="fullName" defaultValue={name} /></Field>
       <Field label={t("Gender")} htmlFor="a-g" required><Select id="a-g" name="gender"><option value="female">{t("Female")}</option><option value="male">{t("Male")}</option><option value="other">{t("Other")}</option></Select></Field>
       <Field label={t("Main specialty")} htmlFor="a-s" required><Select id="a-s" name="specialty" defaultValue={specialty}>{specialties.map((x) => <option key={x.slug} value={x.slug}>{t(x.name)}</option>)}</Select></Field>
-      <Checkbox name="agree" required className="sm:col-span-2" label={t("I agree to verification of my registration, degrees and ID, and to follow the Telemedicine Practice Guidelines, 2020.")} />
+      <Checkbox
+        name="agree"
+        required
+        className="sm:col-span-2"
+        label={t("I agree to verification of my registration, degrees and ID, to follow the Telemedicine Practice Guidelines, 2020, and to the Terms of use and Privacy policy.")}
+        hint={
+          <>
+            <Link href="/legal/terms" target="_blank" className="text-primary underline">
+              {t("Terms of use")}
+            </Link>
+            {" · "}
+            <Link href="/legal/privacy" target="_blank" className="text-primary underline">
+              {t("Privacy policy")}
+            </Link>
+          </>
+        }
+      />
       <div className="sm:col-span-2"><SubmitButton>{t("Continue")}</SubmitButton></div>
     </form>
   );

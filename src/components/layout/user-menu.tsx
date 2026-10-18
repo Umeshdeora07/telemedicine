@@ -10,7 +10,8 @@ import { InitialsAvatar } from "@/components/ui/avatar";
 export type UserMenuLink = { href: string; label: string };
 
 /** Notifications bell and the account menu for signed in people. */
-export function UserMenu({ name, role, links, unread }: { name: string; role: string; links: UserMenuLink[]; unread: number }) {
+/** `avatarName`: the person's real name for the initials; empty shows a person icon. */
+export function UserMenu({ name, avatarName, role, links, unread }: { name: string; avatarName?: string; role: string; links: UserMenuLink[]; unread: number }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -58,7 +59,7 @@ export function UserMenu({ name, role, links, unread }: { name: string; role: st
           aria-controls={menuId}
           className="tap relative flex items-center gap-2 rounded-xl px-1.5 hover:bg-surface-2"
         >
-          <InitialsAvatar name={name} size={36} />
+          <InitialsAvatar name={avatarName ?? name} size={36} />
           {unread ? <span className="absolute end-1 top-1 size-2.5 rounded-full bg-accent ring-2 ring-surface sm:hidden" aria-hidden /> : null}
           <span className="sr-only">{t("Account menu for {name}", { name })}</span>
         </button>

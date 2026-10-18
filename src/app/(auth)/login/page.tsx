@@ -15,6 +15,7 @@ import { emailConfigured, passwordLoginEnabled, phoneCodesConfigured } from "@/l
 import { demoLogin } from "@/server/actions/auth";
 import { getSession } from "@/server/auth/session";
 import { homeFor } from "@/server/auth/roles";
+import { safeNext } from "@/server/auth/identity";
 import { LoginForm } from "./login-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,8 +41,11 @@ const TEST_ACCOUNTS = [
   { label: "Aditi Rao", note: "Super admin", email: "admin@caremitra.example" },
 ];
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const sp = await searchParams;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  // A repeated parameter arrives as a list; only single values count.
+  const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
+  const sp = { next: one(raw.next), reason: one(raw.reason), error: one(raw.error), reset: one(raw.reset) };
   const { t } = await getI18n();
   const session = await getSession();
   if (session && !sp.next) redirect(homeFor(session.user.role));
@@ -66,7 +70,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     ...(env.demoMode || emailConfigured() ? (["email"] as const) : []),
   ];
   const passwords = passwordLoginEnabled();
-  const joiningAsDoctor = Boolean(sp.next?.startsWith("/for-doctors/"));
+  const joiningAsDoctor = Boolean(safeNext(sp.next)?.startsWith("/for-doctors/"));
   return (
     <div className="mx-auto max-w-md space-y-6">
       <Card className="space-y-6 p-6 sm:p-8">
