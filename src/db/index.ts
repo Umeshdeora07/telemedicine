@@ -138,10 +138,12 @@ async function init(): Promise<State> {
       // reference data (the four specialties, countries) is added if missing.
       const { loadOrRefreshDemoData, removeDemoData } = await import("./seed/ensure");
       const { ensureReferenceData } = await import("./seed/reference");
+      const { ensureTestAccounts } = await import("./seed/test-accounts");
       await db.transaction(async (tx) => {
         if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") await loadOrRefreshDemoData(tx as unknown as DB);
         else if (!env.demoMode) await removeDemoData(tx as unknown as DB);
         await ensureReferenceData(tx as unknown as DB);
+        if (env.testAccounts) await ensureTestAccounts(tx as unknown as DB);
       });
     }).then(() => undefined);
     return { db, ready, kind: "postgres", close: () => client.end(), lock };
@@ -166,6 +168,7 @@ async function init(): Promise<State> {
     if (env.demoMode && process.env.DEMO_AUTO_SEED !== "false") await ensureDemoData(db);
     else if (!env.demoMode) await removeDemoData(db);
     await ensureReferenceData(db);
+    if (env.testAccounts) await (await import("./seed/test-accounts")).ensureTestAccounts(db);
   })();
   return {
     db,

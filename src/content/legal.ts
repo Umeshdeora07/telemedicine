@@ -76,7 +76,7 @@ We will tell you about important changes to these terms. These terms are governe
   privacy: {
     title: "Privacy policy",
     summary: "What we collect, why, who sees it, and your rights.",
-    updated: "2026-10-18",
+    updated: "2026-10-19",
     body: `## In short
 - We collect what is needed to give you care: your contact details, the patient's health information, and payment records.
 - Your health records are encrypted. Doctors see them only for consultations you book, or when you choose to share them.
@@ -111,7 +111,7 @@ Medical records and prescriptions are kept for as long as the law requires, usua
 Under India's Digital Personal Data Protection Act, 2023, and the GDPR for people in the EU and UK, you can access your data, correct it, erase it, withdraw consent, nominate someone to act for you, and complain. Use Settings, or ${writeToOfficer}. If you are not satisfied, you can complain to the Data Protection Board of India or your local regulator.
 
 ## Security
-Encryption in transit and at rest, strict access controls, two step verification for doctors and coordinators, automatic sign out on shared devices, and a log of who viewed your records.`,
+Encryption in transit and at rest, strict access controls, automatic sign out on shared devices, and a log of who viewed your records.`,
   },
   "telemedicine-consent": {
     title: "Telemedicine consent",

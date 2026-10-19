@@ -89,16 +89,14 @@ describe("setupProblems", () => {
 });
 
 describe("two step verification", () => {
-  it("is needed for doctors and coordinators but not for the super admin, unless ADMIN_TWO_STEP=true", async () => {
+  it("is off for everyone unless TWO_STEP=true, and then only for staff", async () => {
     const { needsTwoStep } = await import("@/server/auth/roles");
-    delete process.env.ADMIN_TWO_STEP;
+    delete process.env.TWO_STEP;
+    for (const role of ["doctor", "care_coordinator", "clinic_coordinator", "super_admin", "patient"]) expect(needsTwoStep(role)).toBe(false);
+    process.env.TWO_STEP = "true";
     expect(needsTwoStep("doctor")).toBe(true);
-    expect(needsTwoStep("care_coordinator")).toBe(true);
-    expect(needsTwoStep("clinic_coordinator")).toBe(true);
-    expect(needsTwoStep("patient")).toBe(false);
-    expect(needsTwoStep("super_admin")).toBe(false);
-    process.env.ADMIN_TWO_STEP = "true";
     expect(needsTwoStep("super_admin")).toBe(true);
-    delete process.env.ADMIN_TWO_STEP;
+    expect(needsTwoStep("patient")).toBe(false);
+    delete process.env.TWO_STEP;
   });
 });

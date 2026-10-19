@@ -5,7 +5,7 @@ import { demoLogin } from "./helpers";
 /**
  * How a new doctor joins: the admin sends a link with the doctor's name and
  * specialty filled in, the doctor creates an account and goes straight to the
- * doctor form (no patient questions), then two step verification.
+ * doctor form (no patient questions), then the doctor checklist.
  */
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
@@ -46,7 +46,7 @@ test("the admin sends a join link and the doctor signs up through it", async ({ 
   await expect(doctor.getByRole("heading", { name: "Keep these ready" })).toBeVisible();
   await doctor.getByLabel(/I agree to verification/).check();
   await doctor.getByRole("button", { name: "Continue", exact: true }).click();
-  await doctor.waitForURL((u) => u.pathname === "/mfa");
+  await doctor.waitForURL((u) => u.pathname === "/doctor/onboarding");
 });
 
 test("the login page points doctors to joining", async ({ page }) => {

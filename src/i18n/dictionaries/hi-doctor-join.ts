@@ -25,6 +25,10 @@ const dict: Dict = {
   "Send the doctor this link, for example by WhatsApp or email. They create their account, set up two step verification and add their registration, degree, ID, photo, fees, times and payment details. Then they appear in the list below, and you verify them before patients can see them.":
     "डॉक्टर को यह लिंक भेजें, जैसे WhatsApp या ईमेल से। वे अपना खाता बनाते हैं, दो चरण वाला सत्यापन सेट करते हैं और अपना पंजीकरण, डिग्री, पहचान पत्र, फ़ोटो, फ़ीस, समय और भुगतान की जानकारी जोड़ते हैं। फिर वे नीचे की सूची में दिखते हैं, और मरीज़ों को दिखने से पहले आप उनका सत्यापन करते हैं।",
   "Doctor's full name": "डॉक्टर का पूरा नाम",
+  "Next you fill in your details and upload your documents. Our team checks them before your profile goes live.":
+    "इसके बाद आप अपनी जानकारी भरते हैं और अपने दस्तावेज़ अपलोड करते हैं। आपकी प्रोफ़ाइल दिखने से पहले हमारी टीम उनकी जाँच करती है।",
+  "Send the doctor this link, for example by WhatsApp or email. They create their account and add their registration, degree, ID, photo, fees, times and payment details. Then they appear in the list below, and you verify them before patients can see them.":
+    "डॉक्टर को यह लिंक भेजें, जैसे WhatsApp या ईमेल से। वे अपना खाता बनाते हैं और अपना पंजीकरण, डिग्री, पहचान पत्र, फ़ोटो, फ़ीस, समय और भुगतान की जानकारी जोड़ते हैं। फिर वे नीचे की सूची में दिखते हैं, और मरीज़ों को दिखने से पहले आप उनका सत्यापन करते हैं।",
   "Dr. Asha Menon": "डॉ. आशा मेनन",
   "The doctor chooses": "डॉक्टर ख़ुद चुनेंगे",
   "Link for the doctor": "डॉक्टर के लिए लिंक",

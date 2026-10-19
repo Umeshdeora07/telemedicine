@@ -25,7 +25,7 @@ export default async function VerificationQueue() {
         <div className="space-y-1">
           <h2 id="add-doctor" className="text-lg font-bold">{t("Add a new doctor")}</h2>
           <p className="text-fg-muted">
-            {t("Send the doctor this link, for example by WhatsApp or email. They create their account, set up two step verification and add their registration, degree, ID, photo, fees, times and payment details. Then they appear in the list below, and you verify them before patients can see them.")}
+            {t("Send the doctor this link, for example by WhatsApp or email. They create their account and add their registration, degree, ID, photo, fees, times and payment details. Then they appear in the list below, and you verify them before patients can see them.")}
           </p>
         </div>
         <DoctorJoinLink baseUrl={env.appUrl} specialties={specs.map((s) => ({ slug: s.slug, name: s.name }))} />

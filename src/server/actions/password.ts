@@ -97,7 +97,7 @@ export async function resetPasswordAction(_prev: ResetState, form: FormData): Pr
   const db = await getDb();
   const res = await redeemResetLink(db, String(form.get("token") ?? ""), String(form.get("password") ?? ""));
   if (!res.ok) return { field: res.field === "password" ? "password" : undefined, error: t(res.error, res.params) };
-  // Logged in straight away (staff still pass two step verification next).
+  // Logged in straight away (staff pass two step verification next when it is on).
   if (res.value.status !== "active") redirect("/login?error=suspended");
   await createSession(res.value.id);
   await audit({ actor: { id: res.value.id, role: res.value.role }, action: "auth.login", entityType: "user", entityId: res.value.id, metadata: { method: "reset_link" } });

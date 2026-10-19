@@ -9,12 +9,11 @@ export function isStaff(role: string) {
 
 /**
  * Staff who must pass two step verification (an authenticator app) after
- * logging in. The site owner's super admin account doesn't, unless
- * ADMIN_TWO_STEP=true; doctors and coordinators always do.
+ * logging in. Off for now, as the owner asked; TWO_STEP=true turns it on for
+ * doctors, coordinators and admins.
  */
 export function needsTwoStep(role: string) {
-  if (role === "super_admin") return (process.env.ADMIN_TWO_STEP ?? "").toLowerCase() === "true";
-  return isStaff(role);
+  return (process.env.TWO_STEP ?? "").toLowerCase() === "true" && isStaff(role);
 }
 
 export function homeFor(role: string) {

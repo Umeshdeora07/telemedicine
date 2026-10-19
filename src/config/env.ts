@@ -15,6 +15,15 @@ export const env = {
     if (process.env.VERCEL_ENV === "production") return false;
     return bool(process.env.DEMO_MODE, process.env.NODE_ENV !== "production");
   },
+  /**
+   * The owner's three test logins (src/db/seed/test-accounts.ts) while the
+   * live site is being tried out. On by default only on the Vercel production
+   * site; TEST_ACCOUNTS=false or true decides elsewhere. Never with demo mode.
+   */
+  get testAccounts() {
+    if (this.demoMode) return false;
+    return bool(process.env.TEST_ACCOUNTS, process.env.VERCEL_ENV === "production");
+  },
   /** Public address. Falls back to the address Vercel, Render or Railway give the service. */
   get appUrl() {
     const host = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.RAILWAY_PUBLIC_DOMAIN;

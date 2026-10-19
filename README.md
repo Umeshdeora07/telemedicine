@@ -220,8 +220,8 @@ like this:
 
 1. A doctor opens **For doctors → Join as a doctor**, logs in and applies in
    one of the four specialties.
-2. They set up two step verification (an authenticator app such as Google
-   Authenticator), then fill in every required detail: qualifications and
+2. They fill in every required detail (and, with `TWO_STEP=true`, first set
+   up an authenticator app such as Google Authenticator): qualifications and
    degree certificate, Indian registration (NMC, a State Medical Council, or
    RCI for psychologists) and its certificate, government ID and selfie,
    profile photo, a few lines about themselves, languages, video fee,
@@ -269,13 +269,19 @@ temporary), so they survive redeploys. Each file can be up to 4 MB there.
 2. **The admin.** The first person to create an account on a site that has
    no admin becomes the admin, once. So right after deploying, open
    `/login`, choose **Create account** and make yours with a strong
-   password. The admin account needs no authenticator app; set
-   `ADMIN_TWO_STEP=true` to require one (doctors and coordinators always
-   use one). To allow only your own address instead,
+   password. Two step verification (an authenticator app) is off for now;
+   set `TWO_STEP=true` to require it for doctors, coordinators and admins. To allow only your own address instead,
    set `ADMIN_EMAILS` (several, separated by commas): then only those
    addresses become admins, when they log in with an email code or Google
    (not with a password, which proves nothing about the address).
 3. Redeploy, open `/status` to check, then log in.
+
+**Test logins.** While you try the live site, it has three test logins (an
+admin, a patient and a doctor in draft), made once on the production site
+together with a fresh start that removed every earlier account. Their
+passwords were given to the owner privately. Change them under Password, or
+suspend the patient and doctor in Admin, Users, when you are done; set
+`TEST_ACCOUNTS=false` so they are never made again.
 
 **Payments go straight to each doctor.** Every doctor adds their own fees
 (consultation fees per call type, plus a list of treatment and other fees)

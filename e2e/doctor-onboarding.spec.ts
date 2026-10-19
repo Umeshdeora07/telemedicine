@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
-import { totpAt } from "../src/lib/totp";
 import { demoLogin } from "./helpers";
 
 /**
@@ -66,20 +65,12 @@ test("a new doctor signs up, gets verified by an admin and then appears on the s
     await page.waitForURL((u) => u.pathname === "/for-doctors/apply");
   }
 
-  // 2. Apply as a dermatologist, then set up two step verification.
+  // 2. Apply as a dermatologist. Two step verification is off (TWO_STEP is not set), so the checklist comes next.
   await page.getByLabel("Full name as registered").fill(name);
   await page.getByLabel("Gender").selectOption("female");
   await page.getByLabel("Main specialty").selectOption("dermatology");
   await page.getByLabel(/I agree to verification of my registration/).check();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.waitForURL((u) => u.pathname === "/mfa");
-
-  await page.getByRole("button", { name: "Set up two step verification" }).click();
-  const secretEl = page.locator("code");
-  await expect(secretEl).toHaveText(/^[A-Z2-7]{16,}$/);
-  const secret = (await secretEl.textContent())!.trim();
-  await page.getByLabel("Authenticator code").fill(totpAt(secret));
-  await page.getByRole("button", { name: "Verify", exact: true }).click();
   await page.waitForURL((u) => u.pathname === "/doctor/onboarding");
 
   // 3. Fill every step of the checklist.

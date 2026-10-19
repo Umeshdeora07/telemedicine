@@ -62,7 +62,7 @@ export async function loadOrRefreshDemoData(db: DB, now = new Date()) {
 }
 
 /** Empty this app's own tables, never anything else sharing the database. */
-async function wipeAppTables(db: DB) {
+export async function wipeAppTables(db: DB) {
   const tables = Object.values(schema)
     .filter((t) => is(t, PgTable))
     .map((t) => `"${getTableName(t as PgTable).replace(/"/g, '""')}"`);

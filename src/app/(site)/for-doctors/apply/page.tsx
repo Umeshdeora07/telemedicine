@@ -38,7 +38,7 @@ export default async function ApplyAsDoctor({ searchParams }: { searchParams: Pr
   const specs = await getSpecialties();
   return (
     <div className="container-page max-w-xl space-y-6 py-8">
-      <PageHeader title={t("Apply as a doctor")} description={t("Next you will set up two step verification with an app on your phone. Then you fill in your details and upload your documents. Our team checks them before your profile goes live.")} />
+      <PageHeader title={t("Apply as a doctor")} description={t("Next you fill in your details and upload your documents. Our team checks them before your profile goes live.")} />
       <div className="card p-5">
         <DoctorApplyForm specialties={specs.map((s) => ({ slug: s.slug, name: s.name }))} name={session.user.name || name} specialty={specs.some((s) => s.slug === specialty) ? specialty : undefined} />
       </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { needsTwoStep } from "@/server/auth/roles";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getRoomAccess } from "@/server/room";
@@ -18,7 +19,7 @@ export default async function ConsultRoomPage({ params }: { params: Promise<{ id
   const session = await getSession();
   if (!access) {
     if (!session) redirect(`/login?next=/consult/${id}`);
-    if (session.user.role === "doctor" && !session.mfaVerified) redirect(`/mfa?next=/consult/${id}`);
+    if (needsTwoStep(session.user.role) && !session.mfaVerified) redirect(`/mfa?next=/consult/${id}`);
     const { t } = await getViewContext();
     return (
       <div className="container-page max-w-lg py-16">

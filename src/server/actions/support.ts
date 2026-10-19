@@ -10,6 +10,7 @@ import { getDb } from "@/db";
 import { appointments, consents, doctors, specialties, users } from "@/db/schema";
 import { audit } from "@/server/audit";
 import { slugify } from "@/lib/utils";
+import { needsTwoStep } from "@/server/auth/roles";
 
 export type SupportState = { ok?: boolean; error?: string; ref?: string; id?: string };
 
@@ -59,6 +60,6 @@ export async function applyAsDoctorAction(_p: SupportState, f: FormData): Promis
     );
   });
   await audit({ actor: { id: user.id, role: "doctor" }, action: "doctor.apply", entityType: "user", entityId: user.id });
-  // Doctors must set up two-step sign-in before they see the portal.
-  redirect("/mfa?next=/doctor/onboarding");
+  // With two step verification on, doctors set it up before they see the portal.
+  redirect(needsTwoStep("doctor") ? "/mfa?next=/doctor/onboarding" : "/doctor/onboarding");
 }
