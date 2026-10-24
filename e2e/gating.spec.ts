@@ -32,12 +32,13 @@ test("the site starts in light mode and remembers dark mode", async ({ page }) =
   await expect(page.locator("html")).toHaveClass(/\bdark\b/);
 });
 
-test("the language switch shows the site in Hindi and back in English", async ({ page }) => {
+test("the site is in English only, with no language switch", async ({ page, context }) => {
+  // Even someone who chose Hindi before sees English.
+  await context.addCookies([{ name: "lang", value: "hi", url: process.env.BASE_URL ?? "http://localhost:3000" }]);
   await page.goto("/");
-  await page.getByRole("button", { name: /हिन्दी/ }).first().click();
-  await expect(page.locator("html")).toHaveAttribute("lang", "hi");
-  await page.getByRole("button", { name: /English/ }).first().click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("button", { name: /हिन्दी|Change language/ })).toHaveCount(0);
+  await expect(page.getByText("हिन्दी")).toHaveCount(0);
 });
 
 test("a patient living outside India books a video consultation", async ({ page }) => {

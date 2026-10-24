@@ -32,13 +32,14 @@ export default async function SettingsPage() {
   const [prefs, region, c] = await Promise.all([getPrefs(), getViewerRegion(user), consentState(user!.id)]);
   const granted = (type: string) => c.latest(type)?.granted ?? false;
   const history = c.rows.filter((r) => r.type in CONSENT_LABELS).slice(0, 20);
+  const languages = enabledLocales();
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader title={t("Settings")} description={t("Language, appearance, notifications and privacy.")} />
+      <PageHeader title={t("Settings")} description={languages.length > 1 ? t("Language, appearance, notifications and privacy.") : t("Appearance, notifications and privacy.")} />
 
       <section className="card space-y-5 p-5" aria-labelledby="look">
-        <h2 id="look" className="text-lg font-bold">{t("Language and appearance")}</h2>
-        <LanguageForm locale={locale} locales={enabledLocales().map((l) => ({ code: l, name: LOCALES[l].native }))} />
+        <h2 id="look" className="text-lg font-bold">{languages.length > 1 ? t("Language and appearance") : t("Appearance")}</h2>
+        {languages.length > 1 ? <LanguageForm locale={locale} locales={languages.map((l) => ({ code: l, name: LOCALES[l].native }))} /> : null}
         <DisplayForm theme={prefs.theme} />
       </section>
 

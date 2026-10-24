@@ -96,15 +96,19 @@ export function OnboardingForm({
         <Field label={t("City")} htmlFor="city" optional={t("optional")}>
           <Input id="city" name="city" autoComplete="address-level2" />
         </Field>
-        <Field label={t("Language")} htmlFor="language" required>
-          <Select id="language" name="language" defaultValue={defaults.language}>
-            {locales.map((l) => (
-              <option key={l} value={l} lang={l}>
-                {LOCALES[l].native} ({LOCALES[l].english})
-              </option>
-            ))}
-          </Select>
-        </Field>
+        {locales.length > 1 ? (
+          <Field label={t("Language")} htmlFor="language" required>
+            <Select id="language" name="language" defaultValue={defaults.language}>
+              {locales.map((l) => (
+                <option key={l} value={l} lang={l}>
+                  {LOCALES[l].native} ({LOCALES[l].english})
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : (
+          <input type="hidden" name="language" value={locales[0] ?? "en"} />
+        )}
         <Field label={t("Time zone")} htmlFor="timeZone" required hint={t("We show every appointment time in this zone.")}>
           <Select id="timeZone" name="timeZone" value={tz} onChange={(e) => setTz(e.target.value)}>
             {zones.map((z) => (

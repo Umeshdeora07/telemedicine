@@ -14,7 +14,7 @@ A mobile first telemedicine website with two services:
 
 It also has booking for parents and family, online to clinic visits, and
 portals for doctors, clinics, care coordinators and admins. The site is in
-English and Hindi, with a light theme by default and an optional dark theme.
+English (a Hindi translation is included and can be switched on), with a light theme by default and an optional dark theme.
 
 "CareMitra" is a placeholder brand. Change it with `NEXT_PUBLIC_BRAND_NAME`
 and the other `NEXT_PUBLIC_*` settings in `.env.example`.
@@ -57,7 +57,7 @@ On the login page, pick any demo account:
 
 | Account | Role | Shows |
 |---|---|---|
-| Asha Verma | Patient, 62 | Hindi interface, upcoming video consult |
+| Asha Verma | Patient, 62 | Prefers Hindi, upcoming video consult |
 | Rahul Mehta | Patient | Family profiles (wife and son) |
 | Sunita Rao | Patient | Diabetes review with a general physician |
 | Arjun Nair | Caregiver in London | Booking for parents in Kochi, consented family access |
@@ -132,10 +132,10 @@ reloads in a loop after an upgrade, delete `.next/` and restart.
   or can be called at `POST /api/cron/tick`.
 - **PWA**: installable, offline visit pass and prescriptions, Web Push
   (`public/sw.js`).
-- **i18n**: two languages, English and Hindi. English source strings with
-  Hindi dictionaries in `src/i18n/dictionaries/`. The header has a one tap
-  switch to the other language. `npm run i18n:check -- hi` lists missing
-  Hindi strings.
+- **i18n**: English only for now. English source strings, with a full Hindi
+  translation kept in `src/i18n/dictionaries/`; set `ENABLED_LOCALES=en,hi`
+  to show the one tap language switch again. `npm run i18n:check -- hi`
+  lists any missing Hindi strings.
 - **Photos**: site photos are listed in `src/config/images.ts` (free Pexels
   photos). Replace any `src` with your own file under `public/images/site/`.
   Doctors show their own uploaded photo, or their initials.

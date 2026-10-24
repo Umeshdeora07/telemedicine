@@ -7,7 +7,7 @@ import { oauthAccounts, sessions, users } from "@/db/schema";
 import { env } from "@/config/env";
 import { currencyForCountry, isCurrency } from "@/config/currencies";
 import { DIAL_CODES } from "@/config/dial-codes";
-import { isLocale } from "@/i18n/config";
+import { isEnabledLocale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { decryptText, encryptText } from "@/lib/crypto";
 import { PREF_COOKIES } from "@/lib/prefs";
@@ -154,7 +154,7 @@ export async function afterLogin(db: DB, userId: string, next: string | null): P
   const p = user.preferences;
   const year = 60 * 60 * 24 * 365;
   if (p.theme === "light" || p.theme === "dark") jar.set(PREF_COOKIES.theme, p.theme, { path: "/", maxAge: year });
-  if (isLocale(user.language)) jar.set("lang", user.language, { path: "/", maxAge: year });
+  if (isEnabledLocale(user.language)) jar.set("lang", user.language, { path: "/", maxAge: year });
   if (needsTwoStep(user.role)) redirect(`/mfa${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   // Someone joining as a doctor goes straight on: the patient questions are not for them.
   if (!user.onboarded && !isStaff(user.role) && !next?.startsWith("/for-doctors/")) redirect(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`);

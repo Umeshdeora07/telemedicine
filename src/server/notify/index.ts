@@ -4,7 +4,7 @@ import { appointments, familyLinks, notifications, patients, pushSubscriptions, 
 import { env } from "@/config/env";
 import { brand } from "@/config/brand";
 import { loadDictionary } from "@/i18n/dictionaries";
-import { intlLocale, isLocale } from "@/i18n/config";
+import { intlLocale, isEnabledLocale } from "@/i18n/config";
 import { makeTranslator } from "@/i18n/translate";
 import { formatDateTime, zoneLabel } from "@/lib/format";
 import { sendEmail, sendPush, sendSms, sendWhatsApp } from "./channels";
@@ -115,7 +115,7 @@ export async function appointmentRecipients(db: Executor, appointmentId: string)
 
 async function translatorFor(userId: string, db: Executor) {
   const [u] = await db.select({ language: users.language, tz: users.timeZone }).from(users).where(eq(users.id, userId));
-  const locale = isLocale(u?.language) ? u.language : "en";
+  const locale = isEnabledLocale(u?.language) ? u.language : "en";
   const dict = await loadDictionary(locale);
   return { ...makeTranslator(dict, intlLocale(locale)), intl: intlLocale(locale), tz: u?.tz ?? "Asia/Kolkata" };
 }
